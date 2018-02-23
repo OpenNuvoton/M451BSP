@@ -1,0 +1,24 @@
+LOAD_ROM1 0x0
+{
+    APROM 0x0 
+    {        
+        startup_M451Series.o(RESET, +First)
+        startup_M451Series.o
+        __main.o
+        __scatter*.o
+        anon*.o
+        system_M451Series.o
+    }
+
+    SRAM_RO 0x10000000
+    {
+        * (+RO)
+    }
+
+
+    SRAM 0x20002000
+    {
+        * (+RW,+ZI)
+    }
+}
+

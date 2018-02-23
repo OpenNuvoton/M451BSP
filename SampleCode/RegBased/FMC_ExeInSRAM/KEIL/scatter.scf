@@ -1,0 +1,33 @@
+
+
+FLASH 0x00000000
+{
+    FLASH +0
+    {
+         startup_M451Series.o(RESET, +First)
+         startup_M451Series.o
+         system_M451Series.o
+         anon$$obj.o
+         init.o
+         entry*.o
+         handlers.o
+    }
+
+	SRAM1 0x10000000
+    {  
+        * (+RO)
+    }
+
+    SRAM2 0x20002000
+    {
+        * (+RW)
+    
+    }
+
+	ZI +0
+	{
+		*(+ZI)
+	}
+
+}
+

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?><?xml-stylesheet type='text/xsl' href='_UpgradeReport_Files/UpgradeReport.xslt'?><UpgradeLog>
+<Properties><Property Name="Solution" Value="HIDTransferTest">
+</Property><Property Name="Solution File" Value="C:\VSS\M451BSP\SampleCode\StdDriver\USBD_HID_Transfer\WindowsTool\HIDTransferTest.sln">
+</Property><Property Name="Date" Value="2014年6月3日">
+</Property><Property Name="Time" Value="上午 09:40">
+</Property></Properties><Event ErrorLevel="0" Project="" Source="HIDTransferTest.sln" Description="File successfully backed up as C:\VSS\M451BSP\SampleCode\StdDriver\USBD_HID_Transfer\WindowsTool\HIDTransferTest.sln.old">
+</Event><Event ErrorLevel="0" Project="HIDTransferTest" Source="HIDTransferTest\HIDTransferTest.vcproj" Description="Web deployment to the local IIS server is no longer supported. The Web Deployment build tool has been removed from your project settings.">
+</Event><Event ErrorLevel="1" Project="HIDTransferTest" Source="HIDTransferTest\HIDTransferTest.vcproj" Description="This application has been updated to include settings related to the User Account Control (UAC) feature of Windows Vista. By default, when run on Windows Vista with UAC enabled, this application is marked to run with the same privileges as the process that launched it. This marking also disables the application from running with virtualization. You can change UAC related settings from the Property Pages of the project.">
+</Event><Event ErrorLevel="0" Project="HIDTransferTest" Source="HIDTransferTest\HIDTransferTest.vcproj" Description="Project file successfully backed up as 'C:\VSS\M451BSP\SampleCode\StdDriver\USBD_HID_Transfer\WindowsTool\HIDTransferTest\HIDTransferTest.vcproj.8.00.old'.">
+</Event><Event ErrorLevel="0" Project="HIDTransferTest" Source="HIDTransferTest\HIDTransferTest.vcproj" Description="Project upgraded successfully.">
+</Event><Event ErrorLevel="3" Project="HIDTransferTest" Source="HIDTransferTest\HIDTransferTest.vcproj" Description="Converted">
+</Event><Event ErrorLevel="0" Project="" Source="HIDTransferTest.sln" Description="Solution converted successfully">
+</Event><Event ErrorLevel="3" Project="" Source="HIDTransferTest.sln" Description="Converted">
+</Event></UpgradeLog>
