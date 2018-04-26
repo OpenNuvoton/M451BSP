@@ -403,6 +403,7 @@ void USBD_StandardRequest(void)
                         if(((USBD->EP[i].CFG & 0xF) == epNum) && ((g_u32EpStallLock & (1 << i)) == 0))
                         {
                             USBD->EP[i].CFGP &= ~USBD_CFGP_SSTALL_Msk;
+                            USBD->EP[i].CFG &= ~USBD_CFG_DSQSYNC_Msk;
                             DBG_PRINTF("Clr stall ep%d %x\n", i, USBD->EP[i].CFGP);
                         }
                     }
