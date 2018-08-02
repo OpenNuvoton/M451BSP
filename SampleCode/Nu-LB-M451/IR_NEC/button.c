@@ -31,7 +31,7 @@ unsigned char Get_LB_Key_Input(void)
 
     if(LB_KEY4 == 0)
         temp |= 0x8;
-	
+
     if(LB_KEY5 == 0)
         temp |= 0xC;
 

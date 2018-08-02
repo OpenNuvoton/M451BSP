@@ -161,14 +161,16 @@ const uint8_t *gpu8UsbHidReport[3] =
     NULL
 };
 
-const uint32_t gu32UsbHidReportLen[3] = {
+const uint32_t gu32UsbHidReportLen[3] =
+{
     sizeof(HID_MouseReportDescriptor),
     0,
     0
 };
 
-const uint32_t gu32ConfigHidDescIdx[3] = {
-    (LEN_CONFIG+LEN_INTERFACE),
+const uint32_t gu32ConfigHidDescIdx[3] =
+{
+    (LEN_CONFIG + LEN_INTERFACE),
     0,
     0
 };

@@ -42,13 +42,13 @@ void SYS_Init(void)
     /* Enable module clock */
     CLK_EnableModuleClock(UART0_MODULE);
     CLK_EnableModuleClock(USBD_MODULE);
-    CLK_EnableModuleClock(SPI0_MODULE);        
+    CLK_EnableModuleClock(SPI0_MODULE);
 
     /* Select module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
     CLK_SetModuleClock(USBD_MODULE, 0, CLK_CLKDIV0_USB(3));
-    CLK_SetModuleClock(SPI0_MODULE, CLK_CLKSEL2_SPI0SEL_PCLK0, MODULE_NoMsk);    
-    
+    CLK_SetModuleClock(SPI0_MODULE, CLK_CLKSEL2_SPI0SEL_PCLK0, MODULE_NoMsk);
+
     /* Enable USB LDO33 */
     SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk;
 
@@ -62,7 +62,7 @@ void SYS_Init(void)
 
     /* Set SPI0 multi-function pins */
     SYS->GPE_MFPH &= ~(SYS_GPE_MFPH_PE10MFP_Msk | SYS_GPE_MFPH_PE11MFP_Msk | SYS_GPE_MFPH_PE13MFP_Msk);
-    SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE10MFP_SPI0_MISO0 | SYS_GPE_MFPH_PE11MFP_SPI0_MOSI0 | SYS_GPE_MFPH_PE13MFP_SPI0_CLK); 
+    SYS->GPE_MFPH |= (SYS_GPE_MFPH_PE10MFP_SPI0_MISO0 | SYS_GPE_MFPH_PE11MFP_SPI0_MOSI0 | SYS_GPE_MFPH_PE13MFP_SPI0_CLK);
     GPIO_SetMode(PA, BIT9, GPIO_MODE_OUTPUT);
     GPIO_SetMode(PB, BIT6, GPIO_MODE_OUTPUT);
 
@@ -86,7 +86,7 @@ int32_t main(void)
     printf("+-------------------------------------------------------+\n");
     printf("|          NuMicro USB MassStorage Sample Code          |\n");
     printf("+-------------------------------------------------------+\n");
-    
+
     SDCARD_Open();
 
     USBD_Open(&gsInfo, MSC_ClassRequest, NULL);

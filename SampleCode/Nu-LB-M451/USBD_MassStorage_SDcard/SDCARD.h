@@ -35,7 +35,7 @@ extern "C"
 #define DBG_PRINTF      printf     /*!< Debug printf option, On */
 #else
 #define DBG_PRINTF(...)         /*!< Debug printf option, Off */
-#endif    
+#endif
 
 #define PHYSICAL_BLOCK_SIZE 512    /*!< 512 Erase group size = 16 MMC FLASH sectors */
 
@@ -74,11 +74,13 @@ extern "C"
 #define BACK_FROM_ERROR { SingleWrite(0xFF); PA9 = 1;  return FALSE;} /*!< macro for SPI write */
 
 
-typedef union {                        // byte-addressable unsigned long
+typedef union                          // byte-addressable unsigned long
+{
     uint32_t l;
     uint8_t b[4];
 } UINT32;
-typedef union {                        // byte-addressable unsigned int
+typedef union                          // byte-addressable unsigned int
+{
     uint16_t i;
     uint8_t b[2];
 } UINT16;
@@ -132,7 +134,8 @@ typedef union {                        // byte-addressable unsigned int
   @{
 */
 // This structure defines entries into the command table;
-typedef struct {
+typedef struct
+{
     uint8_t command_byte;      /*!< OpCode;*/
     uint8_t arg_required;      /*!< Indicates argument requirement;*/
     uint8_t CRC_SD;               /*!< Holds CRC for command if necessary;*/
@@ -148,7 +151,7 @@ typedef struct {
 uint32_t SDCARD_Open(void);
 void SDCARD_Close(void);
 uint32_t SDCARD_GetVersion(void);
-uint32_t MMC_Command_Exec (uint8_t cmd_loc, uint32_t argument,uint8_t *pchar, uint32_t* response);
+uint32_t MMC_Command_Exec(uint8_t cmd_loc, uint32_t argument, uint8_t *pchar, uint32_t* response);
 uint32_t GetLogicSector(void);
 uint32_t SDCARD_GetCardSize(uint32_t* pu32TotSecCnt);
 void SpiRead(uint32_t addr, uint32_t size, uint8_t* buffer);

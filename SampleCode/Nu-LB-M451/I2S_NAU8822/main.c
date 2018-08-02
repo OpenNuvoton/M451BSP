@@ -42,7 +42,7 @@ int32_t main(void)
     UART_Open(UART0, 115200);
 
     /* Init NAU8822 to turn on speaker ouput function*/
-    NAU8822_Setup();   
+    NAU8822_Setup();
 
     /* Slave mode, 16-bit word width, stereo mode, I2S format. Set TX and RX FIFO threshold to middle value. */
     I2S_Open(SPI1, I2S_MODE_SLAVE, 16000, I2S_DATABIT_16, I2S_STEREO, I2S_FORMAT_I2S);
@@ -116,15 +116,15 @@ void SYS_Init(void)
 uint32_t u32I2Sindex = 0;
 void SPI1_IRQHandler()
 {
-    uint32_t u32I2SIntFlag;    
+    uint32_t u32I2SIntFlag;
     u32I2SIntFlag = SPI1->I2SSTS;
     if(u32I2SIntFlag & SPI_I2SSTS_TXTHIF_Msk)
     {
         /* Fill 2 word data when it is TX threshold interrupt */
         I2S_WRITE_TX_FIFO(SPI1, APU_SOURCE[u32I2Sindex++]);
-        if(u32I2Sindex>12218) u32I2Sindex=0;
+        if(u32I2Sindex > 12218) u32I2Sindex = 0;
         I2S_WRITE_TX_FIFO(SPI1, APU_SOURCE[u32I2Sindex++]);
-        if(u32I2Sindex>12218) u32I2Sindex=0;
+        if(u32I2Sindex > 12218) u32I2Sindex = 0;
     }
 }
 
@@ -139,31 +139,31 @@ uint8_t I2C_WriteNAU8822(uint8_t u8addr, uint16_t u16data)
     I2C_WAIT_READY(I2C0);
     if(I2C_GET_STATUS(I2C0) != 0x08)
         return 1;
-    
+
     /* Send device address */
     I2C_SET_DATA(I2C0, 0x1A << 1);
     I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
     I2C_WAIT_READY(I2C0);
     if(I2C_GET_STATUS(I2C0) != 0x18)
-        return 1;   
-    
+        return 1;
+
 
     /* Send register number and MSB of data */
     I2C_SET_DATA(I2C0, (uint8_t)((u8addr << 1) | (u16data >> 8)));
     I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
     I2C_WAIT_READY(I2C0);
     if(I2C_GET_STATUS(I2C0) != 0x28)
-        return 1;        
-    
+        return 1;
+
 
     /* Send data */
     I2C_SET_DATA(I2C0, (uint8_t)(u16data & 0x00FF));
     I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
     I2C_WAIT_READY(I2C0);
     if(I2C_GET_STATUS(I2C0) != 0x28)
-        return 1;    
-    
-    
+        return 1;
+
+
     /* Send STOP */
     I2C_STOP(I2C0);
     return 0;
@@ -173,8 +173,8 @@ uint8_t I2C_WriteNAU8822(uint8_t u8addr, uint16_t u16data)
 void NAU8822_Setup(void)
 {
     /* Open I2C0 and set clock to 100k for NAU8822*/
-    I2C_Open(I2C0, 100000);    
-    
+    I2C_Open(I2C0, 100000);
+
     I2C_WriteNAU8822(0,  0x000);   /* Reset all registers */
     CLK_SysTickDelay(10000);
 
@@ -190,7 +190,7 @@ void NAU8822_Setup(void)
 
     I2C_WriteNAU8822(15, 0x1EF);   /* ADC left digital volume control */
     I2C_WriteNAU8822(16, 0x1EF);   /* ADC right digital volume control */
-        
+
     I2C_WriteNAU8822(44, 0x033);   /* LMICN/LMICP is connected to PGA */
     I2C_WriteNAU8822(50, 0x001);   /* Left DAC connected to LMIX */
     I2C_WriteNAU8822(51, 0x001);   /* Right DAC connected to RMIX */

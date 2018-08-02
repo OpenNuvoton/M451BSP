@@ -258,11 +258,11 @@ void HID_ClassRequest(void)
 void HID_UpdateMouseData(void)
 {
     int8_t *buf;
-    
+
     if(g_u8EP2Ready)
     {
         buf = (int8_t *)(USBD_BUF_BASE + USBD_GET_EP_BUF_ADDR(EP2));
-        
+
         buf[0] = buf[3] = 0;
 
         if(PA8 == 0)//Left Key
@@ -274,25 +274,29 @@ void HID_UpdateMouseData(void)
         {
             buf[0] |= 0x02;
         }
-        
+
         if(PC0 == 0)//Right
         {
             buf[1] = 1;
-        }else if(PD2 == 0)//Left
+        }
+        else if(PD2 == 0) //Left
         {
             buf[1] = -1;
-        }else
+        }
+        else
         {
             buf[1] = 0;
         }
-        
+
         if(PD3 == 0)//Down
         {
             buf[2] = 1;
-        }else if(PD11 == 0)
+        }
+        else if(PD11 == 0)
         {
             buf[2] = -1;//Up
-        }else
+        }
+        else
         {
             buf[2] = 0;
         }

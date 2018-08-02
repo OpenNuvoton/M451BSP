@@ -229,7 +229,7 @@ void USBD_IRQHandler(void)
         }
 
     }
-    
+
 }
 
 
@@ -1000,7 +1000,7 @@ void MSC_ProcessCmd(void)
                         DBG_PRINTF("Read addr=0x%x, len=0x%x\n", g_u32LbaAddress, g_u32Length);
 
                         /* Error check  */
-                        if((g_u32LbaAddress > g_TotalSectors) || (g_u32LbaAddress + g_u32Length/UDC_SECTOR_SIZE > g_TotalSectors))
+                        if((g_u32LbaAddress > g_TotalSectors) || (g_u32LbaAddress + g_u32Length / UDC_SECTOR_SIZE > g_TotalSectors))
                         {
 
                             USBD_SET_EP_STALL(EP2);
@@ -1019,7 +1019,7 @@ void MSC_ProcessCmd(void)
 
                         MSC_ReadMedia(g_u32LbaAddress, i, (uint8_t *)STORAGE_DATA_BUF);
                         g_u32BytesInStorageBuf = i;
-                        g_u32LbaAddress += i/UDC_SECTOR_SIZE;
+                        g_u32LbaAddress += i / UDC_SECTOR_SIZE;
                     }
                     g_u32Address = STORAGE_DATA_BUF;
 
@@ -1282,7 +1282,7 @@ void MSC_AckCmd(void)
 
 void MSC_ReadMedia(uint32_t addr, uint32_t size, uint8_t *buffer)
 {
-    SpiRead(addr , size, buffer);
+    SpiRead(addr, size, buffer);
 }
 
 void MSC_WriteMedia(uint32_t addr, uint32_t size, uint8_t *buffer)

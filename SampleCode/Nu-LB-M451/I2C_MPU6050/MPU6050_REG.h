@@ -1,9 +1,9 @@
 //
 // MPU6050 : 3-axis Accelerometer & 3-axis Gyroscope
-// 
+//
 #define MPU6050_SlaveAddr        0xD0
 #define MPU6050_I2C_PORT         I2C1
-// MPU6050 Internal Registers 
+// MPU6050 Internal Registers
 #define MPU6050_XG_OFFS_TC       0x00 //[7] PWR_MODE, [6:1] XG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_YG_OFFS_TC       0x01 //[7] PWR_MODE, [6:1] YG_OFFS_TC, [0] OTP_BNK_VLD
 #define MPU6050_ZG_OFFS_TC       0x02 //[7] PWR_MODE, [6:1] ZG_OFFS_TC, [0] OTP_BNK_VLD

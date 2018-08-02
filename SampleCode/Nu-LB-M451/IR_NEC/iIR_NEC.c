@@ -2,7 +2,7 @@
 #include "M451Series.h"
 #include "NuEdu-Basic01_IrDA_NEC.h"
 
-extern void ILI9341_LCD_PutString(uint16_t x, uint16_t y,uint8_t *s, uint32_t fColor, uint32_t bColor);
+extern void ILI9341_LCD_PutString(uint16_t x, uint16_t y, uint8_t *s, uint32_t fColor, uint32_t bColor);
 void IrDA_Code_Exe(uint8_t* IR_CODE1);
 
 #define     Percent             0.04        // 4 % 
@@ -34,18 +34,18 @@ uint8_t     IR_CODE[4]  =   {0x00, 0x00, 0x00, 0x00};
 
 void IrDa_NEC_Rx(uint32_t u32Time)
 {
-	
-	//uint8_t IR_cnt, IR_CTC0, IR_CTC1, IR_DAC, IR_DAB;
-	uint8_t Message[20];
+
+    //uint8_t IR_cnt, IR_CTC0, IR_CTC1, IR_DAC, IR_DAB;
+    uint8_t Message[20];
     char* Message_Print;
-    
+
     Message_Print = (char*)Message;
-	
-	
+
+
     if(IR_State == 0)
     {
-        IR_LDC_Ready = 0;           										// Clear LeaDer Code Ready
-        IR_CTC_Ready = 0;           										// Clear CusTomer Code Ready
+        IR_LDC_Ready = 0;                                                   // Clear LeaDer Code Ready
+        IR_CTC_Ready = 0;                                                   // Clear CusTomer Code Ready
         IR_State++;
     }
     // Leader or Repeater code
@@ -54,14 +54,14 @@ void IrDa_NEC_Rx(uint32_t u32Time)
         // Leader code
         if((u32Time >= IR_LDC_MIN) && (u32Time <= IR_LDC_MAX))
         {
-            IR_LDC_Ready = 1;       										// Set LeaDer Code Ready
+            IR_LDC_Ready = 1;                                               // Set LeaDer Code Ready
             IR_State++;
         }
         else
         {
             IR_State = 1;
-            IR_LDC_Ready = 0;           									// Clear LeaDer Code Ready
-            IR_CTC_Ready = 0;           									// Clear CusTomer Code Ready
+            IR_LDC_Ready = 0;                                               // Clear LeaDer Code Ready
+            IR_CTC_Ready = 0;                                               // Clear CusTomer Code Ready
         }
     }
     // Customer code 0
@@ -71,7 +71,7 @@ void IrDa_NEC_Rx(uint32_t u32Time)
         IR_CTC0 = IR_CTC0 >> 1;
         if((u32Time >= IR_BIT_0_MIN) && (u32Time <= IR_BIT_0_MAX))          // 1.12ms = 0
             IR_CTC0 &= 0x7f;
-        else if((u32Time >= IR_BIT_1_MIN) && (u32Time <= IR_BIT_1_MAX)) 	// 2.25ms = 1
+        else if((u32Time >= IR_BIT_1_MIN) && (u32Time <= IR_BIT_1_MAX))     // 2.25ms = 1
             IR_CTC0 |= 0x80;
         else
             IR_State = 0;
@@ -83,7 +83,7 @@ void IrDa_NEC_Rx(uint32_t u32Time)
         IR_CTC1 = IR_CTC1 >> 1;
         if((u32Time >= IR_BIT_0_MIN) && (u32Time <= IR_BIT_0_MAX))          // 1.12ms = 0
             IR_CTC1 &= 0x7f;
-        else if((u32Time >= IR_BIT_1_MIN) && (u32Time <= IR_BIT_1_MAX)) 	// 2.25ms = 1
+        else if((u32Time >= IR_BIT_1_MIN) && (u32Time <= IR_BIT_1_MAX))     // 2.25ms = 1
             IR_CTC1 |= 0x80;
         else
             IR_State = 0;
@@ -106,7 +106,7 @@ void IrDa_NEC_Rx(uint32_t u32Time)
     {
         IR_State++;
         IR_DAB = IR_DAB >> 1;
-        if((u32Time >= IR_BIT_0_MIN) && (u32Time <= IR_BIT_0_MAX))     		// 1.12ms = 0
+        if((u32Time >= IR_BIT_0_MIN) && (u32Time <= IR_BIT_0_MAX))          // 1.12ms = 0
             IR_DAB &= 0x7f;
         else if((u32Time >= IR_BIT_1_MIN) && (u32Time <= IR_BIT_1_MAX))     // 2.25ms = 1
             IR_DAB |= 0x80;
@@ -117,24 +117,24 @@ void IrDa_NEC_Rx(uint32_t u32Time)
         {
             if((IR_DAC ^ IR_DAB) == 0xff)
             {
-                IR_LDC_Ready = 0;   										// Clear LeaDer Code Ready
+                IR_LDC_Ready = 0;                                           // Clear LeaDer Code Ready
                 IR_CODE[0] = IR_CTC0;
                 IR_CODE[1] = IR_CTC1;
                 IR_CODE[2] = IR_DAC;
                 IR_CODE[3] = IR_DAB;
                 IR_cnt++;
-				
-				//print decode value to LCD
-				sprintf(Message_Print,"IR_cnt= %02x,",IR_cnt);				
-				ILI9341_LCD_PutString(120,0,Message,Red,Yellow); 
-				sprintf(Message_Print,"CTC0= %02x,",IR_CTC0);				
-				ILI9341_LCD_PutString(135,0,Message,Red,Yellow); 
-				sprintf(Message_Print,"CTC1= %02x,",IR_CTC1);				
-				ILI9341_LCD_PutString(135,72,Message,Red,Yellow); 
-				sprintf(Message_Print,"DAC= %02x,",IR_DAC);				
-				ILI9341_LCD_PutString(150,0,Message,Red,Yellow); 
-				sprintf(Message_Print,"DAB= %02x,",IR_DAB);				
-				ILI9341_LCD_PutString(150,64,Message,Red,Yellow); 
+
+                //print decode value to LCD
+                sprintf(Message_Print, "IR_cnt= %02x,", IR_cnt);
+                ILI9341_LCD_PutString(120, 0, Message, Red, Yellow);
+                sprintf(Message_Print, "CTC0= %02x,", IR_CTC0);
+                ILI9341_LCD_PutString(135, 0, Message, Red, Yellow);
+                sprintf(Message_Print, "CTC1= %02x,", IR_CTC1);
+                ILI9341_LCD_PutString(135, 72, Message, Red, Yellow);
+                sprintf(Message_Print, "DAC= %02x,", IR_DAC);
+                ILI9341_LCD_PutString(150, 0, Message, Red, Yellow);
+                sprintf(Message_Print, "DAB= %02x,", IR_DAB);
+                ILI9341_LCD_PutString(150, 64, Message, Red, Yellow);
             }
             IR_State = 0;
         }
@@ -213,7 +213,7 @@ void IrDA_NEC_TxRx_Init(void)
     SYS->GPC_MFPH = SYS->GPC_MFPH & (~SYS_GPC_MFPH_PC13MFP_Msk);
     SYS->GPC_MFPH |= SYS_GPC_MFPH_PC13MFP_PWM1_CH4;
 
-	/*-------------PWM output------------------*/
+    /*-------------PWM output------------------*/
     /* Enable PWM module clock */
     CLK_EnableModuleClock(PWM1_MODULE);
 
@@ -229,7 +229,7 @@ void IrDA_NEC_TxRx_Init(void)
     /* Enable Timer for PWM1 channel 4 */
     PWM_Start(PWM1, PWM_CH_4_MASK);
 
-	/*-------------PWM capture------------------*/
+    /*-------------PWM capture------------------*/
     /* set PWM1 channel 3 capture configuration */
     PWM_ConfigCaptureChannel(PWM1, 3, 1000, 0);
 
