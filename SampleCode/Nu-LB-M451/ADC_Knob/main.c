@@ -133,7 +133,7 @@ void Open_ADC_Knob(void)
 
     /* Set the ADC internal sampling time, input mode as single-end and enable the A/D converter */
     EADC_Open(EADC, EADC_CTL_DIFFEN_SINGLE_END);
-    EADC_SetInternalSampleTime(EADC, 14);
+    EADC_SetInternalSampleTime(EADC, 8);
 
     /* Configure the sample module 0 for analog input channel 11 and software trigger source */
     EADC_ConfigSampleModule(EADC, 0, EADC_SOFTWARE_TRIGGER, 11);
