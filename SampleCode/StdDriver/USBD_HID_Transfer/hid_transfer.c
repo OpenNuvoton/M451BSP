@@ -510,7 +510,7 @@ void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size)
     else
     {
         /* Check and process the command packet */
-        if(ProcessCommand(pu8EpBuf, u32Size))
+        if(ProcessCommand(pu8EpBuf, sizeof(gCmd)))
         {
             printf("Unknown HID command!\n");
         }
