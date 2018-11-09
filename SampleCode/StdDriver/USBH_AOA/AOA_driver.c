@@ -25,7 +25,7 @@ static AOADEV_T  g_aoa_dev;
 static uint8_t aoa_buff[AOA_MAX_STR_LEN];
 #pragma data_alignment=4
 #else
-static __align(16) uint8_t aoa_buff[AOA_MAX_STR_LEN];
+static  uint8_t aoa_buff[AOA_MAX_STR_LEN]  __attribute__ ((__align(16)));
 #endif
 
 static volatile int  bulk_out_done;

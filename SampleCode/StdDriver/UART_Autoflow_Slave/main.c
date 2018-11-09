@@ -30,7 +30,7 @@ volatile int32_t g_i32pointer = 0;
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int32_t main(void);
+int main(void);
 void AutoFlow_FunctionRxTest(void);
 
 

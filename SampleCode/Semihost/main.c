@@ -9,6 +9,9 @@
 *****************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
+# if defined (__GNUC__)
+    extern void initialise_monitor_handles(void);
+#endif
 
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -18,6 +21,9 @@
 int32_t main()
 {
     int8_t item;
+#if (defined (__GNUC__) && (!(defined(__ARMCC_VERSION))))
+    initialise_monitor_handles();
+#endif
 
     /*
         To enable semihost, user must define "DEBUG_ENABLE_SEMIHOST" constant when build code with M451Series BSP.

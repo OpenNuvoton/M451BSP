@@ -15,7 +15,7 @@ static uint16_t  vol_max, vol_min, vol_res, vol_cur;
 
 extern int kbhit(void);             /* function in retarget.c */
 extern char GetChar(void);          /* function in retarget.c */
-
+#define UAC_MIXER 0
 
 void SYS_Init(void)
 {
@@ -515,14 +515,14 @@ int32_t main(void)
 
             if (uac_dev != NULL)                  /* should be newly connected UAC device        */
             {
-            	UAC_StartDevice(uac_dev);
+            	/*UAC_StartDevice(uac_dev);*/
             	
     			uac_control_example(uac_dev);
 
 				val16 = 0x8800;
         		UAC_VolumeControl(uac_dev, UAC_MIXER, UAC_SET_CUR, UAC_CH_MASTER, &val16);
 
-    			if (UAC_InstallIsoInCbFun(uac_dev, audio_in_callback) != UAC_RET_OK)
+    			if (UAC_InstallIsoInCbFun(uac_dev, NULL, 0xFFFF, audio_in_callback) != UAC_RET_OK)
     			{
         			printf("Failed to install audio-in callback function!\n");
         			goto err_out;

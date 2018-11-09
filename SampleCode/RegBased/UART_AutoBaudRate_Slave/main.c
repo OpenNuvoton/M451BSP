@@ -21,7 +21,7 @@
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int32_t main(void);
+int main(void);
 uint32_t GetUartBaudrate(UART_T* uart);
 void AutoBaudRate_RxTest(void);
 

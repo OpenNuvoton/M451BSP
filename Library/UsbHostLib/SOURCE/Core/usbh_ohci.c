@@ -64,7 +64,7 @@
 static uint8_t  g_ohci_hcca[256];
 #pragma data_alignment=4
 #else
-static __align(256) uint8_t  g_ohci_hcca[256];
+static uint8_t  g_ohci_hcca[256] __attribute__ ((__align(256)));
 #endif
 
 

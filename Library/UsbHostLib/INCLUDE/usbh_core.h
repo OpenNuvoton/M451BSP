@@ -711,19 +711,19 @@ extern USB_BUS_T    g_ohci_bus;
   @{
 */
 
-extern int32_t  USBH_Open(void);
+extern int  USBH_Open(void);
 extern int      USBH_ProcessHubEvents(void);
 extern URB_T  * USBH_AllocUrb(void);
 extern void     USBH_FreeUrb(URB_T *);
-extern int32_t  USBH_SubmitUrb(URB_T *urb);
-extern int32_t  USBH_UnlinkUrb(URB_T *urb);
-extern int32_t  USBH_SendCtrlMsg(USB_DEV_T *dev, uint32_t pipe, uint8_t request, uint8_t requesttype,  uint16_t value, uint16_t index, void *data, uint16_t size, int timeout);
-extern int32_t  USBH_SendBulkMsg(USB_DEV_T *usb_dev, uint32_t pipe, void *data, int len, int *actual_length, int timeout);
-extern int32_t  USBH_RegisterDriver(USB_DRIVER_T *new_driver);
-extern int32_t  USBH_GetDescriptor(USB_DEV_T *dev, uint8_t type, uint8_t index, void *buf, int size);
-extern int32_t  USBH_SetConfiguration(USB_DEV_T *dev, int configuration);
-extern int32_t  USBH_SetInterface(USB_DEV_T *dev, char interface, char alternate);
-extern int32_t  USBH_ClearHalt(USB_DEV_T *dev, int pipe);
+extern int  USBH_SubmitUrb(URB_T *urb);
+extern int  USBH_UnlinkUrb(URB_T *urb);
+extern int  USBH_SendCtrlMsg(USB_DEV_T *dev, uint32_t pipe, uint8_t request, uint8_t requesttype,  uint16_t value, uint16_t index, void *data, uint16_t size, int timeout);
+extern int  USBH_SendBulkMsg(USB_DEV_T *usb_dev, uint32_t pipe, void *data, int len, int *actual_length, int timeout);
+extern int  USBH_RegisterDriver(USB_DRIVER_T *new_driver);
+extern int  USBH_GetDescriptor(USB_DEV_T *dev, uint8_t type, uint8_t index, void *buf, int size);
+extern int  USBH_SetConfiguration(USB_DEV_T *dev, int configuration);
+extern int  USBH_SetInterface(USB_DEV_T *dev, char interface, char alternate);
+extern int  USBH_ClearHalt(USB_DEV_T *dev, int pipe);
 extern int32_t  USBH_Suspend(void);
 extern int32_t  USBH_Resume(void);
 extern int32_t  USBH_Close(void);

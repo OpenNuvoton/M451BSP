@@ -36,6 +36,8 @@ BYTE Buff[1024] ;       /* Working buffer */
 
 #ifdef __ARMCC_VERSION
 __align(32) BYTE Buff[1024] ;       /* Working buffer */
+#else
+BYTE Buff[4096] __attribute__ ((__align(32) ));
 #endif
 
 void Delay(uint32_t delayCnt)

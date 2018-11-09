@@ -16,7 +16,7 @@
 #define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
-#if !defined(__ICCARM__)
+#if !defined(__ICCARM__) && !defined(__GNUC__)
 extern uint32_t Image$$RO$$Base;
 #endif
 
@@ -137,7 +137,7 @@ int32_t main(void)
 
     printf("\nCPU @ %dHz\n\n", SystemCoreClock);
 
-#if defined(__ICCARM__)
+#if defined(__ICCARM__) || defined(__GNUC__)
     printf("VECMAP = 0x%x\n", FMC_GetVECMAP());
 #else
     printf("Current RO Base = 0x%x, VECMAP = 0x%x\n", (uint32_t)&Image$$RO$$Base, FMC_GetVECMAP());

@@ -23,7 +23,7 @@
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int32_t main(void);
+int main(void);
 void AutoBaudRate_TestItem(void);
 void AutoBaudRate_TxTest(void);
 

@@ -37,7 +37,7 @@ volatile int8_t   g_bMicIsMono = 0;
 #pragma data_alignment=32
 uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN];
 #else
-__align(32) uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN];
+uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN] __attribute__ ((__align(32)));
 #endif
 volatile uint32_t g_UacOutBuff_8822RecPos = 0;   /* NAU8822 record pointer          */
 volatile uint32_t g_UacOutBuff_UacPlayPos = 0;   /* UAC play data pointer           */
@@ -49,7 +49,7 @@ volatile uint32_t g_UacOutBuff_UacPlayCnt = 0;   /* UAC play pcm counter        
 #pragma data_alignment=32
 uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN];
 #else
-__align(32) uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN];
+uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN] __attribute__ ((__align(32)));
 #endif
 volatile uint32_t g_UacInBuff_8822PlayPos = 0;   /* NAU8822 play pointer            */
 volatile uint32_t g_UacInBuff_UacRecPos = 0;     /* UAC data recieving pointer      */

@@ -561,7 +561,7 @@ void UMAS_ScanAllDevice()
   * @retval   0   Success
   * @retval   Otherwise  Failed
   */
-int  USBH_MassInit(void)
+int32_t  USBH_MassInit(void)
 {
     int     i = 0;
 

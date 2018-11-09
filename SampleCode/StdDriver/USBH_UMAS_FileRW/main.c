@@ -31,6 +31,8 @@ BYTE Buff[4096] ;       /* Working buffer */
 
 #ifdef __ARMCC_VERSION
 __align(32) BYTE Buff[4096] ;       /* Working buffer */
+#else
+BYTE Buff[4096] __attribute__ ((__align(32) ));
 #endif
 
 char GetChar(void);
