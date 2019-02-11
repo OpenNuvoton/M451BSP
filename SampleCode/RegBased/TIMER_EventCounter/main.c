@@ -98,6 +98,10 @@ void SYS_Init(void)
     /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
+    
+    /* Set PD multi-function pin for Timer2 event counter pin */
+    SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD3MFP_Msk);
+    SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD3MFP_T2);	
 }
 
 void UART0_Init(void)
