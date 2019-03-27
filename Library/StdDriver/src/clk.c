@@ -450,6 +450,7 @@ void CLK_DisableXtalRC(uint32_t u32ClkMask)
   *             - \ref EBI_MODULE
   *             - \ref USBH_MODULE
   *             - \ref CRC_MODULE
+  *             - \ref FMCIDLE_MODULE
   *             - \ref WDT_MODULE
   *             - \ref WWDT_MODULE
   *             - \ref RTC_MODULE
@@ -493,6 +494,7 @@ void CLK_EnableModuleClock(uint32_t u32ModuleIdx)
   *             - \ref EBI_MODULE
   *             - \ref USBH_MODULE
   *             - \ref CRC_MODULE
+  *             - \ref FMCIDLE_MODULE
   *             - \ref WDT_MODULE
   *             - \ref WWDT_MODULE
   *             - \ref RTC_MODULE
