@@ -79,7 +79,7 @@ const uint8_t gu8ConfigDescriptor[] =
     0x00,               /* iTerminal */
 
     /* UNIT ID 5: Feature Unit */
-    0x08,               /* bLength */
+    0x0A,               /* bLength */
     0x24,               /* bDescriptorType */
     0x06,               /* bDescriptorSubType */
     REC_FEATURE_UNITID, /* bUnitID */
