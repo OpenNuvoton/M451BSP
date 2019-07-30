@@ -5970,23 +5970,239 @@ typedef struct
 #define PDMA_INTSTS_TEIF_Pos             (2)                                               /*!< PDMA_T::INTSTS: TEIF Position             */
 #define PDMA_INTSTS_TEIF_Msk             (0x1ul << PDMA_INTSTS_TEIF_Pos)                   /*!< PDMA_T::INTSTS: TEIF Mask                 */
 
+#define PDMA_INTSTS_REQTOF0_Pos          (8)                                               /*!< PDMA_T::INTSTS: REQTOF0 Position          */
+#define PDMA_INTSTS_REQTOF0_Msk          (0x1ul << PDMA_INTSTS_REQTOF0_Pos)                /*!< PDMA_T::INTSTS: REQTOF0 Mask              */
+
+#define PDMA_INTSTS_REQTOF1_Pos          (9)                                               /*!< PDMA_T::INTSTS: REQTOF1 Position          */
+#define PDMA_INTSTS_REQTOF1_Msk          (0x1ul << PDMA_INTSTS_REQTOF1_Pos)                /*!< PDMA_T::INTSTS: REQTOF1 Mask              */
+
+#define PDMA_INTSTS_REQTOF2_Pos          (10)                                              /*!< PDMA_T::INTSTS: REQTOF2 Position          */
+#define PDMA_INTSTS_REQTOF2_Msk          (0x1ul << PDMA_INTSTS_REQTOF2_Pos)                /*!< PDMA_T::INTSTS: REQTOF2 Mask              */
+
+#define PDMA_INTSTS_REQTOF3_Pos          (11)                                              /*!< PDMA_T::INTSTS: REQTOF3 Position          */
+#define PDMA_INTSTS_REQTOF3_Msk          (0x1ul << PDMA_INTSTS_REQTOF3_Pos)                /*!< PDMA_T::INTSTS: REQTOF3 Mask              */
+
+#define PDMA_INTSTS_REQTOF4_Pos          (12)                                              /*!< PDMA_T::INTSTS: REQTOF4 Position          */
+#define PDMA_INTSTS_REQTOF4_Msk          (0x1ul << PDMA_INTSTS_REQTOF4_Pos)                /*!< PDMA_T::INTSTS: REQTOF4 Mask              */
+
+#define PDMA_INTSTS_REQTOF5_Pos          (13)                                              /*!< PDMA_T::INTSTS: REQTOF5 Position          */
+#define PDMA_INTSTS_REQTOF5_Msk          (0x1ul << PDMA_INTSTS_REQTOF5_Pos)                /*!< PDMA_T::INTSTS: REQTOF5 Mask              */
+
+#define PDMA_INTSTS_REQTOF6_Pos          (14)                                              /*!< PDMA_T::INTSTS: REQTOF6 Position          */
+#define PDMA_INTSTS_REQTOF6_Msk          (0x1ul << PDMA_INTSTS_REQTOF6_Pos)                /*!< PDMA_T::INTSTS: REQTOF6 Mask              */
+
+#define PDMA_INTSTS_REQTOF7_Pos          (15)                                              /*!< PDMA_T::INTSTS: REQTOF7 Position          */
+#define PDMA_INTSTS_REQTOF7_Msk          (0x1ul << PDMA_INTSTS_REQTOF7_Pos)                /*!< PDMA_T::INTSTS: REQTOF7 Mask              */
+
 #define PDMA_INTSTS_REQTOFn_Pos          (8)                                               /*!< PDMA_T::INTSTS: REQTOFn Position          */
 #define PDMA_INTSTS_REQTOFn_Msk          (0xfful << PDMA_INTSTS_REQTOFn_Pos)               /*!< PDMA_T::INTSTS: REQTOFn Mask              */
+
+#define PDMA_ABTSTS_ABTIF0_Pos           (0)                                               /*!< PDMA_T::ABTSTS: ABTIF0 Position           */
+#define PDMA_ABTSTS_ABTIF0_Msk           (0x1ul << PDMA_ABTSTS_ABTIF0_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF0 Mask               */
+
+#define PDMA_ABTSTS_ABTIF1_Pos           (1)                                               /*!< PDMA_T::ABTSTS: ABTIF1 Position           */
+#define PDMA_ABTSTS_ABTIF1_Msk           (0x1ul << PDMA_ABTSTS_ABTIF1_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF1 Mask               */
+
+#define PDMA_ABTSTS_ABTIF2_Pos           (2)                                               /*!< PDMA_T::ABTSTS: ABTIF2 Position           */
+#define PDMA_ABTSTS_ABTIF2_Msk           (0x1ul << PDMA_ABTSTS_ABTIF2_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF2 Mask               */
+
+#define PDMA_ABTSTS_ABTIF3_Pos           (3)                                               /*!< PDMA_T::ABTSTS: ABTIF3 Position           */
+#define PDMA_ABTSTS_ABTIF3_Msk           (0x1ul << PDMA_ABTSTS_ABTIF3_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF3 Mask               */
+
+#define PDMA_ABTSTS_ABTIF4_Pos           (4)                                               /*!< PDMA_T::ABTSTS: ABTIF4 Position           */
+#define PDMA_ABTSTS_ABTIF4_Msk           (0x1ul << PDMA_ABTSTS_ABTIF4_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF4 Mask               */
+
+#define PDMA_ABTSTS_ABTIF5_Pos           (5)                                               /*!< PDMA_T::ABTSTS: ABTIF5 Position           */
+#define PDMA_ABTSTS_ABTIF5_Msk           (0x1ul << PDMA_ABTSTS_ABTIF5_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF5 Mask               */
+
+#define PDMA_ABTSTS_ABTIF6_Pos           (6)                                               /*!< PDMA_T::ABTSTS: ABTIF6 Position           */
+#define PDMA_ABTSTS_ABTIF6_Msk           (0x1ul << PDMA_ABTSTS_ABTIF6_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF6 Mask               */
+
+#define PDMA_ABTSTS_ABTIF7_Pos           (7)                                               /*!< PDMA_T::ABTSTS: ABTIF7 Position           */
+#define PDMA_ABTSTS_ABTIF7_Msk           (0x1ul << PDMA_ABTSTS_ABTIF7_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF7 Mask               */
+
+#define PDMA_ABTSTS_ABTIF8_Pos           (8)                                               /*!< PDMA_T::ABTSTS: ABTIF8 Position           */
+#define PDMA_ABTSTS_ABTIF8_Msk           (0x1ul << PDMA_ABTSTS_ABTIF8_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF8 Mask               */
+
+#define PDMA_ABTSTS_ABTIF9_Pos           (9)                                               /*!< PDMA_T::ABTSTS: ABTIF9 Position           */
+#define PDMA_ABTSTS_ABTIF9_Msk           (0x1ul << PDMA_ABTSTS_ABTIF9_Pos)                 /*!< PDMA_T::ABTSTS: ABTIF9 Mask               */
+
+#define PDMA_ABTSTS_ABTIF10_Pos          (10)                                              /*!< PDMA_T::ABTSTS: ABTIF10 Position          */
+#define PDMA_ABTSTS_ABTIF10_Msk          (0x1ul << PDMA_ABTSTS_ABTIF10_Pos)                /*!< PDMA_T::ABTSTS: ABTIF10 Mask              */
+
+#define PDMA_ABTSTS_ABTIF11_Pos          (11)                                              /*!< PDMA_T::ABTSTS: ABTIF11 Position          */
+#define PDMA_ABTSTS_ABTIF11_Msk          (0x1ul << PDMA_ABTSTS_ABTIF11_Pos)                /*!< PDMA_T::ABTSTS: ABTIF11 Mask              */
 
 #define PDMA_ABTSTS_ABTIFn_Pos           (0)                                               /*!< PDMA_T::ABTSTS: ABTIFn Position           */
 #define PDMA_ABTSTS_ABTIFn_Msk           (0xffful << PDMA_ABTSTS_ABTIFn_Pos)               /*!< PDMA_T::ABTSTS: ABTIFn Mask               */
 
+#define PDMA_TDSTS_TDIF0_Pos             (0)                                               /*!< PDMA_T::TDSTS: TDIF0 Position             */
+#define PDMA_TDSTS_TDIF0_Msk             (0x1ul << PDMA_TDSTS_TDIF0_Pos)                   /*!< PDMA_T::TDSTS: TDIF0 Mask                 */
+
+#define PDMA_TDSTS_TDIF1_Pos             (1)                                               /*!< PDMA_T::TDSTS: TDIF1 Position             */
+#define PDMA_TDSTS_TDIF1_Msk             (0x1ul << PDMA_TDSTS_TDIF1_Pos)                   /*!< PDMA_T::TDSTS: TDIF1 Mask                 */
+
+#define PDMA_TDSTS_TDIF2_Pos             (2)                                               /*!< PDMA_T::TDSTS: TDIF2 Position             */
+#define PDMA_TDSTS_TDIF2_Msk             (0x1ul << PDMA_TDSTS_TDIF2_Pos)                   /*!< PDMA_T::TDSTS: TDIF2 Mask                 */
+
+#define PDMA_TDSTS_TDIF3_Pos             (3)                                               /*!< PDMA_T::TDSTS: TDIF3 Position             */
+#define PDMA_TDSTS_TDIF3_Msk             (0x1ul << PDMA_TDSTS_TDIF3_Pos)                   /*!< PDMA_T::TDSTS: TDIF3 Mask                 */
+
+#define PDMA_TDSTS_TDIF4_Pos             (4)                                               /*!< PDMA_T::TDSTS: TDIF4 Position             */
+#define PDMA_TDSTS_TDIF4_Msk             (0x1ul << PDMA_TDSTS_TDIF4_Pos)                   /*!< PDMA_T::TDSTS: TDIF4 Mask                 */
+
+#define PDMA_TDSTS_TDIF5_Pos             (5)                                               /*!< PDMA_T::TDSTS: TDIF5 Position             */
+#define PDMA_TDSTS_TDIF5_Msk             (0x1ul << PDMA_TDSTS_TDIF5_Pos)                   /*!< PDMA_T::TDSTS: TDIF5 Mask                 */
+
+#define PDMA_TDSTS_TDIF6_Pos             (6)                                               /*!< PDMA_T::TDSTS: TDIF6 Position             */
+#define PDMA_TDSTS_TDIF6_Msk             (0x1ul << PDMA_TDSTS_TDIF6_Pos)                   /*!< PDMA_T::TDSTS: TDIF6 Mask                 */
+
+#define PDMA_TDSTS_TDIF7_Pos             (7)                                               /*!< PDMA_T::TDSTS: TDIF7 Position             */
+#define PDMA_TDSTS_TDIF7_Msk             (0x1ul << PDMA_TDSTS_TDIF7_Pos)                   /*!< PDMA_T::TDSTS: TDIF7 Mask                 */
+
+#define PDMA_TDSTS_TDIF8_Pos             (8)                                               /*!< PDMA_T::TDSTS: TDIF8 Position             */
+#define PDMA_TDSTS_TDIF8_Msk             (0x1ul << PDMA_TDSTS_TDIF8_Pos)                   /*!< PDMA_T::TDSTS: TDIF8 Mask                 */
+
+#define PDMA_TDSTS_TDIF9_Pos             (9)                                               /*!< PDMA_T::TDSTS: TDIF9 Position             */
+#define PDMA_TDSTS_TDIF9_Msk             (0x1ul << PDMA_TDSTS_TDIF9_Pos)                   /*!< PDMA_T::TDSTS: TDIF9 Mask                 */
+
+#define PDMA_TDSTS_TDIF10_Pos            (10)                                              /*!< PDMA_T::TDSTS: TDIF10 Position            */
+#define PDMA_TDSTS_TDIF10_Msk            (0x1ul << PDMA_TDSTS_TDIF10_Pos)                  /*!< PDMA_T::TDSTS: TDIF10 Mask                */
+
+#define PDMA_TDSTS_TDIF11_Pos            (11)                                              /*!< PDMA_T::TDSTS: TDIF11 Position            */
+#define PDMA_TDSTS_TDIF11_Msk            (0x1ul << PDMA_TDSTS_TDIF11_Pos)                  /*!< PDMA_T::TDSTS: TDIF11 Mask                */
+
 #define PDMA_TDSTS_TDIFn_Pos             (0)                                               /*!< PDMA_T::TDSTS: TDIFn Position             */
 #define PDMA_TDSTS_TDIFn_Msk             (0xffful << PDMA_TDSTS_TDIFn_Pos)                 /*!< PDMA_T::TDSTS: TDIFn Mask                 */
+
+#define PDMA_SCATSTS_TEMPTYF0_Pos        (0)                                               /*!< PDMA_T::SCATSTS: TEMPTYF0 Position        */
+#define PDMA_SCATSTS_TEMPTYF0_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF0_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF0 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF1_Pos        (1)                                               /*!< PDMA_T::SCATSTS: TEMPTYF1 Position        */
+#define PDMA_SCATSTS_TEMPTYF1_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF1_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF1 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF2_Pos        (2)                                               /*!< PDMA_T::SCATSTS: TEMPTYF2 Position        */
+#define PDMA_SCATSTS_TEMPTYF2_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF2_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF2 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF3_Pos        (3)                                               /*!< PDMA_T::SCATSTS: TEMPTYF3 Position        */
+#define PDMA_SCATSTS_TEMPTYF3_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF3_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF3 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF4_Pos        (4)                                               /*!< PDMA_T::SCATSTS: TEMPTYF4 Position        */
+#define PDMA_SCATSTS_TEMPTYF4_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF4_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF4 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF5_Pos        (5)                                               /*!< PDMA_T::SCATSTS: TEMPTYF5 Position        */
+#define PDMA_SCATSTS_TEMPTYF5_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF5_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF5 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF6_Pos        (6)                                               /*!< PDMA_T::SCATSTS: TEMPTYF6 Position        */
+#define PDMA_SCATSTS_TEMPTYF6_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF6_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF6 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF7_Pos        (7)                                               /*!< PDMA_T::SCATSTS: TEMPTYF7 Position        */
+#define PDMA_SCATSTS_TEMPTYF7_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF7_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF7 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF8_Pos        (8)                                               /*!< PDMA_T::SCATSTS: TEMPTYF8 Position        */
+#define PDMA_SCATSTS_TEMPTYF8_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF8_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF8 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF9_Pos        (9)                                               /*!< PDMA_T::SCATSTS: TEMPTYF9 Position        */
+#define PDMA_SCATSTS_TEMPTYF9_Msk        (0x1ul << PDMA_SCATSTS_TEMPTYF9_Pos)              /*!< PDMA_T::SCATSTS: TEMPTYF9 Mask            */
+
+#define PDMA_SCATSTS_TEMPTYF10_Pos       (10)                                              /*!< PDMA_T::SCATSTS: TEMPTYF10 Position       */
+#define PDMA_SCATSTS_TEMPTYF10_Msk       (0x1ul << PDMA_SCATSTS_TEMPTYF10_Pos)             /*!< PDMA_T::SCATSTS: TEMPTYF10 Mask           */
+
+#define PDMA_SCATSTS_TEMPTYF11_Pos       (11)                                              /*!< PDMA_T::SCATSTS: TEMPTYF11 Position       */
+#define PDMA_SCATSTS_TEMPTYF11_Msk       (0x1ul << PDMA_SCATSTS_TEMPTYF11_Pos)             /*!< PDMA_T::SCATSTS: TEMPTYF11 Mask           */
 
 #define PDMA_SCATSTS_TEMPTYFn_Pos        (0)                                               /*!< PDMA_T::SCATSTS: TEMPTYFn Position        */
 #define PDMA_SCATSTS_TEMPTYFn_Msk        (0xffful << PDMA_SCATSTS_TEMPTYFn_Pos)            /*!< PDMA_T::SCATSTS: TEMPTYFn Mask            */
 
+#define PDMA_TACTSTS_TXACTF0_Pos         (0)                                               /*!< PDMA_T::TACTSTS: TXACTF0 Position         */
+#define PDMA_TACTSTS_TXACTF0_Msk         (0x1ul << PDMA_TACTSTS_TXACTF0_Pos)               /*!< PDMA_T::TACTSTS: TXACTF0 Mask             */
+
+#define PDMA_TACTSTS_TXACTF1_Pos         (1)                                               /*!< PDMA_T::TACTSTS: TXACTF1 Position         */
+#define PDMA_TACTSTS_TXACTF1_Msk         (0x1ul << PDMA_TACTSTS_TXACTF1_Pos)               /*!< PDMA_T::TACTSTS: TXACTF1 Mask             */
+
+#define PDMA_TACTSTS_TXACTF2_Pos         (2)                                               /*!< PDMA_T::TACTSTS: TXACTF2 Position         */
+#define PDMA_TACTSTS_TXACTF2_Msk         (0x1ul << PDMA_TACTSTS_TXACTF2_Pos)               /*!< PDMA_T::TACTSTS: TXACTF2 Mask             */
+
+#define PDMA_TACTSTS_TXACTF3_Pos         (3)                                               /*!< PDMA_T::TACTSTS: TXACTF3 Position         */
+#define PDMA_TACTSTS_TXACTF3_Msk         (0x1ul << PDMA_TACTSTS_TXACTF3_Pos)               /*!< PDMA_T::TACTSTS: TXACTF3 Mask             */
+
+#define PDMA_TACTSTS_TXACTF4_Pos         (4)                                               /*!< PDMA_T::TACTSTS: TXACTF4 Position         */
+#define PDMA_TACTSTS_TXACTF4_Msk         (0x1ul << PDMA_TACTSTS_TXACTF4_Pos)               /*!< PDMA_T::TACTSTS: TXACTF4 Mask             */
+
+#define PDMA_TACTSTS_TXACTF5_Pos         (5)                                               /*!< PDMA_T::TACTSTS: TXACTF5 Position         */
+#define PDMA_TACTSTS_TXACTF5_Msk         (0x1ul << PDMA_TACTSTS_TXACTF5_Pos)               /*!< PDMA_T::TACTSTS: TXACTF5 Mask             */
+
+#define PDMA_TACTSTS_TXACTF6_Pos         (6)                                               /*!< PDMA_T::TACTSTS: TXACTF6 Position         */
+#define PDMA_TACTSTS_TXACTF6_Msk         (0x1ul << PDMA_TACTSTS_TXACTF6_Pos)               /*!< PDMA_T::TACTSTS: TXACTF6 Mask             */
+
+#define PDMA_TACTSTS_TXACTF7_Pos         (7)                                               /*!< PDMA_T::TACTSTS: TXACTF7 Position         */
+#define PDMA_TACTSTS_TXACTF7_Msk         (0x1ul << PDMA_TACTSTS_TXACTF7_Pos)               /*!< PDMA_T::TACTSTS: TXACTF7 Mask             */
+
+#define PDMA_TACTSTS_TXACTF8_Pos         (8)                                               /*!< PDMA_T::TACTSTS: TXACTF8 Position         */
+#define PDMA_TACTSTS_TXACTF8_Msk         (0x1ul << PDMA_TACTSTS_TXACTF8_Pos)               /*!< PDMA_T::TACTSTS: TXACTF8 Mask             */
+
+#define PDMA_TACTSTS_TXACTF9_Pos         (9)                                               /*!< PDMA_T::TACTSTS: TXACTF9 Position         */
+#define PDMA_TACTSTS_TXACTF9_Msk         (0x1ul << PDMA_TACTSTS_TXACTF9_Pos)               /*!< PDMA_T::TACTSTS: TXACTF9 Mask             */
+
+#define PDMA_TACTSTS_TXACTF10_Pos        (10)                                              /*!< PDMA_T::TACTSTS: TXACTF10 Position        */
+#define PDMA_TACTSTS_TXACTF10_Msk        (0x1ul << PDMA_TACTSTS_TXACTF10_Pos)              /*!< PDMA_T::TACTSTS: TXACTF10 Mask            */
+
+#define PDMA_TACTSTS_TXACTF11_Pos        (11)                                              /*!< PDMA_T::TACTSTS: TXACTF11 Position        */
+#define PDMA_TACTSTS_TXACTF11_Msk        (0x1ul << PDMA_TACTSTS_TXACTF11_Pos)              /*!< PDMA_T::TACTSTS: TXACTF11 Mask            */
+
 #define PDMA_TACTSTS_TXACTFn_Pos         (0)                                               /*!< PDMA_T::TACTSTS: TXACTFn Position         */
 #define PDMA_TACTSTS_TXACTFn_Msk         (0xffful << PDMA_TACTSTS_TXACTFn_Pos)             /*!< PDMA_T::TACTSTS: TXACTFn Mask             */
 
+#define PDMA_TOUTEN_TOUTEN0_Pos          (0)                                               /*!< PDMA_T::TOUTEN: TOUTEN0 Position          */
+#define PDMA_TOUTEN_TOUTEN0_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN0_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN0 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN1_Pos          (1)                                               /*!< PDMA_T::TOUTEN: TOUTEN1 Position          */
+#define PDMA_TOUTEN_TOUTEN1_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN1_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN1 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN2_Pos          (2)                                               /*!< PDMA_T::TOUTEN: TOUTEN2 Position          */
+#define PDMA_TOUTEN_TOUTEN2_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN2_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN2 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN3_Pos          (3)                                               /*!< PDMA_T::TOUTEN: TOUTEN3 Position          */
+#define PDMA_TOUTEN_TOUTEN3_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN3_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN3 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN4_Pos          (4)                                               /*!< PDMA_T::TOUTEN: TOUTEN4 Position          */
+#define PDMA_TOUTEN_TOUTEN4_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN4_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN4 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN5_Pos          (5)                                               /*!< PDMA_T::TOUTEN: TOUTEN5 Position          */
+#define PDMA_TOUTEN_TOUTEN5_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN5_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN5 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN6_Pos          (6)                                               /*!< PDMA_T::TOUTEN: TOUTEN6 Position          */
+#define PDMA_TOUTEN_TOUTEN6_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN6_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN6 Mask              */
+
+#define PDMA_TOUTEN_TOUTEN7_Pos          (7)                                               /*!< PDMA_T::TOUTEN: TOUTEN7 Position          */
+#define PDMA_TOUTEN_TOUTEN7_Msk          (0x1ul << PDMA_TOUTEN_TOUTEN7_Pos)                /*!< PDMA_T::TOUTEN: TOUTEN7 Mask              */
+
 #define PDMA_TOUTEN_TOUTENn_Pos          (0)                                               /*!< PDMA_T::TOUTEN: TOUTENn Position          */
 #define PDMA_TOUTEN_TOUTENn_Msk          (0xfful << PDMA_TOUTEN_TOUTENn_Pos)               /*!< PDMA_T::TOUTEN: TOUTENn Mask              */
+
+#define PDMA_TOUTIEN_TOUTIEN0_Pos        (0)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN0 Position        */
+#define PDMA_TOUTIEN_TOUTIEN0_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN0_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN0 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN1_Pos        (1)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN1 Position        */
+#define PDMA_TOUTIEN_TOUTIEN1_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN1_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN1 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN2_Pos        (2)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN2 Position        */
+#define PDMA_TOUTIEN_TOUTIEN2_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN2_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN2 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN3_Pos        (3)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN3 Position        */
+#define PDMA_TOUTIEN_TOUTIEN3_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN3_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN3 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN4_Pos        (4)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN4 Position        */
+#define PDMA_TOUTIEN_TOUTIEN4_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN4_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN4 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN5_Pos        (5)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN5 Position        */
+#define PDMA_TOUTIEN_TOUTIEN5_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN5_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN5 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN6_Pos        (6)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN6 Position        */
+#define PDMA_TOUTIEN_TOUTIEN6_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN6_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN6 Mask            */
+
+#define PDMA_TOUTIEN_TOUTIEN7_Pos        (7)                                               /*!< PDMA_T::TOUTIEN: TOUTIEN7 Position        */
+#define PDMA_TOUTIEN_TOUTIEN7_Msk        (0x1ul << PDMA_TOUTIEN_TOUTIEN7_Pos)              /*!< PDMA_T::TOUTIEN: TOUTIEN7 Mask            */
 
 #define PDMA_TOUTIEN_TOUTIENn_Pos        (0)                                               /*!< PDMA_T::TOUTIEN: TOUTIENn Position        */
 #define PDMA_TOUTIEN_TOUTIENn_Msk        (0xfful << PDMA_TOUTIEN_TOUTIENn_Pos)             /*!< PDMA_T::TOUTIEN: TOUTIENn Mask            */

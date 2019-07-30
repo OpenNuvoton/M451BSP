@@ -49,7 +49,7 @@ DMA_DESC_T DMA_DESC[2];
  */
 void PDMA_IRQHandler(void)
 {
-    //if (PDMA->TDSTS == 0x20)
+    //if (PDMA->TDSTS == PDMA_TDSTS_TDIF5_Msk)
     {
         /* Reload PDMA description table configuration */
         DMA_DESC[s_u32TableIndex].ctl = g_u32DMAConfig;
@@ -62,9 +62,9 @@ void PDMA_IRQHandler(void)
             DMA_DESC[0].ctl &= ~PDMA_DSCT_CTL_OPMODE_Msk;
             DMA_DESC[1].ctl &= ~PDMA_DSCT_CTL_OPMODE_Msk;
             g_u32IsTestOver = 1;
-            PDMA_CLR_EMPTY_FLAG(PDMA_SCATSTS_TEMPTYFn_Msk);
+            PDMA_CLR_EMPTY_FLAG(PDMA_SCATSTS_TEMPTYF5_Msk);
         }
-        PDMA_CLR_TD_FLAG(PDMA_TDSTS_TDIFn_Msk);
+        PDMA_CLR_TD_FLAG(PDMA_TDSTS_TDIF5_Msk);
     }
 }
 

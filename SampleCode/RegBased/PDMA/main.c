@@ -35,23 +35,23 @@ uint32_t volatile u32IsTestOver = 0;
  *
  * @return      None
  *
- * @details     The DMA default IRQ, declared in startup_nuc400series.s.
+ * @details     The DMA default IRQ, declared in startup_M451series.s.
  */
 void PDMA_IRQHandler(void)
 {
     uint32_t status = PDMA_GET_INT_STATUS();
 
-    if(status & 0x1)    /* abort */
+    if(status & PDMA_INTSTS_ABTIF_Msk)    /* abort */
     {
-        if(PDMA_GET_ABORT_STS() & 0x4)
+        if(PDMA_GET_ABORT_STS() & PDMA_ABTSTS_ABTIF2_Msk)
             u32IsTestOver = 2;
-        PDMA_CLR_ABORT_FLAG(PDMA_ABTSTS_ABTIFn_Msk);
+        PDMA_CLR_ABORT_FLAG(PDMA_ABTSTS_ABTIF2_Msk);
     }
-    else if(status & 0x2)      /* done */
+    else if(status & PDMA_INTSTS_TDIF_Msk)      /* done */
     {
-        if(PDMA_GET_TD_STS() & 0x4)
+        if(PDMA_GET_TD_STS() & PDMA_TDSTS_TDIF2_Msk)
             u32IsTestOver = 1;
-        PDMA_CLR_TD_FLAG(PDMA_TDSTS_TDIFn_Msk);
+        PDMA_CLR_TD_FLAG(PDMA_TDSTS_TDIF2_Msk);
     }
     else
         printf("unknown interrupt !!\n");
