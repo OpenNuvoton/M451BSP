@@ -472,14 +472,15 @@ void HID_MSC_ClassRequest(void)
 #define SECTOR_SIZE      4096
 #define START_SECTOR     0x10
 
-typedef __packed struct {
+typedef struct
+{
     uint8_t u8Cmd;
     uint8_t u8Size;
     uint32_t u32Arg1;
     uint32_t u32Arg2;
     uint32_t u32Signature;
     uint32_t u32Checksum;
-}CMD_T;
+} __attribute__((packed)) CMD_T;
 
 CMD_T gCmd;    
 
