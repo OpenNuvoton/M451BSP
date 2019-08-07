@@ -129,6 +129,9 @@ void SYS_Init(void)
     /* Waiting for HXT clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
 
+    /* Select HCLK clock divider as 2 */
+    CLK->CLKDIV0 = (CLK->CLKDIV0 & ~CLK_CLKDIV0_HCLKDIV_Msk) | CLK_CLKDIV0_HCLK(2);
+
     /* Enable PLL and Set PLL frequency */
     CLK->PLLCTL = PLLCTL_SETTING;
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
@@ -140,8 +143,6 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* PWM clock frequency configuration                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Select HCLK clock divider as 2 */
-    CLK->CLKDIV0 = (CLK->CLKDIV0 & ~CLK_CLKDIV0_HCLKDIV_Msk) | CLK_CLKDIV0_HCLK(2);
 
     /* PWM clock frequency can be set equal or double to HCLK by choosing case 1 or case 2 */
     /* case 1.PWM clock frequency is set equal to HCLK: select PWM module clock source as PCLK */
