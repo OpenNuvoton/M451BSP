@@ -1,5 +1,5 @@
 /**************************************************************************//**
- * @file     retarget.c
+* @file     retarget.c
  * @version  V3.00
  * $Revision: 14 $
  * $Date: 15/11/02 9:02a $
@@ -222,7 +222,7 @@ void HardFault_Handler (void)
     while(1);
 }
 
-# else
+# else // __ICCARM__
 
 /**
  * @brief    This HardFault handler is implemented to support semihost
@@ -304,13 +304,15 @@ SH_End
     MOVS   R0, #1        //; Set return value to 1
     BX     lr            //; Return
 }
-#endif
+#endif //__ICCARM__
 
-#else
+#else //DEBUG_ENABLE_SEMIHOST
 
-//# if defined(__ICCARM__)
+
 # if defined ( __GNUC__ ) && !(__CC_ARM) && !(__ICCARM__) 
 	
+# elif defined(__ICCARM__)
+
 void Get_LR_and_Branch(void)
 {
     asm("MOV     R1, LR                  \n" //; LR current value
@@ -348,7 +350,7 @@ void HardFault_Handler(void)
     while(1);
 }
 
-# else
+# else //defined ( __GNUC__ ) && !(__CC_ARM) && !(__ICCARM__)
 
 /**
  * @brief    This HardFault handler is implemented to show r0, r1, r2, r3, r12, lr, pc, psr
@@ -376,9 +378,9 @@ Get_LR_and_Branch
     BX      R2
 }
 
-#endif
+#endif //defined ( __GNUC__ ) && !(__CC_ARM) && !(__ICCARM__)
 
-#endif
+#endif //DEBUG_ENABLE_SEMIHOST
 
 
 /**
