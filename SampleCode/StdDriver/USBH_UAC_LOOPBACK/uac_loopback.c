@@ -30,7 +30,7 @@ volatile int8_t   g_bMicIsMono = 0;
 #pragma data_alignment=32
 uint8_t g_u8PcmBuf[PCM_BUF_LEN];
 #else
- uint8_t g_u8PcmBuf[PCM_BUF_LEN] __attribute__ ((__align(32)));
+uint8_t g_u8PcmBuf[PCM_BUF_LEN] __attribute__((aligned(32)));
 #endif
 volatile uint32_t g_UacRecPos = 0;          /* UAC record pointer of PCM buffer       */
 volatile uint32_t g_UacPlayPos = 0;         /* UAC playback pointer of PCM buffer     */
@@ -40,13 +40,13 @@ volatile uint32_t g_UacPlayCnt = 0;         /* Counter UAC playback data        
 
 void ResetAudioLoopBack(void)
 {
-	memset(g_u8PcmBuf, 0, sizeof(g_u8PcmBuf));
-	g_UacRecPos = 0;
-	g_UacPlayPos = 0;
-	g_UacRecCnt = 0;
-	g_UacPlayCnt = 0;
-	g_u8RecEn = 0;
-	g_u8PlayEn = 0;
+    memset(g_u8PcmBuf, 0, sizeof(g_u8PcmBuf));
+    g_UacRecPos = 0;
+    g_UacPlayPos = 0;
+    g_UacRecCnt = 0;
+    g_UacPlayCnt = 0;
+    g_u8RecEn = 0;
+    g_u8PlayEn = 0;
 }
 
 
@@ -60,54 +60,61 @@ void ResetAudioLoopBack(void)
  */
 int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
 {
-	int        i, cp_len;
-	uint16_t   *dptr, *bptr;
-	
-	if (g_UacRecPos + len >= PCM_BUF_LEN) {
-		cp_len = PCM_BUF_LEN - g_UacRecPos;
-	}
-	else {
-		cp_len = len;
-	}
-	
-	if (g_bMicIsMono) {
-		dptr = (uint16_t *)data;
-		bptr = (uint16_t *)&g_u8PcmBuf[g_UacRecPos];
-		for (i = 0; i < cp_len; i+=2) {
-			*bptr++ = *dptr;
-			*bptr++ = *dptr++;
-		}
-	}
-	else {
-		memcpy(&g_u8PcmBuf[g_UacRecPos], data, cp_len);
-	}
-	
-	g_UacRecPos = (g_UacRecPos + cp_len) % PCM_BUF_LEN;
-	g_UacRecCnt += cp_len;
-	len -= cp_len;
-	
-	if (len) 
-	{
-		if (g_bMicIsMono) 
-		{
-			dptr = (uint16_t *)&data[cp_len];
-			bptr = (uint16_t *)g_u8PcmBuf;
-			for (i = 0; i < len; i+=2) {
-				*bptr++ = *dptr;
-				*bptr++ = *dptr++;
-			}
-		}
-		else {
-    		memcpy(&g_u8PcmBuf[0], &data[cp_len], len);
-    	}
-    	g_UacRecPos = len;
-    	g_UacRecCnt += len;
+    int        i, cp_len;
+    uint16_t   *dptr, *bptr;
+
+    if(g_UacRecPos + len >= PCM_BUF_LEN)
+    {
+        cp_len = PCM_BUF_LEN - g_UacRecPos;
+    }
+    else
+    {
+        cp_len = len;
     }
 
-    if ((g_u8PlayEn == 0) && (g_UacRecPos >= PCM_BUF_LEN/2))
+    if(g_bMicIsMono)
     {
-       	g_UacPlayPos = g_UacPlayCnt = 0;
-       	g_u8PlayEn = 1;
+        dptr = (uint16_t *)data;
+        bptr = (uint16_t *)&g_u8PcmBuf[g_UacRecPos];
+        for(i = 0; i < cp_len; i += 2)
+        {
+            *bptr++ = *dptr;
+            *bptr++ = *dptr++;
+        }
+    }
+    else
+    {
+        memcpy(&g_u8PcmBuf[g_UacRecPos], data, cp_len);
+    }
+
+    g_UacRecPos = (g_UacRecPos + cp_len) % PCM_BUF_LEN;
+    g_UacRecCnt += cp_len;
+    len -= cp_len;
+
+    if(len)
+    {
+        if(g_bMicIsMono)
+        {
+            dptr = (uint16_t *)&data[cp_len];
+            bptr = (uint16_t *)g_u8PcmBuf;
+            for(i = 0; i < len; i += 2)
+            {
+                *bptr++ = *dptr;
+                *bptr++ = *dptr++;
+            }
+        }
+        else
+        {
+            memcpy(&g_u8PcmBuf[0], &data[cp_len], len);
+        }
+        g_UacRecPos = len;
+        g_UacRecCnt += len;
+    }
+
+    if((g_u8PlayEn == 0) && (g_UacRecPos >= PCM_BUF_LEN / 2))
+    {
+        g_UacPlayPos = g_UacPlayCnt = 0;
+        g_u8PlayEn = 1;
     }
 
     return 0;
@@ -125,29 +132,32 @@ int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
  */
 int audio_out_callback(UAC_DEV_T *dev, uint8_t *data, int len)
 {
-	int  cp_len;
+    int  cp_len;
 
-	if (!g_u8PlayEn) {
-		memset(data, 0, 192);
-		return 192;
-	}
-	
-	if (PCM_BUF_LEN - g_UacPlayPos < 192) {
-		cp_len = PCM_BUF_LEN - g_UacPlayPos;
-	}
-	else {
-	    cp_len = 192;   
-	}
-	
-	memcpy(data, &g_u8PcmBuf[g_UacPlayPos], cp_len);
-	g_UacPlayPos = (g_UacPlayPos + cp_len) % PCM_BUF_LEN;
-
-    if (cp_len < 192)	
+    if(!g_u8PlayEn)
     {
-    	memcpy(&data[cp_len], &g_u8PcmBuf[0], 192-cp_len);
-    	g_UacPlayPos = 192-cp_len;
-	}
-	g_UacPlayCnt += 192;
+        memset(data, 0, 192);
+        return 192;
+    }
+
+    if(PCM_BUF_LEN - g_UacPlayPos < 192)
+    {
+        cp_len = PCM_BUF_LEN - g_UacPlayPos;
+    }
+    else
+    {
+        cp_len = 192;
+    }
+
+    memcpy(data, &g_u8PcmBuf[g_UacPlayPos], cp_len);
+    g_UacPlayPos = (g_UacPlayPos + cp_len) % PCM_BUF_LEN;
+
+    if(cp_len < 192)
+    {
+        memcpy(&data[cp_len], &g_u8PcmBuf[0], 192 - cp_len);
+        g_UacPlayPos = 192 - cp_len;
+    }
+    g_UacPlayCnt += 192;
 
     return 192;   // for 48000 stero Hz
 }

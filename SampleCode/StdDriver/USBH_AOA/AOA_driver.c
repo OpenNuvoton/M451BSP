@@ -25,7 +25,7 @@ static AOADEV_T  g_aoa_dev;
 static uint8_t aoa_buff[AOA_MAX_STR_LEN];
 #pragma data_alignment=4
 #else
-static  uint8_t aoa_buff[AOA_MAX_STR_LEN]  __attribute__ ((__align(16)));
+static  uint8_t aoa_buff[AOA_MAX_STR_LEN]  __attribute__((aligned(16)));
 #endif
 
 static volatile int  bulk_out_done;
@@ -33,15 +33,15 @@ static volatile int  bulk_out_done;
 
 static void  bulk_in_irq(URB_T *urb)
 {
-	USB_DEV_T 	*dev = urb->dev;
-	int  		pipe;
-	
-    if (!g_aoa_dev.connected)
-    	return;
-    	
-    if (g_aoa_dev.func_read != NULL)
-    	g_aoa_dev.func_read(urb->transfer_buffer, urb->actual_length);
-    	
+    USB_DEV_T   *dev = urb->dev;
+    int         pipe;
+
+    if(!g_aoa_dev.connected)
+        return;
+
+    if(g_aoa_dev.func_read != NULL)
+        g_aoa_dev.func_read(urb->transfer_buffer, urb->actual_length);
+
     /*------------------------------------------*/
     /*  Re-submit bulk in transfer              */
     /*------------------------------------------*/
@@ -49,9 +49,9 @@ static void  bulk_in_irq(URB_T *urb)
 
     FILL_BULK_URB(urb, dev, pipe, g_aoa_dev.buff_in, AOA_BULK_IN_BUFF_SIZE, bulk_in_irq, NULL);
 
-    if (USBH_SubmitUrb(urb) < 0)
-	{
-		AOA_DBGMSG("Failed to submit Bulk in transfer!\n");
+    if(USBH_SubmitUrb(urb) < 0)
+    {
+        AOA_DBGMSG("Failed to submit Bulk in transfer!\n");
     }
 }
 
@@ -70,62 +70,62 @@ static int  aoa_probe(USB_DEV_T *dev, USB_IF_DESC_T *ifd, const USB_DEV_ID_T *id
 
     AOA_DBGMSG("aoa_probe - VID=0x%x, PID=0x%x\n", dev->descriptor.idVendor, dev->descriptor.idProduct);
 
-    if (g_aoa_dev.connected && g_aoa_dev.is_aoa)
+    if(g_aoa_dev.connected && g_aoa_dev.is_aoa)
     {
         AOA_DBGMSG("There's an AOA device connected. The other AOA device will be ignored.\n");
         return -1;
     }
-    
+
     g_aoa_dev.dev = dev;
     g_aoa_dev.vid = dev->descriptor.idVendor;
     g_aoa_dev.pid = dev->descriptor.idProduct;
-    
-    g_aoa_dev.connected = 1;
-    
-    if ((g_aoa_dev.vid != VID_GOOGLE) ||
-        ((g_aoa_dev.pid != PID_AOAv1) && (g_aoa_dev.pid != PID_AOAv1_ADB) &&
-         (g_aoa_dev.pid != PID_AOAv2_AUDIO) && (g_aoa_dev.pid != PID_AOAv2_AUDIO_ADB) &&
-         (g_aoa_dev.pid != PID_AOAv2_AOA_AUDIO) && (g_aoa_dev.pid != PID_AOAv2_AOA_AUDIO_ADB)))
-    {
-    	// Not an AOA device or not in AOA mode.
-    	g_aoa_dev.is_aoa = 0;
-    	return 0;
-	}
 
-	g_aoa_dev.is_aoa = 1;
+    g_aoa_dev.connected = 1;
+
+    if((g_aoa_dev.vid != VID_GOOGLE) ||
+            ((g_aoa_dev.pid != PID_AOAv1) && (g_aoa_dev.pid != PID_AOAv1_ADB) &&
+             (g_aoa_dev.pid != PID_AOAv2_AUDIO) && (g_aoa_dev.pid != PID_AOAv2_AUDIO_ADB) &&
+             (g_aoa_dev.pid != PID_AOAv2_AOA_AUDIO) && (g_aoa_dev.pid != PID_AOAv2_AOA_AUDIO_ADB)))
+    {
+        // Not an AOA device or not in AOA mode.
+        g_aoa_dev.is_aoa = 0;
+        return 0;
+    }
+
+    g_aoa_dev.is_aoa = 1;
 
     ifnum = ifd->bInterfaceNumber;
     g_aoa_dev.ifnum = ifnum;
 
-    for (i = 0; i < dev->ep_list_cnt; i++) 
+    for(i = 0; i < dev->ep_list_cnt; i++)
     {
-        if (dev->ep_list[i].ifnum != ifnum)
+        if(dev->ep_list[i].ifnum != ifnum)
             continue;
 
-        if ((dev->ep_list[i].bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) == USB_ENDPOINT_XFER_BULK)
+        if((dev->ep_list[i].bmAttributes & USB_ENDPOINT_XFERTYPE_MASK) == USB_ENDPOINT_XFER_BULK)
         {
-           	if (dev->ep_list[i].bEndpointAddress & USB_ENDPOINT_DIR_MASK)
-               	g_aoa_dev.bulk_in = &dev->ep_list[i];
-           	else
-               	g_aoa_dev.bulk_out = &dev->ep_list[i];
+            if(dev->ep_list[i].bEndpointAddress & USB_ENDPOINT_DIR_MASK)
+                g_aoa_dev.bulk_in = &dev->ep_list[i];
+            else
+                g_aoa_dev.bulk_out = &dev->ep_list[i];
         }
     }
 
-    if (!g_aoa_dev.bulk_in || !g_aoa_dev.bulk_out) 
+    if(!g_aoa_dev.bulk_in || !g_aoa_dev.bulk_out)
     {
         AOA_DBGMSG("Expected bulk endpoints not found!\n");
         g_aoa_dev.connected = 0;
         return -1;
     }
 
-	/*----------------------------------------*/
-	/*  Start bulk in transfer                */
-	/*----------------------------------------*/
+    /*----------------------------------------*/
+    /*  Start bulk in transfer                */
+    /*----------------------------------------*/
 
-	AOA_DBGMSG("Start AOA bulk in transfer.\n");
-	
+    AOA_DBGMSG("Start AOA bulk in transfer.\n");
+
     urb = USBH_AllocUrb();
-    if (urb == NULL) 
+    if(urb == NULL)
     {
         AOA_DBGMSG("No free URB!\n");
         g_aoa_dev.connected = 0;
@@ -137,10 +137,10 @@ static int  aoa_probe(USB_DEV_T *dev, USB_IF_DESC_T *ifd, const USB_DEV_ID_T *id
 
     FILL_BULK_URB(urb, dev, pipe, g_aoa_dev.buff_in, AOA_BULK_IN_BUFF_SIZE, bulk_in_irq, NULL);
 
-    if (USBH_SubmitUrb(urb) < 0)
-	{
-		AOA_DBGMSG("Failed to submit Bulk in transfer!\n");
-		g_aoa_dev.connected = 0;
+    if(USBH_SubmitUrb(urb) < 0)
+    {
+        AOA_DBGMSG("Failed to submit Bulk in transfer!\n");
+        g_aoa_dev.connected = 0;
         return -1;
     }
 
@@ -150,7 +150,7 @@ static int  aoa_probe(USB_DEV_T *dev, USB_IF_DESC_T *ifd, const USB_DEV_ID_T *id
 
 static void  aoa_disconnect(USB_DEV_T *dev)
 {
-    if (g_aoa_dev.urb_bulk_in) 
+    if(g_aoa_dev.urb_bulk_in)
     {
         USBH_UnlinkUrb(g_aoa_dev.urb_bulk_in);
         USBH_FreeUrb(g_aoa_dev.urb_bulk_in);
@@ -162,25 +162,27 @@ static void  aoa_disconnect(USB_DEV_T *dev)
 }
 
 
-static const USB_DEV_ID_T  aoa_id_table[] = {
-	{ 0, VID_GOOGLE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv1_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AUDIO, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AUDIO_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AOA_AUDIO, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
-//	{ USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AOA_AUDIO_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+static const USB_DEV_ID_T  aoa_id_table[] =
+{
+    { 0, VID_GOOGLE, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv1_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AUDIO, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AUDIO_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AOA_AUDIO, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+//  { USB_DEVICE_ID_MATCH_PRODUCT, 0, PID_AOAv2_AOA_AUDIO_ADB, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
 };
 
 
-static USB_DRIVER_T  aoa_driver = {
+static USB_DRIVER_T  aoa_driver =
+{
     "AOA driver",
     aoa_probe,
     aoa_disconnect,
     aoa_id_table,
     NULL,                       /* suspend */
     NULL,                       /* resume */
-    {NULL,NULL}                 /* driver_list */
+    {NULL, NULL}                /* driver_list */
 };
 
 
@@ -212,14 +214,15 @@ int AOA_WriteData(uint8_t *buff, int len)
     int        pipe;
     int        timeout, ret;
 
-	if (!g_aoa_dev.connected || !g_aoa_dev.is_aoa)
+    if(!g_aoa_dev.connected || !g_aoa_dev.is_aoa)
         return -1;
 
     dev = g_aoa_dev.dev;
     ep_info = g_aoa_dev.bulk_out;
 
     urb = USBH_AllocUrb();
-    if (urb == NULL) {
+    if(urb == NULL)
+    {
         AOA_DBGMSG("No free URB!\n");
         return -1;
     }
@@ -231,14 +234,16 @@ int AOA_WriteData(uint8_t *buff, int len)
     bulk_out_done = 0;
 
     ret = USBH_SubmitUrb(urb);
-    if (ret < 0) {
+    if(ret < 0)
+    {
         AOA_DBGMSG("Failed to submit Bulk out transfer!\n");
         goto err_out;
     }
 
-    for (timeout = 0x1000000 ; (timeout > 0) && (bulk_out_done == 0) ; timeout--);
+    for(timeout = 0x1000000 ; (timeout > 0) && (bulk_out_done == 0) ; timeout--);
 
-    if (timeout <= 0) {
+    if(timeout <= 0)
+    {
         USBH_UnlinkUrb(urb);
         AOA_DBGMSG("Bulk out xfer time-out!\n");
         goto err_out;
@@ -254,7 +259,7 @@ err_out:
 
 
 /**
- *  @brief  Check if an AOA device is connected. If a device is connected and not presented as 
+ *  @brief  Check if an AOA device is connected. If a device is connected and not presented as
  *          an AOA device, this function will try to start it in AOA mode.
  *  @retval   0           AOA device not found.
  *  @retval   Otherwise   An AOA device is found and connected.
@@ -263,81 +268,81 @@ int  AOA_IsConnected(void)
 {
     USB_DEV_T   *dev;
 
-	dev = g_aoa_dev.dev;
-	
-	if ((g_aoa_dev.connected) && (g_aoa_dev.is_aoa == 0))
-	{
-		/*
-		 *  A device connected, but is not in AOA mode.
-		 *  Attempt to start in accessory mode
-		 */
-		 
-		/*
-		 *  [1] Get Protocol
-		 */
-    	if (USBH_SendCtrlMsg(dev, usb_rcvctrlpipe(dev, 0),
-                             AOA_REQ_GET_PROTOCOL, USB_DIR_IN | USB_TYPE_VENDOR,
-                             0, 0, aoa_buff, 16, HZ * 10000) < 0)
+    dev = g_aoa_dev.dev;
+
+    if((g_aoa_dev.connected) && (g_aoa_dev.is_aoa == 0))
+    {
+        /*
+         *  A device connected, but is not in AOA mode.
+         *  Attempt to start in accessory mode
+         */
+
+        /*
+         *  [1] Get Protocol
+         */
+        if(USBH_SendCtrlMsg(dev, usb_rcvctrlpipe(dev, 0),
+                            AOA_REQ_GET_PROTOCOL, USB_DIR_IN | USB_TYPE_VENDOR,
+                            0, 0, aoa_buff, 16, HZ * 10000) < 0)
         {
-        	g_aoa_dev.connected = 0;
-        	return 0;
+            g_aoa_dev.connected = 0;
+            return 0;
         }
-        
-        if (aoa_buff[0] >= 1)
+
+        if(aoa_buff[0] >= 1)
         {
-        	AOA_DBGMSG("Get protocl code is 0x%x.\n", aoa_buff[0]);
-    	}
-    	else
-    	{
-    		/* Not support AOA */
-        	g_aoa_dev.connected = 0;
-        	return 0;
-    	}
+            AOA_DBGMSG("Get protocl code is 0x%x.\n", aoa_buff[0]);
+        }
+        else
+        {
+            /* Not support AOA */
+            g_aoa_dev.connected = 0;
+            return 0;
+        }
 
-		/*
-		 *  [2] Send identifying string information to the device
-		 */
-		strcpy((char *)aoa_buff, AOA_STR0_MANUFACTURER);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 0, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
-		
-		strcpy((char *)aoa_buff, AOA_STR1_MODEL);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 1, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+        /*
+         *  [2] Send identifying string information to the device
+         */
+        strcpy((char *)aoa_buff, AOA_STR0_MANUFACTURER);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 0, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
 
-		strcpy((char *)aoa_buff, AOA_STR2_DESCRIPTION);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 2, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+        strcpy((char *)aoa_buff, AOA_STR1_MODEL);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 1, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
 
-		strcpy((char *)aoa_buff, AOA_STR3_VERSION);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 3, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+        strcpy((char *)aoa_buff, AOA_STR2_DESCRIPTION);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 2, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
 
-		strcpy((char *)aoa_buff, AOA_STR4_URI);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 4, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+        strcpy((char *)aoa_buff, AOA_STR3_VERSION);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 3, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
 
-		strcpy((char *)aoa_buff, AOA_STR5_SERIAL_NUM);
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 5, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
-                            
-		/*
-		 *  [3] Send request to start in accessory mode
-		 */
-    	USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
-                            AOA_REQ_START, USB_DIR_OUT | USB_TYPE_VENDOR,
-                            0, 0, NULL, 0, HZ * 10000);
-        
+        strcpy((char *)aoa_buff, AOA_STR4_URI);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 4, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+
+        strcpy((char *)aoa_buff, AOA_STR5_SERIAL_NUM);
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_SEND_STRING, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 5, (void *)aoa_buff, strlen((char *)aoa_buff), HZ * 10000);
+
+        /*
+         *  [3] Send request to start in accessory mode
+         */
+        USBH_SendCtrlMsg(dev, usb_sndctrlpipe(dev, 0),
+                         AOA_REQ_START, USB_DIR_OUT | USB_TYPE_VENDOR,
+                         0, 0, NULL, 0, HZ * 10000);
+
         g_aoa_dev.connected = 0;
         return 0;
-	}
-	
+    }
+
     return g_aoa_dev.connected;
 }
 

@@ -107,6 +107,7 @@
 /*-----------------------------------------------------------------------------------
  *  CDC Class-specific interface descriptor header
  */
+#ifdef __ICCARM__
 typedef struct cdc_if_header
 {
     __packed uint8_t  bLength;
@@ -114,17 +115,36 @@ typedef struct cdc_if_header
     __packed uint8_t  bDescriptorSubtype;
     __packed uint8_t  payload[16];
 } CDC_IF_HDR_T;
+#else
+typedef struct __attribute__((__packed__)) cdc_if_header
+{
+    uint8_t  bLength;
+    uint8_t  bDescriptorType;
+    uint8_t  bDescriptorSubtype;
+    uint8_t  payload[16];
+} CDC_IF_HDR_T;
+#endif
 
 /*
  *  Line Coding
  */
+#ifdef __ICCARM__
 typedef struct line_coding_t
 {
 	__packed uint32_t   baud;          /* Baud Rate                                               */
 	__packed uint8_t    stop_bits;     /* 0 - 1 Stop bit;  1 - 1.5 Stop bits;  2 - 2 Stop bits    */
 	__packed uint8_t    parity;        /* 0 - None; 1 - Odd; 2 - Even; 3 - Mark; 4 - Space        */
 	__packed uint8_t    data_bits;     /* Data bits (5, 6, 7, 8 or 16)                            */
-}  LINE_CODING_T; 
+}  LINE_CODING_T;
+#else
+typedef struct __attribute__((__packed__)) line_coding_t
+{
+	uint32_t   baud;          /* Baud Rate                                               */
+	uint8_t    stop_bits;     /* 0 - 1 Stop bit;  1 - 1.5 Stop bits;  2 - 2 Stop bits    */
+	uint8_t    parity;        /* 0 - None; 1 - Odd; 2 - Even; 3 - Mark; 4 - Space        */
+	uint8_t    data_bits;     /* Data bits (5, 6, 7, 8 or 16)                            */
+}  LINE_CODING_T;
+#endif
 
 struct cdc_dev_t;
 typedef void (CDC_CB_FUNC)(struct cdc_dev_t *cdev, uint8_t *rdata, int data_len); 

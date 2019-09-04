@@ -37,7 +37,7 @@ volatile int8_t   g_bMicIsMono = 0;
 #pragma data_alignment=32
 uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN];
 #else
-uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN] __attribute__ ((__align(32)));
+uint8_t g_u8UacOutBuf[UAC_OUT_BUF_LEN] __attribute__((aligned(32)));
 #endif
 volatile uint32_t g_UacOutBuff_8822RecPos = 0;   /* NAU8822 record pointer          */
 volatile uint32_t g_UacOutBuff_UacPlayPos = 0;   /* UAC play data pointer           */
@@ -49,7 +49,7 @@ volatile uint32_t g_UacOutBuff_UacPlayCnt = 0;   /* UAC play pcm counter        
 #pragma data_alignment=32
 uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN];
 #else
-uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN] __attribute__ ((__align(32)));
+uint8_t g_u8UacInBuf[UAC_IN_BUF_LEN] __attribute__((aligned(32)));
 #endif
 volatile uint32_t g_UacInBuff_8822PlayPos = 0;   /* NAU8822 play pointer            */
 volatile uint32_t g_UacInBuff_UacRecPos = 0;     /* UAC data recieving pointer      */
@@ -59,17 +59,17 @@ volatile uint32_t g_UacInBuff_UacRecCnt = 0;     /* UAC data recieving pcm count
 
 void ResetAudioBuffer(void)
 {
-	memset(g_u8UacOutBuf, 0, sizeof(g_u8UacOutBuf));
-	g_UacOutBuff_8822RecPos = 0;
-	g_UacOutBuff_UacPlayPos = 0;
-	g_UacOutBuff_8822RecCnt = 0;
-	g_UacOutBuff_UacPlayCnt = 0;
+    memset(g_u8UacOutBuf, 0, sizeof(g_u8UacOutBuf));
+    g_UacOutBuff_8822RecPos = 0;
+    g_UacOutBuff_UacPlayPos = 0;
+    g_UacOutBuff_8822RecCnt = 0;
+    g_UacOutBuff_UacPlayCnt = 0;
 
-	memset(g_u8UacInBuf, 0, sizeof(g_u8UacInBuf));
-	g_UacInBuff_8822PlayPos = 0;
-	g_UacInBuff_UacRecPos = 0;
-	g_UacInBuff_8822PlayCnt = 0;
-	g_UacInBuff_UacRecCnt = 0;
+    memset(g_u8UacInBuf, 0, sizeof(g_u8UacInBuf));
+    g_UacInBuff_8822PlayPos = 0;
+    g_UacInBuff_UacRecPos = 0;
+    g_UacInBuff_8822PlayCnt = 0;
+    g_UacInBuff_UacRecCnt = 0;
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -104,7 +104,7 @@ void I2C_WriteWAU8822(uint8_t u8addr, uint16_t u16data)
 void WAU8822_Setup(void)
 {
     ResetAudioBuffer();
-    
+
     I2C_WriteWAU8822(0,  0x000);   /* Reset all registers */
     CLK_SysTickDelay(10000);
 
@@ -154,71 +154,77 @@ void WAU8822_Setup(void)
 
 int WAU8822_SetSamplingRate(int srate)
 {
-	if (srate == 48000) {
-    	I2C_WriteWAU8822(6,  0x14D);   /* Divide by 2, 48K */
-    	I2C_WriteWAU8822(7,  0x000);   /* 48K for internal filter coefficients */
+    if(srate == 48000)
+    {
+        I2C_WriteWAU8822(6,  0x14D);   /* Divide by 2, 48K */
+        I2C_WriteWAU8822(7,  0x000);   /* 48K for internal filter coefficients */
     }
-    else if (srate == 32000) {
-    	I2C_WriteWAU8822(6,  0x16D);   /* Divide by 3, 32K */
-    	I2C_WriteWAU8822(7,  0x002);   /* 32K for internal filter coefficients */
+    else if(srate == 32000)
+    {
+        I2C_WriteWAU8822(6,  0x16D);   /* Divide by 3, 32K */
+        I2C_WriteWAU8822(7,  0x002);   /* 32K for internal filter coefficients */
     }
-    else if (srate == 16000) {
-    	I2C_WriteWAU8822(6,  0x1AD);   /* Divide by 6, 16K */
-    	I2C_WriteWAU8822(7,  0x006);   /* 16K for internal filter coefficients */
+    else if(srate == 16000)
+    {
+        I2C_WriteWAU8822(6,  0x1AD);   /* Divide by 6, 16K */
+        I2C_WriteWAU8822(7,  0x006);   /* 16K for internal filter coefficients */
     }
-    else if (srate == 8000) {
-    	I2C_WriteWAU8822(6,  0x1ED);   /* Divide by 12, 8K */
-    	I2C_WriteWAU8822(7,  0x00A);   /* 8K for internal filter coefficients */
+    else if(srate == 8000)
+    {
+        I2C_WriteWAU8822(6,  0x1ED);   /* Divide by 12, 8K */
+        I2C_WriteWAU8822(7,  0x00A);   /* 8K for internal filter coefficients */
     }
-    else {
-    	printf("Not pre-defined sampling rate %d!\n", srate);
-    	return -1;
-	}
-	return 0;
+    else
+    {
+        printf("Not pre-defined sampling rate %d!\n", srate);
+        return -1;
+    }
+    return 0;
 }
 
 void SPI1_IRQHandler(void)
 {
-    if (SPI1->I2SSTS & SPI_I2SSTS_TXTHIF_Msk)
+    if(SPI1->I2SSTS & SPI_I2SSTS_TXTHIF_Msk)
     {
-    	if (g_u8PlayEn)
-        	I2S_WRITE_TX_FIFO(SPI1, inpw(&g_u8UacInBuf[g_UacInBuff_8822PlayPos]));
+        if(g_u8PlayEn)
+            I2S_WRITE_TX_FIFO(SPI1, inpw(&g_u8UacInBuf[g_UacInBuff_8822PlayPos]));
         else
-        	I2S_WRITE_TX_FIFO(SPI1, 0);    /* send mute PCM data to NAU8822 */
+            I2S_WRITE_TX_FIFO(SPI1, 0);    /* send mute PCM data to NAU8822 */
 
-        if (!g_bMicIsMono) {        /* MIC in mono, just duplicate channel to be stereo */
-        	g_UacInBuff_8822PlayPos = (g_UacInBuff_8822PlayPos+4) % UAC_IN_BUF_LEN;
+        if(!g_bMicIsMono)           /* MIC in mono, just duplicate channel to be stereo */
+        {
+            g_UacInBuff_8822PlayPos = (g_UacInBuff_8822PlayPos + 4) % UAC_IN_BUF_LEN;
         }
-                
-    	if (g_u8PlayEn)
-        	I2S_WRITE_TX_FIFO(SPI1, inpw(&g_u8UacInBuf[g_UacInBuff_8822PlayPos]));
-        else
-        	I2S_WRITE_TX_FIFO(SPI1, 0);    /* send mute PCM data to NAU8822 */
 
-        g_UacInBuff_8822PlayPos = (g_UacInBuff_8822PlayPos+4) % UAC_IN_BUF_LEN;
+        if(g_u8PlayEn)
+            I2S_WRITE_TX_FIFO(SPI1, inpw(&g_u8UacInBuf[g_UacInBuff_8822PlayPos]));
+        else
+            I2S_WRITE_TX_FIFO(SPI1, 0);    /* send mute PCM data to NAU8822 */
+
+        g_UacInBuff_8822PlayPos = (g_UacInBuff_8822PlayPos + 4) % UAC_IN_BUF_LEN;
 
         g_UacInBuff_8822PlayCnt += 8;
     }
 
-    if (SPI1->I2SSTS & SPI_I2SSTS_RXTHIF_Msk)
+    if(SPI1->I2SSTS & SPI_I2SSTS_RXTHIF_Msk)
     {
-    	*(uint32_t *)(&g_u8UacOutBuf[g_UacOutBuff_8822RecPos]) = I2S_READ_RX_FIFO(SPI1);
-        g_UacOutBuff_8822RecPos = (g_UacOutBuff_8822RecPos+4) % UAC_OUT_BUF_LEN;
-        
         *(uint32_t *)(&g_u8UacOutBuf[g_UacOutBuff_8822RecPos]) = I2S_READ_RX_FIFO(SPI1);
-        g_UacOutBuff_8822RecPos = (g_UacOutBuff_8822RecPos+4) % UAC_OUT_BUF_LEN;
-        
+        g_UacOutBuff_8822RecPos = (g_UacOutBuff_8822RecPos + 4) % UAC_OUT_BUF_LEN;
+
+        *(uint32_t *)(&g_u8UacOutBuf[g_UacOutBuff_8822RecPos]) = I2S_READ_RX_FIFO(SPI1);
+        g_UacOutBuff_8822RecPos = (g_UacOutBuff_8822RecPos + 4) % UAC_OUT_BUF_LEN;
+
         g_UacOutBuff_8822RecCnt += 8;
-        
-    	/* 
-     	 *  If UAC play is not activated, enable it once NAU8822 audio in record data 
-     	 *  accumulated over a half of g_u8UacOutBuf.
-     	 */
-    	if ((g_u8RecEn == 0) && (g_UacOutBuff_8822RecPos >= UAC_OUT_BUF_LEN/2))
-    	{
-       		g_UacOutBuff_UacPlayPos = g_UacOutBuff_UacPlayCnt = 0;
-       		g_u8RecEn = 1;
-    	}
+
+        /*
+         *  If UAC play is not activated, enable it once NAU8822 audio in record data
+         *  accumulated over a half of g_u8UacOutBuf.
+         */
+        if((g_u8RecEn == 0) && (g_UacOutBuff_8822RecPos >= UAC_OUT_BUF_LEN / 2))
+        {
+            g_UacOutBuff_UacPlayPos = g_UacOutBuff_UacPlayCnt = 0;
+            g_u8RecEn = 1;
+        }
     }
 }
 
@@ -461,38 +467,41 @@ void VolumnControl(void)
  */
 int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
 {
-	int   cp_len;
-	
-	if (g_UacInBuff_UacRecPos + len >= UAC_IN_BUF_LEN) {
-		cp_len = UAC_IN_BUF_LEN - g_UacInBuff_UacRecPos;
-	}
-	else {
-		cp_len = len;
-	}
-	
-	memcpy(&g_u8UacInBuf[g_UacInBuff_UacRecPos], data, cp_len);
-	
-	g_UacInBuff_UacRecPos = (g_UacInBuff_UacRecPos + cp_len) % UAC_IN_BUF_LEN;
-	g_UacInBuff_UacRecCnt += cp_len;
-	len -= cp_len;
-	
-	if (len) {
-    	memcpy(&g_u8UacInBuf[0], &data[cp_len], len);
-    	g_UacInBuff_UacRecPos = len;
-    	g_UacInBuff_UacRecCnt += len;
+    int   cp_len;
+
+    if(g_UacInBuff_UacRecPos + len >= UAC_IN_BUF_LEN)
+    {
+        cp_len = UAC_IN_BUF_LEN - g_UacInBuff_UacRecPos;
+    }
+    else
+    {
+        cp_len = len;
     }
 
-    /* 
+    memcpy(&g_u8UacInBuf[g_UacInBuff_UacRecPos], data, cp_len);
+
+    g_UacInBuff_UacRecPos = (g_UacInBuff_UacRecPos + cp_len) % UAC_IN_BUF_LEN;
+    g_UacInBuff_UacRecCnt += cp_len;
+    len -= cp_len;
+
+    if(len)
+    {
+        memcpy(&g_u8UacInBuf[0], &data[cp_len], len);
+        g_UacInBuff_UacRecPos = len;
+        g_UacInBuff_UacRecCnt += len;
+    }
+
+    /*
      *  If NAU8822 playback is not activated, enable it once audio in data accumulated over
      *  a half of g_u8UacInBuf.
      */
-    if ((g_u8PlayEn == 0) && (g_UacInBuff_UacRecPos >= UAC_IN_BUF_LEN/2))
+    if((g_u8PlayEn == 0) && (g_UacInBuff_UacRecPos >= UAC_IN_BUF_LEN / 2))
     {
-       	/* Fill 0x0 to buffer before playing for buffer operation smooth */
-    	NVIC_DisableIRQ(SPI1_IRQn);
-       	g_UacInBuff_8822PlayPos = g_UacInBuff_8822PlayCnt = 0;
-       	g_u8PlayEn = 1;
-    	NVIC_EnableIRQ(SPI1_IRQn);
+        /* Fill 0x0 to buffer before playing for buffer operation smooth */
+        NVIC_DisableIRQ(SPI1_IRQn);
+        g_UacInBuff_8822PlayPos = g_UacInBuff_8822PlayCnt = 0;
+        g_u8PlayEn = 1;
+        NVIC_EnableIRQ(SPI1_IRQn);
     }
 
     return 0;
@@ -510,27 +519,29 @@ int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
  */
 int audio_out_callback(UAC_DEV_T *dev, uint8_t *data, int len)
 {
-	int  cp_len;
-	
-	if (g_u8RecEn == 0)    /* do not send data until NAU8822 record enough data */
-		return 0;
+    int  cp_len;
 
-	if (UAC_OUT_BUF_LEN - g_UacOutBuff_UacPlayPos < 192) {
-		cp_len = UAC_OUT_BUF_LEN - g_UacOutBuff_UacPlayPos;
-	}
-	else {
-	    cp_len = 192;   
-	}
-	
-	memcpy(data, &g_u8UacOutBuf[g_UacOutBuff_UacPlayPos], cp_len);
-	g_UacOutBuff_UacPlayPos = (g_UacOutBuff_UacPlayPos + cp_len) % UAC_OUT_BUF_LEN;
+    if(g_u8RecEn == 0)     /* do not send data until NAU8822 record enough data */
+        return 0;
 
-    if (cp_len < 192)	
+    if(UAC_OUT_BUF_LEN - g_UacOutBuff_UacPlayPos < 192)
     {
-    	memcpy(&data[cp_len], &g_u8UacOutBuf[0], 192-cp_len);
-    	g_UacOutBuff_UacPlayPos = 192-cp_len;
-	}
-	g_UacOutBuff_UacPlayCnt += 192;
+        cp_len = UAC_OUT_BUF_LEN - g_UacOutBuff_UacPlayPos;
+    }
+    else
+    {
+        cp_len = 192;
+    }
+
+    memcpy(data, &g_u8UacOutBuf[g_UacOutBuff_UacPlayPos], cp_len);
+    g_UacOutBuff_UacPlayPos = (g_UacOutBuff_UacPlayPos + cp_len) % UAC_OUT_BUF_LEN;
+
+    if(cp_len < 192)
+    {
+        memcpy(&data[cp_len], &g_u8UacOutBuf[0], 192 - cp_len);
+        g_UacOutBuff_UacPlayPos = 192 - cp_len;
+    }
+    g_UacOutBuff_UacPlayCnt += 192;
 
     return 192;   // for 48000 stero Hz
 }

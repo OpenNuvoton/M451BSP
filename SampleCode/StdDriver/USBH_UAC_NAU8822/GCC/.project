@@ -50,11 +50,6 @@
 			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/SOURCE/Core</locationURI>
 		</link>
 		<link>
-			<name>USBH_HID_Lib/USBH_HID_Lib</name>
-			<type>2</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/SOURCE/Hid</locationURI>
-		</link>
-		<link>
 			<name>USBH_UAC_Lib/USBH_UAC_Lib</name>
 			<type>2</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/SOURCE/AudioClass</locationURI>

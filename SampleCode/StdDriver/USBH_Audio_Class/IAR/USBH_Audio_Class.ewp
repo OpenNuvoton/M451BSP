@@ -29,7 +29,7 @@
         </option>
         <option>
           <name>Variant</name>
-          <version>19</version>
+          <version>20</version>
           <state>39</state>
         </option>
         <option>
@@ -87,7 +87,7 @@
         </option>
         <option>
           <name>OGLastSavedByProductVersion</name>
-          <state>6.21.1.52845</state>
+          <state>6.50.2.4581</state>
         </option>
         <option>
           <name>GeneralEnableMisra</name>
@@ -137,13 +137,13 @@
         </option>
         <option>
           <name>GFPUCoreSlave</name>
-          <version>19</version>
+          <version>20</version>
           <state>39</state>
         </option>
         <option>
           <name>GBECoreSlave</name>
-          <version>19</version>
-          <state>41</state>
+          <version>20</version>
+          <state>42</state>
         </option>
         <option>
           <name>OGUseCmsis</name>
@@ -162,6 +162,10 @@
         <version>28</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
+        <option>
+          <name>CCOptimizationNoSizeConstraints</name>
+          <state>0</state>
+        </option>
         <option>
           <name>CCDefines</name>
           <state></state>
@@ -609,7 +613,7 @@
       <name>ILINK</name>
       <archiveVersion>0</archiveVersion>
       <data>
-        <version>13</version>
+        <version>15</version>
         <wantNonLocal>1</wantNonLocal>
         <debug>0</debug>
         <option>
@@ -778,10 +782,6 @@
           <state>1</state>
         </option>
         <option>
-          <name>CrcAlgo</name>
-          <state>1</state>
-        </option>
-        <option>
           <name>CrcPoly</name>
           <state>0x11021</state>
         </option>
@@ -869,6 +869,28 @@
         </option>
         <option>
           <name>IlinkOptForceVfe</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>IlinkStackAnalysisEnable</name>
+          <state>0</state>
+        </option>
+        <option>
+          <name>IlinkStackControlFile</name>
+          <state></state>
+        </option>
+        <option>
+          <name>IlinkStackCallGraphFile</name>
+          <state></state>
+        </option>
+        <option>
+          <name>CrcAlgorithm</name>
+          <version>0</version>
+          <state>1</state>
+        </option>
+        <option>
+          <name>CrcUnitSize</name>
+          <version>0</version>
           <state>0</state>
         </option>
       </data>
@@ -961,3 +983,5 @@
     </file>
   </group>
 </project>
+
+
