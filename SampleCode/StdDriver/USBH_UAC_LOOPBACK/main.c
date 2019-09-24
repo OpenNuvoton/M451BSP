@@ -11,6 +11,8 @@
 #include "usbh_core.h"
 #include "usbh_uac.h"
 
+uint8_t  au_in_buff[8192];
+
 static uint16_t  vol_max, vol_min, vol_res, vol_cur;
 
 extern int kbhit(void);             /* function in retarget.c */
@@ -55,14 +57,11 @@ void SYS_Init(void)
     CLK_EnableModuleClock(UART0_MODULE);
     CLK_EnableModuleClock(USBH_MODULE);
     CLK_EnableModuleClock(TMR0_MODULE);
-    CLK_EnableModuleClock(I2C0_MODULE);
-    CLK_EnableModuleClock(SPI1_MODULE);
 
     /* Select module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
     CLK_SetModuleClock(USBH_MODULE, 0, CLK_CLKDIV0_USB(3));
     CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HXT, 0);
-    CLK_SetModuleClock(SPI1_MODULE, CLK_CLKSEL2_SPI1SEL_PLL, 0);
 
     // Configure OTG function as Host-Only
     SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
@@ -92,28 +91,18 @@ void SYS_Init(void)
     PC->DOUT |= 0x10;
 #endif
 
-    /* Set PD.0, PD.1, PD.6, PD.4 and PD.5 as SPI1_I2SMCLK, UART0 TXD, UART0 RXD, I2C0_SDA and I2C0_SCL function pins */
-    SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk | SYS_GPD_MFPL_PD6MFP_Msk |
-                    SYS_GPD_MFPL_PD4MFP_Msk | SYS_GPD_MFPL_PD5MFP_Msk);
-    SYS->GPD_MFPL |= SYS_GPD_MFPL_PD0MFP_SPI1_I2SMCLK | SYS_GPD_MFPL_PD1MFP_UART0_TXD | SYS_GPD_MFPL_PD6MFP_UART0_RXD |
-                    SYS_GPD_MFPL_PD4MFP_I2C0_SDA | SYS_GPD_MFPL_PD5MFP_I2C0_SCL;
-                    
-    /* Set I2S1 interface: I2S1_LRCLK (PA.4), I2S1_DO (PA.5), I2S1_DI (PA.6), I2S1_BCLK (PA.7) */
-    SYS->GPA_MFPL |= (SYS->GPA_MFPL & 0x0000FFFF) |
-                    SYS_GPA_MFPL_PA4MFP_SPI1_SS | SYS_GPA_MFPL_PA5MFP_SPI1_MOSI | SYS_GPA_MFPL_PA6MFP_SPI1_MISO | SYS_GPA_MFPL_PA7MFP_SPI1_CLK;
-    
-    /* Enable Input Schmitt Trigger of PA.4 ~ PA.7  */
-    PD->SMTEN |= 0x31;
-    PA->SMTEN |= 0xF0;     
+    /* Set GPD multi-function pins for UART0 RXD and TXD */
+    SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
+    SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 }
 
 uint32_t CLK_GetUSBFreq(void)
-{  
+{
     /*---------------------------------------------------------------------------------------------------------*/
     /* Get USB Peripheral Clock                                                                                */
-    /*---------------------------------------------------------------------------------------------------------*/  
-    /* USB Peripheral clock = PLL_CLOCK/USBDIV+1) */    
-    return CLK_GetPLLClockFreq()/(((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk)>>CLK_CLKDIV0_USBDIV_Pos)+1);
+    /*---------------------------------------------------------------------------------------------------------*/
+    /* USB Peripheral clock = PLL_CLOCK/USBDIV+1) */
+    return CLK_GetPLLClockFreq() / (((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk) >> CLK_CLKDIV0_USBDIV_Pos) + 1);
 }
 
 void UART0_Init(void)
@@ -124,15 +113,6 @@ void UART0_Init(void)
     UART_Open(UART0, 115200);
 }
 
-void I2C0_Init(void)
-{
-    /* Open I2C0 and set clock to 100k */
-    I2C_Open(I2C0, 100000);
-
-    /* Get I2C0 Bus Clock */
-    printf("I2C clock %d Hz\n", I2C_GetBusClockFreq(I2C0));
-}
-
 void  uac_control_example(UAC_DEV_T *uac_dev)
 {
     uint16_t   val16;
@@ -141,8 +121,8 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     //uint8_t    data[8];
     int        i, ret;
     uint32_t   val32;
-    
-   	vol_max = vol_min = vol_res = 0;
+
+    vol_max = vol_min = vol_res = 0;
 
     printf("\nGet channel information ===>\n");
 
@@ -156,15 +136,15 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
         printf("    Speaker: %d\n", ret);
 
     ret = UAC_GetChannelNumber(uac_dev, UAC_MICROPHONE);
-    if (ret < 0)
+    if(ret < 0)
         printf("    Failed to get microphone's channel number.\n");
     else
     {
         printf("    Microphone: %d\n", ret);
-        if (ret == 1)
-        	g_bMicIsMono = 1;
+        if(ret == 1)
+            g_bMicIsMono = 1;
         else
-        	g_bMicIsMono = 0;
+            g_bMicIsMono = 0;
     }
 
     printf("\nGet subframe bit resolution ===>\n");
@@ -236,16 +216,16 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     else
         printf("    Failed to get speaker mute state!\n");
 
-	printf("\nSpeaker L(F) volume control ===>\n");
+    printf("\nSpeaker L(F) volume control ===>\n");
 #endif
 
-	/*--------------------------------------------------------------------------*/
-	/*  Get current volume value of UAC device's speaker left channel.          */
-	/*--------------------------------------------------------------------------*/
-	if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    	printf("    Speaker L(F) volume is 0x%x.\n", val16);
-	else
-    	printf("    Failed to get seaker L(F) volume!\n");
+    /*--------------------------------------------------------------------------*/
+    /*  Get current volume value of UAC device's speaker left channel.          */
+    /*--------------------------------------------------------------------------*/
+    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
+        printf("    Speaker L(F) volume is 0x%x.\n", val16);
+    else
+        printf("    Failed to get seaker L(F) volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get minimum volume value of UAC device's speaker left channel.          */
@@ -399,7 +379,7 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
 #endif
 
     printf("\nSampling rate control ===>\n");
-    
+
     /*-------------------------------------------------------------*/
     /*  Get current sampling rate value of UAC device's speaker.   */
     /*-------------------------------------------------------------*/
@@ -412,7 +392,7 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     /*  Set new sampling rate value of UAC device's speaker.       */
     /*-------------------------------------------------------------*/
     val32 = 48000;
-    if (UAC_SamplingRateControl(uac_dev, UAC_SPEAKER, UAC_SET_CUR, &val32) != UAC_RET_OK)
+    if(UAC_SamplingRateControl(uac_dev, UAC_SPEAKER, UAC_SET_CUR, &val32) != UAC_RET_OK)
         printf("    Failed to set Speaker's current sampling rate %d.\n", val32);
 
     if(UAC_SamplingRateControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, &val32) == UAC_RET_OK)
@@ -432,10 +412,10 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     /*  Set new sampling rate value of UAC device's microphone.    */
     /*-------------------------------------------------------------*/
     val32 = 48000;
-    if (UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, &val32) != UAC_RET_OK)
+    if(UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, &val32) != UAC_RET_OK)
         printf("    Failed to set microphone's current sampling rate!\n");
-    
-    if (UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, &val32) == UAC_RET_OK)
+
+    if(UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, &val32) == UAC_RET_OK)
         printf("    Microphone's current sampling rate is %d.\n", val32);
     else
         printf("    Failed to get microphone's current sampling rate!\n");
@@ -462,9 +442,9 @@ int32_t main(void)
 
     printf("\n\n");
     printf(" System clock:   %d Hz.\n", SystemCoreClock);
-    printf(" USB Host clock: %d Hz.\n", CLK_GetUSBFreq());    
+    printf(" USB Host clock: %d Hz.\n", CLK_GetUSBFreq());
     printf("+------------------------------------------------------+\n");
-    printf("|      NuMicro USB Host UAC + NAU882 Sample Code       |\n");
+    printf("|        NuMicro USB Host Loop Back Sample Code        |\n");
     printf("+------------------------------------------------------+\n");
 
     USBH_Open();
@@ -473,92 +453,91 @@ int32_t main(void)
 
     while(1)
     {
-        if (USBH_ProcessHubEvents())              /* USB Host port detect polling and management */
+        if(USBH_ProcessHubEvents())               /* USB Host port detect polling and management */
         {
-        	/*
-        	 *  Has hub port event. 
-        	 */
-        	
-        	uac_dev = UAC_GetDeviceList();
-        	if (uac_dev == NULL)
+            /*
+             *  Has hub port event.
+             */
+
+            uac_dev = UAC_GetDeviceList();
+            if(uac_dev == NULL)
                 continue;
 
-            if (uac_dev != NULL)                  /* should be newly connected UAC device        */
+            if(uac_dev != NULL)                   /* should be newly connected UAC device        */
             {
-            	/*UAC_StartDevice(uac_dev);*/
-            	
-    			uac_control_example(uac_dev);
+                uac_control_example(uac_dev);
 
-    			if (UAC_InstallIsoInCbFun(uac_dev, NULL, 0xFFFF, audio_in_callback) != UAC_RET_OK)
-    			{
-        			printf("Failed to install audio-in callback function!\n");
-        			goto err_out;
-    			}
+                if(UAC_InstallIsoInCbFun(uac_dev, au_in_buff, 8192, audio_in_callback) != UAC_RET_OK)
+                {
+                    printf("Failed to install audio-in callback function!\n");
+                    goto err_out;
+                }
 
-    			if (UAC_InstallIsoOutCbFun(uac_dev, audio_out_callback) != UAC_RET_OK)
-    			{
-        			printf("Failed to install audio-out callback function!\n");
-        			goto err_out;
-    			}
-    			
-    			ResetAudioLoopBack();
+                if(UAC_InstallIsoOutCbFun(uac_dev, audio_out_callback) != UAC_RET_OK)
+                {
+                    printf("Failed to install audio-out callback function!\n");
+                    goto err_out;
+                }
 
-    			UAC_StartIsoInPipe(uac_dev);
+                ResetAudioLoopBack();
 
-    			UAC_StartIsoOutPipe(uac_dev);
+                UAC_StartIsoInPipe(uac_dev);
+
+                UAC_StartIsoOutPipe(uac_dev);
             }
         }
-        
-        if (uac_dev == NULL) {
-        	ResetAudioLoopBack();
+
+        if(uac_dev == NULL)
+        {
+            ResetAudioLoopBack();
             continue;
         }
-        
-    	if (!kbhit())
-    	{
-    		ch = GetChar();
-    
-    		if ((ch == '+') && (vol_cur + vol_res <= vol_max))
-    		{
-    			printf("+");
-    			val16 = vol_cur+vol_res;
-        		if (UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &val16) == UAC_RET_OK)
-        		{
-            		printf("    Microphone set volume 0x%x success.\n", val16);
-            		vol_cur = val16;
-            	}
-            	else
-            		printf("    Failed to set microphone volume 0x%x!\n", val16);
+
+        if(!kbhit())
+        {
+            ch = GetChar();
+
+            if((ch == '+') && (vol_cur + vol_res <= vol_max))
+            {
+                printf("+");
+                val16 = vol_cur + vol_res;
+                if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &val16) == UAC_RET_OK)
+                {
+                    printf("    Microphone set volume 0x%x success.\n", val16);
+                    vol_cur = val16;
+                }
+                else
+                    printf("    Failed to set microphone volume 0x%x!\n", val16);
             }
-    		else if ((ch == '-') && (vol_cur - vol_res >= vol_min))
-    		{
-    			printf("-");
-    			val16 = vol_cur-vol_res;
-        		if (UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &val16) == UAC_RET_OK)
-        		{
-            		printf("    Microphone set volume 0x%x success.\n", val16);
-            		vol_cur = val16;
-            	}
-            	else
-            		printf("    Failed to set microphone volume 0x%x!\n", val16);
+            else if((ch == '-') && (vol_cur - vol_res >= vol_min))
+            {
+                printf("-");
+                val16 = vol_cur - vol_res;
+                if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &val16) == UAC_RET_OK)
+                {
+                    printf("    Microphone set volume 0x%x success.\n", val16);
+                    vol_cur = val16;
+                }
+                else
+                    printf("    Failed to set microphone volume 0x%x!\n", val16);
             }
-    		else if ((ch == '0') && (vol_cur - vol_res >= vol_min))
-    		{
-        		if (UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, &vol_cur) == UAC_RET_OK)
-            		printf("    Microphone current volume is 0x%x.\n", vol_cur);
-        		else
-            		printf("    Failed to get microphone current volume!\n");
-    		}
+            else if((ch == '0') && (vol_cur - vol_res >= vol_min))
+            {
+                if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, &vol_cur) == UAC_RET_OK)
+                    printf("    Microphone current volume is 0x%x.\n", vol_cur);
+                else
+                    printf("    Failed to get microphone current volume!\n");
+            }
             else
             {
-            	/* ignore this key */
+                /* ignore this key */
             }
 
         }  /* end of kbhit() */
     }
 
 err_out:
-	while (1);    
+    while(1);
 }
 
 /*** (C) COPYRIGHT 2017 Nuvoton Technology Corp. ***/

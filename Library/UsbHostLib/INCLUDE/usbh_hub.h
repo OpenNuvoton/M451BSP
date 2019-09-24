@@ -117,6 +117,7 @@ typedef struct usb_hub_status
  * Hub descriptor
  * See USB 2.0 spec Table 11-13
  */
+#ifdef __ICCARM__
 typedef struct usb_hub_descriptor
 {
     __packed uint8_t  bDescLength;
@@ -128,6 +129,19 @@ typedef struct usb_hub_descriptor
     __packed uint8_t  DeviceRemovable[MAX_PORTS_PER_HUB / 8];
     __packed uint8_t  PortPwrCtrlMask[MAX_PORTS_PER_HUB / 8];
 } USB_HUB_DESC_T;
+#else
+typedef struct __attribute__((__packed__)) usb_hub_descriptor
+{
+    uint8_t  bDescLength;
+    uint8_t  bDescriptorType;
+    uint8_t  bNbrPorts;
+    uint16_t wHubCharacteristics;
+    uint8_t  bPwrOn2PwrGood;
+    uint8_t  bHubContrCurrent;
+    uint8_t  DeviceRemovable[MAX_PORTS_PER_HUB / 8];
+    uint8_t  PortPwrCtrlMask[MAX_PORTS_PER_HUB / 8];
+} USB_HUB_DESC_T;
+#endif
 
 
 typedef struct usb_hub

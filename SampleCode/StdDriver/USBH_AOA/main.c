@@ -19,25 +19,25 @@
 static volatile int  g_tick_cnt = 29020;
 static volatile int  g_tick_cnt2 = 1;
 
-void SysTick_Handler(void) 
-{  	
-	g_tick_cnt++;
+void SysTick_Handler(void)
+{
+    g_tick_cnt++;
 }
 
 
 void enable_sys_ticks(int ticks_per_second)
 {
-	uint32_t  systick_load;
-	/*
-	 *  Configure system tick to be 0.1 second count
-	 */
-	systick_load = ((PLL_CLOCK/(2 * ticks_per_second)) & SysTick_LOAD_RELOAD_Msk) - 1;
-	/* system tick from HCLK/2 */
-    CLK->CLKSEL0 = (CLK->CLKSEL0 & ~CLK_CLKSEL0_STCLKSEL_Msk) | (3 << CLK_CLKSEL0_STCLKSEL_Pos	);	
-	SysTick->LOAD  = systick_load; 
-  	NVIC_SetPriority (SysTick_IRQn, (1<<__NVIC_PRIO_BITS) - 1);  /* set Priority for Cortex-M0 System Interrupts */
+    uint32_t  systick_load;
+    /*
+     *  Configure system tick to be 0.1 second count
+     */
+    systick_load = ((PLL_CLOCK / (2 * ticks_per_second)) & SysTick_LOAD_RELOAD_Msk) - 1;
+    /* system tick from HCLK/2 */
+    CLK->CLKSEL0 = (CLK->CLKSEL0 & ~CLK_CLKSEL0_STCLKSEL_Msk) | (3 << CLK_CLKSEL0_STCLKSEL_Pos);
+    SysTick->LOAD  = systick_load;
+    NVIC_SetPriority(SysTick_IRQn, (1 << __NVIC_PRIO_BITS) - 1); /* set Priority for Cortex-M0 System Interrupts */
     SysTick->VAL = 0;
-   	SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
+    SysTick->CTRL = SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
 }
 
 void Delay(uint32_t delayCnt)
@@ -137,12 +137,12 @@ void UART0_Init(void)
 }
 
 uint32_t CLK_GetUSBFreq(void)
-{  
+{
     /*---------------------------------------------------------------------------------------------------------*/
     /* Get USB Peripheral Clock                                                                                */
-    /*---------------------------------------------------------------------------------------------------------*/  
-    /* USB peripheral clock = PLL_CLOCK/USBDIV+1) */    
-    return CLK_GetPLLClockFreq()/(((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk)>>CLK_CLKDIV0_USBDIV_Pos)+1);
+    /*---------------------------------------------------------------------------------------------------------*/
+    /* USB peripheral clock = PLL_CLOCK/USBDIV+1) */
+    return CLK_GetPLLClockFreq() / (((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk) >> CLK_CLKDIV0_USBDIV_Pos) + 1);
 }
 
 /*
@@ -150,11 +150,11 @@ uint32_t CLK_GetUSBFreq(void)
  */
 void aoa_read_func(uint8_t *data_buff, int data_len)
 {
-	int  i;
-	printf("AOA RX: ");
-	for (i = 0; i < data_len; i++)
-		printf("%02d ", data_buff[i]);
-	printf("\n");
+    int  i;
+    printf("AOA RX: ");
+    for(i = 0; i < data_len; i++)
+        printf("%02d ", data_buff[i]);
+    printf("\n");
 }
 
 /*----------------------------------------------------------------------------
@@ -197,38 +197,38 @@ int32_t main(void)
     USBH_Open();
 
     AOA_Init(aoa_read_func);
-    
-    while (1)
+
+    while(1)
     {
         USBH_ProcessHubEvents();
 
-        if (AOA_IsConnected())
+        if(AOA_IsConnected())
         {
-            if (!connected) 
+            if(!connected)
             {
                 connected = 1;
                 printf("\nAOA device found!\n");
             }
-        } 
-        else 
+        }
+        else
         {
             connected = 0;
             continue;
         }
 
-		if (connected)
-		{      
-			if (g_tick_cnt - t0 >= 2)
-			{  
-        		memset(buff, 0, 64);
-        		sprintf(buff, "%08d", g_tick_cnt2++);
-        		
-        		printf("AOA write: %s\n", buff);
-        
-        		AOA_WriteData((uint8_t *)buff, 64);
-        		
-        		t0 = g_tick_cnt;
-        	}
+        if(connected)
+        {
+            if(g_tick_cnt - t0 >= 2)
+            {
+                memset(buff, 0, 64);
+                sprintf(buff, "%08d", g_tick_cnt2++);
+
+                printf("AOA write: %s\n", buff);
+
+                AOA_WriteData((uint8_t *)buff, 64);
+
+                t0 = g_tick_cnt;
+            }
         }
     }
 }

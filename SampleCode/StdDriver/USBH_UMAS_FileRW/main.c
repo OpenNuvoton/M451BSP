@@ -27,12 +27,8 @@ FATFS FatFs[_VOLUMES];      /* File system object for logical drive */
 #ifdef __ICCARM__
 #pragma data_alignment=32
 BYTE Buff[4096] ;       /* Working buffer */
-#endif
-
-#ifdef __ARMCC_VERSION
-__align(32) BYTE Buff[4096] ;       /* Working buffer */
 #else
-BYTE Buff[4096] __attribute__ ((__align(32) ));
+BYTE Buff[4096] __attribute__((aligned(32)));       /* Working buffer */
 #endif
 
 char GetChar(void);

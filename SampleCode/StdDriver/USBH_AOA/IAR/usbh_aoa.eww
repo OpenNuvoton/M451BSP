@@ -2,7 +2,7 @@
 
 <workspace>
   <project>
-    <path>$WS_DIR$\usbh_aoa.ewp</path>
+    <path>$WS_DIR$\USBH_AOA.ewp</path>
   </project>
   <batchBuild/>
 </workspace>

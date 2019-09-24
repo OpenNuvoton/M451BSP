@@ -23,9 +23,9 @@ static ED_T  g_ed_pool[ED_MAX_NUM];
 static TD_T  g_td_pool[TD_MAX_NUM];
 static URB_T  g_urb_pool[URB_MAX_NUM];
 #else
-static ED_T  g_ed_pool[ED_MAX_NUM] __attribute__ ((__align(32)));
-static TD_T  g_td_pool[TD_MAX_NUM] __attribute__ ((__align(32)));
-static URB_T  g_urb_pool[URB_MAX_NUM] __attribute__ ((__align(32)));
+static ED_T  g_ed_pool[ED_MAX_NUM] __attribute__((aligned(32)));
+static TD_T  g_td_pool[TD_MAX_NUM] __attribute__((aligned(32)));
+static URB_T  g_urb_pool[URB_MAX_NUM] __attribute__((aligned(32)));
 #endif
 
 USB_DEV_T g_dev_pool[DEV_MAX_NUM];

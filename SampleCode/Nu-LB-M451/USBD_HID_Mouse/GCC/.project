@@ -45,6 +45,16 @@
 			<locationURI>PARENT-4-PROJECT_LOC/Library/StdDriver/src</locationURI>
 		</link>
 		<link>
+			<name>User/descriptors.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>User/hid_mouse.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/hid_mouse.c</locationURI>
+		</link>
+		<link>
 			<name>User/main.c</name>
 			<type>1</type>
 			<locationURI>PARENT-1-PROJECT_LOC/main.c</locationURI>
