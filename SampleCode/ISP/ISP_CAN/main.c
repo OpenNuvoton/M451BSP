@@ -42,7 +42,7 @@ typedef struct
 } STR_CANMSG_ISP;
 
 STR_CANMSG_T rrMsg;
-volatile uint8_t u8CAN_PackageFlag = 0, u8CAN_AckFlag = 0;
+volatile uint8_t g_u8CAN_PackageFlag = 0, g_u8CAN_AckFlag = 0;
 uint32_t Chip_EndAddress = 0;
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -53,7 +53,7 @@ void CAN_MsgInterrupt(CAN_T *tCAN, uint32_t u32IIDR)
     if(u32IIDR == 1)
     {
         CAN_Receive(tCAN, 0, &rrMsg);
-        u8CAN_PackageFlag = 1;
+        g_u8CAN_PackageFlag = 1;
     }
 }
 
@@ -78,7 +78,7 @@ void CAN0_IRQHandler(void)
         if(CAN0->STATUS & CAN_STATUS_TXOK_Msk)
         {
             CAN0->STATUS &= ~CAN_STATUS_TXOK_Msk;    /* Clear TxOK status*/
-            u8CAN_AckFlag = 0;
+            g_u8CAN_AckFlag = 0;
         }
     }
     else if(u8IIDRstatus != 0)
@@ -118,7 +118,7 @@ void SYS_Init(void)
 void CAN_Package_ACK(CAN_T *tCAN)
 {
     STR_CANMSG_T tMsg;
-    u8CAN_AckFlag = 1;
+    g_u8CAN_AckFlag = 1;
     /* Send a 11-bit Standard Identifier message */
     tMsg.FrameType = CAN_DATA_FRAME;
     tMsg.IdType    = CAN_STD_ID;
@@ -131,7 +131,7 @@ void CAN_Package_ACK(CAN_T *tCAN)
         return;
     }
 
-    while(u8CAN_AckFlag);
+    while(g_u8CAN_AckFlag);
 }
 
 void CAN_Init(void)
@@ -140,12 +140,14 @@ void CAN_Init(void)
     CLK->APBCLK0 |= CLK_APBCLK0_CAN0CKEN_Msk;
     
     /* Set PA multi-function pins for CANTX0, CANRX0 */
-    SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA0MFP_Msk | SYS_GPA_MFPL_PA1MFP_Msk);
-    SYS->GPA_MFPL |= SYS_GPA_MFPL_PA1MFP_CAN0_TXD | SYS_GPA_MFPL_PA0MFP_CAN0_RXD;
+    //SYS->GPA_MFPL = (SYS->GPA_MFPL & (~(SYS_GPA_MFPL_PA0MFP_Msk | SYS_GPA_MFPL_PA1MFP_Msk))) | SYS_GPA_MFPL_PA1MFP_CAN0_TXD | SYS_GPA_MFPL_PA0MFP_CAN0_RXD;
+    SYS->GPA_MFPH = (SYS->GPA_MFPH & (~(SYS_GPA_MFPH_PA12MFP_Msk | SYS_GPA_MFPH_PA13MFP_Msk))) | SYS_GPA_MFPH_PA12MFP_CAN0_TXD | SYS_GPA_MFPH_PA13MFP_CAN0_RXD;
 
     /* Set CAN transceiver to high speed mode */
-    GPIO_SETMODE(PC, 11, GPIO_MODE_OUTPUT);
-    PC11 = 0;
+    GPIO_SETMODE(PB, 9, GPIO_MODE_OUTPUT);
+    GPIO_SETMODE(PB, 10, GPIO_MODE_OUTPUT);
+    PB9 = 0;
+    PB10 = 0;
     CAN_Open(CAN0, CAN_BAUD_RATE, CAN_NORMAL_MODE);
     CAN_EnableInt(CAN0, (CAN_CON_IE_Msk | CAN_CON_SIE_Msk | CAN_CON_EIE_Msk));
     NVIC_SetPriority(CAN0_IRQn, (1 << __NVIC_PRIO_BITS) - 2);
@@ -176,7 +178,7 @@ int main(void)
 
     while(1)
     {
-        if(u8CAN_PackageFlag == 1)
+        if(g_u8CAN_PackageFlag == 1)
         {
             break;
         }
@@ -190,9 +192,9 @@ int main(void)
     /* stat update program */
     while(1)
     {
-        if(u8CAN_PackageFlag)
+        if(g_u8CAN_PackageFlag)
         {
-            u8CAN_PackageFlag = 0;
+            g_u8CAN_PackageFlag = 0;
             Address = inpw(&rrMsg.Data);
             Data = inpw(&rrMsg.Data[4]);
 
