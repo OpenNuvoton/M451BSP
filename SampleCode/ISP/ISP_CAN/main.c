@@ -12,8 +12,8 @@
 #include "M451Series.h"
 
 
-#define PLLCON_SETTING          (CLK_PLLCTL_72MHz_HIRC)
-#define PLL_CLOCK               (720000000)
+#define PLLCON_SETTING          (CLK_PLLCTL_72MHz_HXT)
+#define PLL_CLOCK               (72000000)
 #define HCLK_DIV                (1)
 
 #define GPIO_SETMODE(port, pin, u32Mode) port->MODE = (port->MODE & ~(0x3ul << (pin << 1))) | (u32Mode << (pin << 1));
@@ -94,7 +94,7 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk | CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for Internal RC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    while(!(CLK->STATUS & CLK_PWRCTL_HXTEN_Msk));
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK->PLLCTL = PLLCON_SETTING;
@@ -102,8 +102,7 @@ void SYS_Init(void)
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
 
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
-    CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
-    CLK->CLKDIV0 |= CLK_CLKDIV0_HCLK(HCLK_DIV);
+    CLK->CLKDIV0 = (CLK->CLKDIV0 &(~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(HCLK_DIV);
     /* Update System Core Clock */
     /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CycylesPerUs automatically. */
     //SystemCoreClockUpdate();
