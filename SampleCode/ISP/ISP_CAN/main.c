@@ -12,7 +12,7 @@
 #include "M451Series.h"
 
 
-#define PLLCON_SETTING          (CLK_PLLCTL_72MHz_HXT)
+#define PLLCTL_SETTING          (CLK_PLLCTL_72MHz_HXT)
 #define PLL_CLOCK               (72000000)
 #define HCLK_DIV                (1)
 
@@ -94,10 +94,10 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk | CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for Internal RC clock ready */
-    while(!(CLK->STATUS & CLK_PWRCTL_HXTEN_Msk));
+    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
 
     /* Set core clock as PLL_CLOCK from PLL */
-    CLK->PLLCTL = PLLCON_SETTING;
+    CLK->PLLCTL = PLLCTL_SETTING;
 
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
 
