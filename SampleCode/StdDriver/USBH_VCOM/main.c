@@ -1,41 +1,209 @@
 /**************************************************************************//**
  * @file     main.c
  * @version  V1.00
- * $Revision: 18 $
- * $Date: 18/01/30 10:05a $
- * @brief
- *           USB CDC class virtual COM sample code.
+ * @brief    Use USB Host core driver and CDC driver. This sample demonstrates how
+ *           to connect a CDC class VCOM device.
  *
- * @note
- * Copyright (C) 2018~2019 Nuvoton Technology Corp. All rights reserved.
+ *
+ * @copyright (C) 2018 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include <string.h>
+
 #include "M451Series.h"
-#include "usbh_core.h"
+
+#include "usbh_lib.h"
 #include "usbh_cdc.h"
 
-char Line[64];             /* Console input buffer */
+char g_achLine[64];             /* Console input buffer */
 
-static volatile int  g_rx_ready = 0;
+static volatile int  g_i8RxReady = 0;
 
-extern int kbhit(void);
+extern int kbhit(void);                        /* function in retarget.c                 */
 
-void Delay(uint32_t delayCnt)
+volatile uint32_t  g_u32TickCnt;
+
+void SysTick_Handler(void)
 {
-    while(delayCnt--)
+    g_u32TickCnt++;
+}
+
+void enable_sys_tick(int ticks_per_second)
+{
+    g_u32TickCnt = 0;
+    if(SysTick_Config(SystemCoreClock / ticks_per_second))
     {
-        __NOP();
-        __NOP();
+        /* Setup SysTick Timer for 1 second interrupts  */
+        printf("Set system tick error!!\n");
+        while(1);
     }
 }
 
+uint32_t get_ticks()
+{
+    return g_u32TickCnt;
+}
+
+/*
+ *  This function is necessary for USB Host library.
+ */
+void delay_us(int usec)
+{
+    /*
+     *  Configure Timer0, clock source from XTL_12M. Prescale 12
+     */
+    /* TIMER0 clock from HXT */
+    CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR0SEL_Msk)) | CLK_CLKSEL1_TMR0SEL_HXT;
+    CLK->APBCLK0 |= CLK_APBCLK0_TMR0CKEN_Msk;
+    TIMER0->CTL = 0;        /* disable timer */
+    TIMER0->INTSTS = (TIMER_INTSTS_TIF_Msk | TIMER_INTSTS_TWKF_Msk);   /* write 1 to clear for safety */
+    TIMER0->CMP = usec;
+    TIMER0->CTL = (11 << TIMER_CTL_PSC_Pos) | TIMER_ONESHOT_MODE | TIMER_CTL_CNTEN_Msk;
+
+    while(!TIMER0->INTSTS);
+}
+
+void  dump_buff_hex(uint8_t *pu8Buff, int i8Bytes)
+{
+    int     i8Idx, i8Cnt;
+
+    i8Idx = 0;
+    while(i8Bytes > 0)
+    {
+        printf("0x%04X  ", i8Idx);
+        for(i8Cnt = 0; (i8Cnt < 16) && (i8Bytes > 0); i8Cnt++)
+        {
+            printf("%02x ", pu8Buff[i8Idx + i8Cnt]);
+            i8Bytes--;
+        }
+        i8Idx += 16;
+        printf("\n");
+    }
+    printf("\n");
+}
+
+void  vcom_status_callback(CDC_DEV_T *cdev, uint8_t *pu8RData, int u8DataLen)
+{
+    int  i8Cnt;
+    printf("[VCOM STS] ");
+    for(i8Cnt = 0; i8Cnt < u8DataLen; i8Cnt++)
+        printf("0x%02x ", pu8RData[i8Cnt]);
+    printf("\n");
+}
+
+void  vcom_rx_callback(CDC_DEV_T *cdev, uint8_t *pu8RData, int u8DataLen)
+{
+    int  i8Cnt;
+
+    //printf("[VCOM DATA %d] ", u8DataLen);
+    for(i8Cnt = 0; i8Cnt < u8DataLen; i8Cnt++)
+    {
+        //printf("0x%02x ", pu8RData[i8Cnt]);
+        printf("%c", pu8RData[i8Cnt]);
+    }
+    //printf("\n");
+
+    g_i8RxReady = 1;
+}
+
+void show_line_coding(LINE_CODING_T *lc)
+{
+    printf("[CDC device line coding]\n");
+    printf("====================================\n");
+    printf("Baud rate:  %d bps\n", lc->baud);
+    printf("Parity:     ");
+    switch(lc->parity)
+    {
+        case 0:
+            printf("None\n");
+            break;
+        case 1:
+            printf("Odd\n");
+            break;
+        case 2:
+            printf("Even\n");
+            break;
+        case 3:
+            printf("Mark\n");
+            break;
+        case 4:
+            printf("Space\n");
+            break;
+        default:
+            printf("Invalid!\n");
+            break;
+    }
+    printf("Data Bits:  ");
+    switch(lc->data_bits)
+    {
+        case 5 :
+        case 6 :
+        case 7 :
+        case 8 :
+        case 16:
+            printf("%d\n", lc->data_bits);
+            break;
+        default:
+            printf("Invalid!\n");
+            break;
+    }
+    printf("Stop Bits:  %s\n\n", (lc->stop_bits == 0) ? "1" : ((lc->stop_bits == 1) ? "1.5" : "2"));
+}
+
+int  init_cdc_device(CDC_DEV_T *cdev)
+{
+    int     i8Ret;
+    LINE_CODING_T  line_code;
+
+    printf("\n\n==================================\n");
+    printf("  Init CDC device : 0x%x\n", (int)cdev);
+    printf("  VID: 0x%x, PID: 0x%x\n\n", cdev->udev->descriptor.idVendor, cdev->udev->descriptor.idProduct);
+
+    i8Ret = usbh_cdc_get_line_coding(cdev, &line_code);
+    if(i8Ret < 0)
+    {
+        printf("Get Line Coding command failed: %d\n", i8Ret);
+    }
+    else
+        show_line_coding(&line_code);
+
+    line_code.baud = 115200;
+    line_code.parity = 0;
+    line_code.data_bits = 8;
+    line_code.stop_bits = 0;
+
+    i8Ret = usbh_cdc_set_line_coding(cdev, &line_code);
+    if(i8Ret < 0)
+    {
+        printf("Set Line Coding command failed: %d\n", i8Ret);
+    }
+
+    i8Ret = usbh_cdc_get_line_coding(cdev, &line_code);
+    if(i8Ret < 0)
+    {
+        printf("Get Line Coding command failed: %d\n", i8Ret);
+    }
+    else
+    {
+        printf("New line coding =>\n");
+        show_line_coding(&line_code);
+    }
+
+    usbh_cdc_set_control_line_state(cdev, 1, 1);
+
+    printf("usbh_cdc_start_polling_status...\n");
+    usbh_cdc_start_polling_status(cdev, vcom_status_callback);
+
+    printf("usbh_cdc_start_to_receive_data...\n");
+    usbh_cdc_start_to_receive_data(cdev, vcom_rx_callback);
+
+    return 0;
+}
 
 void SYS_Init(void)
 {
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init System Clock                                                                                       */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Unlock protected registers */
+    SYS_UnlockReg();
 
     /* Enable Internal RC 22.1184MHz clock */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
@@ -66,199 +234,33 @@ void SYS_Init(void)
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
     CLK_SetModuleClock(USBH_MODULE, 0, CLK_CLKDIV0_USB(3));
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init I/O Multi-function                                                                                 */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Enable OTG clock */
+    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;
+
+    /* Configure OTG function as Host-Only */
+    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
+
     /* Set GPD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init USB Host clock                                                                                     */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* USB_VBUS_EN (USB 1.1 VBUS power enable pin) multi-function pin - PA.2 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA2MFP_Msk) | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN;
 
-    // Configure OTG function as Host-Only
-    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
+    /* USB_VBUS_ST (USB 1.1 over-current detect pin) multi-function pin - PA.3 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA3MFP_Msk) | SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST;
 
-#ifdef AUTO_POWER_CONTROL
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PC.4 is VBUS_EN function pin and PC.3 VBUS_ST function pin             */
-    //SYS->GPC_MFPL &= ~(SYS_GPC_MFPL_PC4MFP_Msk | SYS_GPC_MFPL_PC3MFP_Msk);
-    //SYS->GPC_MFPL |=  (SYS_GPC_MFPL_PC3MFP_USB_VBUS_ST | SYS_GPC_MFPL_PC4MFP_USB_VBUS_EN);
-
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PA.2 is VBUS_EN function pin and PA.3 VBUS_ST function pin             */
-    SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA2MFP_Msk | SYS_GPA_MFPL_PA3MFP_Msk);
-    SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN);
-
-    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;   //Enable OTG_EN clock
-#else
-    /* Below settings is use GPIO to enable/disable USB Host power.
-       Set PC.4 output high to enable USB power                               */
-
-    SYS->GPC_MFPL &= ~SYS_GPC_MFPL_PC4MFP_Msk;
-    PC->MODE = (PC->MODE & ~GPIO_MODE_MODE4_Msk) | (0x1 << GPIO_MODE_MODE4_Pos);
-    PC->DOUT |= 0x10;
-#endif
+    /* Lock protected registers */
+    SYS_LockReg();
 }
-
 
 void UART0_Init(void)
 {
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init UART                                                                                               */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Reset UART IP */
-    SYS->IPRST1 |=  SYS_IPRST1_UART0RST_Msk;
-    SYS->IPRST1 &= ~SYS_IPRST1_UART0RST_Msk;
-
-    /* Configure UART0 and set UART0 Baudrate */
-    UART0->BAUD = UART_BAUD_MODE2 | UART_BAUD_MODE2_DIVIDER(__HXT, 115200);
-    UART0->LINE = UART_WORD_LEN_8 | UART_PARITY_NONE | UART_STOP_BIT_1;
-}
-
-
-void  vcom_status_callback(CDC_DEV_T *cdev, uint8_t *rdata, int data_len)
-{
-    int  i;
-    printf("[VCOM STS] ");
-    for(i = 0; i < data_len; i++)
-        printf("0x%02x ", rdata[i]);
-    printf("\n");
-}
-
-void  vcom_rx_callback(CDC_DEV_T *cdev, uint8_t *rdata, int data_len)
-{
-    int  i;
-    
-    //printf("[VCOM DATA %d] ", data_len);
-    for (i = 0; i < data_len; i++)
-    {
-        //printf("0x%02x ", rdata[i]);
-        printf("%c", rdata[i]);
-    }
-    //printf("\n");
-    
-    g_rx_ready = 1;   
-}
-
-
-void show_line_coding(LINE_CODING_T *lc)
-{
-	printf("[CDC device line coding]\n");
-	printf("====================================\n");
-	printf("Baud rate:  %d bps\n", lc->baud);
-	printf("Parity:     ");
-	switch (lc->parity)
-	{
-		case 0: printf("None\n");  break;
-		case 1: printf("Odd\n");   break;
-		case 2: printf("Even\n");  break;
-		case 3: printf("Mark\n");  break;
-		case 4: printf("Space\n"); break;
-		default:  printf("Invalid!\n"); break;
-	}
-	printf("Data Bits:  ");
-	switch (lc->data_bits)
-	{
-		case 5 :
-		case 6 :
-		case 7 :
-		case 8 :
-		case 16:
-			printf("%d\n", lc->data_bits);
-			break;
-		default:
-		    printf("Invalid!\n");
-		    break;
-	}
-	printf("Stop Bits:  %s\n\n", (lc->stop_bits == 0) ? "1" : ((lc->stop_bits == 1) ? "1.5" : "2"));
-}
-
-int  init_cdc_device(CDC_DEV_T *cdev)
-{
-    int     ret;
-    LINE_CODING_T  line_code;
-
-    printf("\n\n==================================\n");
-    printf("  Init CDC device : 0x%x\n", (int)cdev);
-    printf("  VID: 0x%x, PID: 0x%x\n\n", cdev->udev->descriptor.idVendor, cdev->udev->descriptor.idProduct);
-
-	ret = USBH_CDC_GetLineCoding(cdev, &line_code);
-	if (ret < 0)
-	{
-		printf("Get Line Coding command failed: %d\n", ret);
-	}
-	else
-	    show_line_coding(&line_code);
-	    
-	line_code.baud = 115200;
-	line_code.parity = 0;
-	line_code.data_bits = 8;
-	line_code.stop_bits = 0;
-
-	ret = USBH_CDC_SetLineCoding(cdev, &line_code);
-	if (ret < 0)
-	{
-		printf("Set Line Coding command failed: %d\n", ret);
-	}
-
-	ret = USBH_CDC_GetLineCoding(cdev, &line_code);
-	if (ret < 0)
-	{
-		printf("Get Line Coding command failed: %d\n", ret);
-	}
-	else
-	{
-		printf("New line coding =>\n");
-	    show_line_coding(&line_code);
-	}
-	
-	USBH_CDC_SetControlLineState(cdev, 1, 1);
-
-    printf("USBH_CDC_StartStatusPipe...\n");
-    USBH_CDC_StartStatusPipe(cdev, vcom_status_callback);
-
-    printf("USBH_CDC_StartRxPipe...\n");
-    USBH_CDC_StartRxPipe(cdev, vcom_rx_callback);
-
-    return 0;
-}
-
-
-/*----------------------------------------------*/
-/* Get a line from the input                    */
-/*----------------------------------------------*/
-void get_line(CDC_DEV_T *cdev, char *buff, int len)
-{
-    char c;
-    int idx = 0;
-    for(;;)
-    {
-    	while (kbhit())   /* wait until any key input */
-    	{
-        	if (cdev->rx_busy == 0)
-     			USBH_CDC_StartRxPipe(cdev, vcom_rx_callback);
-    	}
-        c = getchar();
-        putchar(c);
-        if(c == '\r') break;
-        if((c == '\b') && idx) idx--;
-        if((c >= ' ') && (idx < len - 1)) buff[idx++] = c;
-    }
-    buff[idx] = 0;
-    putchar('\n');
-}
-
-
-
-uint32_t CLK_GetUSBFreq(void)
-{  
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Get USB Peripheral Clock                                                                                */
-    /*---------------------------------------------------------------------------------------------------------*/  
-    /* USB peripheral clock = PLL_CLOCK/USBDIV+1) */    
-    return CLK_GetPLLClockFreq()/(((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk)>>CLK_CLKDIV0_USBDIV_Pos)+1);
+    /* Configure UART0 and set UART0 baud rate */
+    UART_Open(UART0, 115200);
 }
 
 
@@ -267,84 +269,73 @@ uint32_t CLK_GetUSBFreq(void)
  *----------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    CDC_DEV_T    *cdev;
-    int          ret;
+    CDC_DEV_T   *cdev;
+    int         i8Ret;
 
-    /* Lock protected registers */
-    if(SYS->REGLCTL == 1) // In end of main function, program issued CPU reset and write-protection will be disabled.
-        SYS_LockReg();
+    SYS_Init();                        /* Init System, IP clock and multi-function I/O */
 
-    /* Unlock protected registers */
-    SYS_UnlockReg();
+    UART0_Init();                      /* Initialize UART0 */
 
-    SYS_Init(); //In the end of SYS_Init() will issue SYS_LockReg() to lock protected register. If user want to write protected register, please issue SYS_UnlockReg() to unlock protected register.
+    enable_sys_tick(100);
 
-    /* Lock protected registers */
-    SYS_LockReg();
+    printf("\n");
+    printf("+----------------------------------------------------------+\n");
+    printf("|            M451 USB Host VCOM sample program             |\n");
+    printf("+----------------------------------------------------------+\n");
+    printf("|   (NOTE: This sample supports only one CDC device, but   |\n");
+    printf("|          driver supports multiple CDC devices. If you    |\n");
+    printf("|          want to support multiple CDC devices, you       |\n");
+    printf("|          have to modify this sample.                     |\n");
+    printf("+----------------------------------------------------------+\n");
 
-    /* Init UART0 for printf */
-    UART0_Init();
-
-    printf("\n\n");
-    printf(" System clock:   %d Hz.\n", SystemCoreClock);
-    printf(" USB Host clock: %d Hz.\n", CLK_GetUSBFreq());
-    printf("+---------------------------------------------------------+\n");
-    printf("|           M451 USB Host VCOM sample program             |\n");
-    printf("+---------------------------------------------------------+\n");
-    printf("|  (NOTE: This sample supports only one CDC device, but   |\n"); 
-    printf("|         driver supports multiple CDC devices. If you    |\n");
-    printf("|         want to support multiple CDC devices, you       |\n");
-    printf("|         have to modify this sample.                     |\n");
-    printf("+---------------------------------------------------------+\n");
-
-    USBH_Open();
-
-    USBH_CDCInit();
-
-    printf("Wait until any CDC devices connected...\n");
+    usbh_core_init();
+    usbh_cdc_init();
+    usbh_memory_used();
 
     while(1)
     {
-        if (USBH_ProcessHubEvents())              /* USB Host port detect polling and management */
+        if(usbh_pooling_hubs())              /* USB Host port detect polling and management */
         {
-            cdev = USBH_CDCGetDeviceList();
-            if (cdev == NULL)
+            usbh_memory_used();              /* print out USB memory allocating information */
+
+            cdev = usbh_cdc_get_device_list();
+            if(cdev == NULL)
                 continue;
 
-            while (cdev != NULL)
+            while(cdev != NULL)
             {
                 init_cdc_device(cdev);
 
-                if (cdev != NULL)
+                if(cdev != NULL)
                     cdev = cdev->next;
             }
         }
-        
-        cdev = USBH_CDCGetDeviceList();
-        if (cdev == NULL)
-            continue;
-        
-        if (g_rx_ready)
-        {
-        	g_rx_ready = 0;
 
-            if (cdev->rx_busy == 0)
-      			USBH_CDC_StartRxPipe(cdev, vcom_rx_callback);
-    	}
-	
-		/* 
-		 *  Check user input and send to CDC device immediately 
-		 *  (You can also modify it send multiple characters at one time.)
-		 */
-    	if (kbhit() == 0)
-    	{
-            Line[0] = getchar();
-        	ret = USBH_CDC_SendData(cdev, (uint8_t *)Line, 1);                
-        	if (ret != 0)
-            	printf("\n!! Send data failed, 0x%x!\n", ret);
-    	}
+        cdev = usbh_cdc_get_device_list();
+        if(cdev == NULL)
+            continue;
+
+        if(g_i8RxReady)
+        {
+            g_i8RxReady = 0;
+
+            if(cdev->rx_busy == 0)
+                usbh_cdc_start_to_receive_data(cdev, vcom_rx_callback);
+        }
+
+        /*
+         *  Check user input and send to CDC device immediately
+         *  (You can also modify it send multiple characters at one time.)
+         */
+        if(kbhit() == 0)
+        {
+            g_achLine[0] = getchar();
+            i8Ret = usbh_cdc_send_data(cdev, (uint8_t *)g_achLine, 1);
+            if(i8Ret != 0)
+                printf("\n!! Send data failed, 0x%x!\n", i8Ret);
+        }
     }
 }
 
 
-/*** (C) COPYRIGHT 2014~2015 Nuvoton Technology Corp. ***/
+/*** (C) COPYRIGHT 2018 Nuvoton Technology Corp. ***/

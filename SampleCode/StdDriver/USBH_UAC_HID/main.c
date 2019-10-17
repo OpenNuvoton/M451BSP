@@ -1,40 +1,93 @@
 /**************************************************************************//**
  * @file     main.c
  * @version  V1.00
- * $Revision: 5 $
- * $Date: 15/09/02 10:05a $
- * @brief
- *        A USB Host sample code to support USB Audio Class with HID composite device.
+ * @brief    Demonstrates how to use USBH Audio Class driver and HID driver
+ *           at the same time.
+ *           The target device is a Game Audio (UAC+HID composite device).
  *
- * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ *
+ * @copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include <string.h>
+
 #include "M451Series.h"
-#include "usbh_core.h"
+
+#include "usbh_lib.h"
 #include "usbh_uac.h"
 #include "usbh_hid.h"
 
-uint8_t  au_in_buff[2048];
+#define AUDIO_IN_BUFSIZ             8192
 
-static volatile int  au_in_cnt, au_out_cnt;
+#ifdef __ICCARM__
+#pragma data_alignment=32
+uint8_t  au_in_buff[AUDIO_IN_BUFSIZ];
+#else
+uint8_t  au_in_buff[AUDIO_IN_BUFSIZ] __attribute__((aligned(32)));
+#endif
 
-void Delay(uint32_t delayCnt)
+#ifdef __ICCARM__
+#pragma data_alignment=32
+uint8_t  g_au8BuffPool[1024];
+#else
+uint8_t  g_au8BuffPool[1024] __attribute__((aligned(32)));
+#endif
+
+HID_DEV_T   *g_hid_list[CONFIG_HID_MAX_DEV];
+
+static volatile int  g_i8AuInCnt, g_i8AuOutCnt;
+
+static uint16_t  g_u16VolMax, g_u16VolMin, g_u16VolRes, g_u16VolCur;
+
+extern int kbhit(void);                        /* function in retarget.c                 */
+
+
+volatile uint32_t  g_u32TickCnt;
+
+void SysTick_Handler(void)
 {
-    while(delayCnt--)
+    g_u32TickCnt++;
+}
+
+void enable_sys_tick(int ticks_per_second)
+{
+    g_u32TickCnt = 0;
+    if(SysTick_Config(SystemCoreClock / ticks_per_second))
     {
-        __NOP();
-        __NOP();
+        /* Setup SysTick Timer for 1 second interrupts  */
+        printf("Set system tick error!!\n");
+        while(1);
     }
 }
 
+uint32_t get_ticks()
+{
+    return g_u32TickCnt;
+}
+
+/*
+ *  This function is necessary for USB Host library.
+ */
+void delay_us(int usec)
+{
+    /*
+     *  Configure Timer0, clock source from XTL_12M. Prescale 12
+     */
+    /* TIMER0 clock from HXT */
+    CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR0SEL_Msk)) | CLK_CLKSEL1_TMR0SEL_HXT;
+    CLK->APBCLK0 |= CLK_APBCLK0_TMR0CKEN_Msk;
+    TIMER0->CTL = 0;        /* disable timer */
+    TIMER0->INTSTS = (TIMER_INTSTS_TIF_Msk | TIMER_INTSTS_TWKF_Msk);   /* write 1 to clear for safety */
+    TIMER0->CMP = usec;
+    TIMER0->CTL = (11 << TIMER_CTL_PSC_Pos) | TIMER_ONESHOT_MODE | TIMER_CTL_CNTEN_Msk;
+
+    while(!TIMER0->INTSTS);
+}
 
 void SYS_Init(void)
 {
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init System Clock                                                                                       */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Unlock protected registers */
+    SYS_UnlockReg();
 
     /* Enable Internal RC 22.1184MHz clock */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
@@ -65,54 +118,118 @@ void SYS_Init(void)
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
     CLK_SetModuleClock(USBH_MODULE, 0, CLK_CLKDIV0_USB(3));
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init I/O Multi-function                                                                                 */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Enable OTG clock */
+    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;
+
+    /* Configure OTG function as Host-Only */
+    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
+
     /* Set GPD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init USB Host clock                                                                                     */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* USB_VBUS_EN (USB 1.1 VBUS power enable pin) multi-function pin - PA.2 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA2MFP_Msk) | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN;
 
-    // Configure OTG function as Host-Only
-    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
+    /* USB_VBUS_ST (USB 1.1 over-current detect pin) multi-function pin - PA.3 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA3MFP_Msk) | SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST;
 
-#ifdef AUTO_POWER_CONTROL
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PC.4 is VBUS_EN function pin and PC.3 VBUS_ST function pin             */
-    //SYS->GPC_MFPL &= ~(SYS_GPC_MFPL_PC4MFP_Msk | SYS_GPC_MFPL_PC3MFP_Msk);
-    //SYS->GPC_MFPL |=  (SYS_GPC_MFPL_PC3MFP_USB_VBUS_ST | SYS_GPC_MFPL_PC4MFP_USB_VBUS_EN);
-
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PA.2 is VBUS_EN function pin and PA.3 VBUS_ST function pin             */
-    SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA2MFP_Msk | SYS_GPA_MFPL_PA3MFP_Msk);
-    SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN);
-
-    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;   //Enable OTG_EN clock
-#else
-    /* Below settings is use GPIO to enable/disable USB Host power.
-       Set PC.4 output high to enable USB power                               */
-
-    SYS->GPC_MFPL &= ~SYS_GPC_MFPL_PC4MFP_Msk;
-    PC->MODE = (PC->MODE & ~GPIO_MODE_MODE4_Msk) | (0x1 << GPIO_MODE_MODE4_Pos);
-    PC->DOUT |= 0x10;
-#endif
+    /* Lock protected registers */
+    SYS_LockReg();
 }
 
 void UART0_Init(void)
 {
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init UART                                                                                               */
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Reset UART IP */
-    SYS->IPRST1 |=  SYS_IPRST1_UART0RST_Msk;
-    SYS->IPRST1 &= ~SYS_IPRST1_UART0RST_Msk;
+    /* Configure UART0 and set UART0 baud rate */
+    UART_Open(UART0, 115200);
+}
 
-    /* Configure UART0 and set UART0 Baudrate */
-    UART0->BAUD = UART_BAUD_MODE2 | UART_BAUD_MODE2_DIVIDER(__HXT, 115200);
-    UART0->LINE = UART_WORD_LEN_8 | UART_PARITY_NONE | UART_STOP_BIT_1;
+void  dump_buff_hex(uint8_t *pu8Buff, int i8Bytes)
+{
+    int     i8Idx, i8Cnt;
+
+    i8Idx = 0;
+    while(i8Bytes > 0)
+    {
+        printf("0x%04X  ", i8Idx);
+        for(i8Cnt = 0; (i8Cnt < 16) && (i8Bytes > 0); i8Cnt++)
+        {
+            printf("%02x ", pu8Buff[i8Idx + i8Cnt]);
+            i8Bytes--;
+        }
+        i8Idx += 16;
+        printf("\n");
+    }
+    printf("\n");
+}
+
+int  is_a_new_hid_device(HID_DEV_T *hdev)
+{
+    int    i8Cnt;
+    for(i8Cnt = 0; i8Cnt < CONFIG_HID_MAX_DEV; i8Cnt++)
+    {
+        if((g_hid_list[i8Cnt] != NULL) && (g_hid_list[i8Cnt] == hdev) &&
+                (g_hid_list[i8Cnt]->uid == hdev->uid))
+            return 0;
+    }
+    return 1;
+}
+
+void update_hid_device_list(HID_DEV_T *hdev)
+{
+    int  i8Cnt = 0;
+    memset(g_hid_list, 0, sizeof(g_hid_list));
+    while((i8Cnt < CONFIG_HID_MAX_DEV) && (hdev != NULL))
+    {
+        g_hid_list[i8Cnt++] = hdev;
+        hdev = hdev->next;
+    }
+}
+
+void  int_read_callback(HID_DEV_T *hdev, uint16_t u16EpAddr, int i8Status, uint8_t *pu8RData, uint32_t u32DataLen)
+{
+    /*
+     *  USB host HID driver notify user the transfer status via <i8Status> parameter. If the
+     *  If <i8Status> is 0, the USB transfer is fine. If <i8Status> is not zero, this interrupt in
+     *  transfer failed and HID driver will stop this pipe. It can be caused by USB transfer error
+     *  or device disconnected.
+     */
+    if(i8Status < 0)
+    {
+        printf("Interrupt in transfer failed! status: %d\n", i8Status);
+        return;
+    }
+    printf("Device [0x%x,0x%x] ep 0x%x, %d bytes received =>\n",
+           hdev->idVendor, hdev->idProduct, u16EpAddr, u32DataLen);
+    dump_buff_hex(pu8RData, u32DataLen);
+}
+
+int  init_hid_device(HID_DEV_T *hdev)
+{
+    uint8_t   *pu8DataBuff;
+    int       i8Ret;
+
+    pu8DataBuff = (uint8_t *)((uint32_t)g_au8BuffPool);
+
+    printf("\n\n==================================\n");
+    printf("  Init HID device : 0x%x\n", (int)hdev);
+    printf("  VID: 0x%x, PID: 0x%x\n\n", hdev->idVendor, hdev->idProduct);
+
+    i8Ret = usbh_hid_get_report_descriptor(hdev, pu8DataBuff, 1024);
+    if(i8Ret > 0)
+    {
+        printf("\nDump report descriptor =>\n");
+        dump_buff_hex(pu8DataBuff, i8Ret);
+    }
+
+    printf("\nUSBH_HidStartIntReadPipe...\n");
+    i8Ret = usbh_hid_start_int_read(hdev, 0, int_read_callback);
+    if(i8Ret != HID_RET_OK)
+        printf("usbh_hid_start_int_read failed! %d\n", i8Ret);
+    else
+        printf("Interrupt in transfer started...\n");
+
+    return 0;
 }
 
 /**
@@ -120,17 +237,17 @@ void UART0_Init(void)
  *          UAC driver notify user that audio-in data has been moved into user audio-in buffer,
  *          which is provided by user application via UAC_InstallIsoInCbFun().
  *  @param[in] dev    Audio Class device
- *  @param[in] data   Available audio-in data, which is located in user audio-in buffer.
- *  @param[in] len    Length of available audio-in data started from <data>.
+ *  @param[in] pu8Data   Available audio-in data, which is located in user audio-in buffer.
+ *  @param[in] i8Len    Length of available audio-in data started from <pu8Data>.
  *  @return   UAC driver does not check this return value.
  */
-int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
+int audio_in_callback(UAC_DEV_T *dev, uint8_t *pu8Data, int i8Len)
 {
-    au_in_cnt += len;
-    //printf("I %x,%x\n", (int)data & 0xffff, len);   // UART send too many will cause ISO transfer time overrun
+    g_i8AuInCnt += i8Len;
+    //printf("I %x,%x\n", (int)pu8Data & 0xffff, i8Len);   // UART send too many will cause ISO transfer time overrun
 
     // Add your code here to get audio-in data ...
-    // For example, memcpy(audio_record_buffer, data, len);
+    // For example, memcpy(audio_record_buffer, pu8Data, i8Len);
     // . . .
 
     return 0;
@@ -142,71 +259,75 @@ int audio_in_callback(UAC_DEV_T *dev, uint8_t *data, int len)
  *          UAC driver requests user to move audio-out data into the specified address. The audio-out
  *          data will then be send to UAC device via isochronous-out pipe.
  *  @param[in] dev    Audio Class device
- *  @param[in] data   Application should move audio-out data into this buffer.
- *  @param[in] len    Maximum length of audio-out data can be moved.
+ *  @param[in] pu8Data   Application should move audio-out data into this buffer.
+ *  @param[in] i8Len    Maximum length of audio-out data can be moved.
  *  @return   Actual length of audio data moved.
  */
-int audio_out_callback(UAC_DEV_T *dev, uint8_t *data, int len)
+int audio_out_callback(UAC_DEV_T *dev, uint8_t *pu8Data, int i8Len)
 {
-    au_out_cnt += len;
-    //printf("O %x,%x\n", (int)data & 0xffff, len);   // UART send too many will cause ISO transfer time overrun
+    g_i8AuOutCnt += i8Len;
+    //printf("O %x,%x\n", (int)pu8Data & 0xffff, i8Len);   // UART send too many will cause ISO transfer time overrun
 
     // Add your code here to put audio-out data ...
-    // For example, memcpy(data, playback_buffer, actual_len);
+    // For example, memcpy(pu8Data, playback_buffer, actual_len);
     //              return actual_len;
     // . . .
 
-    return 192;   // for 48000 stero Hz
+    return 192;   // for 48000 stereo Hz
 }
 
 
 void  uac_control_example(UAC_DEV_T *uac_dev)
 {
-    uint8_t    data[8];
-    uint32_t   srate[4];
-    uint32_t   val32;
-    uint16_t   val16;
-    uint8_t    val8;
-    int        i, ret;
+    uint16_t   u16Val;
+    uint32_t   au32SRate[4];
+    uint8_t    u8Val;
+    uint8_t    au8Data[8];
+    int        i8Cnt, i8Ret;
+    uint32_t   u32Val;
+
+    g_u16VolMax = g_u16VolMin = g_u16VolRes = 0;
 
     printf("\nGet channel information ===>\n");
 
     /*-------------------------------------------------------------*/
     /*  Get channel number information                             */
     /*-------------------------------------------------------------*/
-    ret = UAC_GetChannelNumber(uac_dev, UAC_SPEAKER);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_channel_number(uac_dev, UAC_SPEAKER);
+    if(i8Ret < 0)
         printf("    Failed to get speaker's channel number.\n");
     else
-        printf("    Speaker: %d\n", ret);
+        printf("    Speaker: %d\n", i8Ret);
 
-    ret = UAC_GetChannelNumber(uac_dev, UAC_MICROPHONE);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_channel_number(uac_dev, UAC_MICROPHONE);
+    if(i8Ret < 0)
         printf("    Failed to get microphone's channel number.\n");
     else
-        printf("    Microphone: %d\n", ret);
+    {
+        printf("    Microphone: %d\n", i8Ret);
+    }
 
     printf("\nGet subframe bit resolution ===>\n");
 
     /*-------------------------------------------------------------*/
     /*  Get audio subframe bit resolution information              */
     /*-------------------------------------------------------------*/
-    ret = UAC_GetBitResolution(uac_dev, UAC_SPEAKER, &val8);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_bit_resolution(uac_dev, UAC_SPEAKER, &u8Val);
+    if(i8Ret < 0)
         printf("    Failed to get speaker's bit resoltion.\n");
     else
     {
-        printf("    Speaker audio subframe size: %d bytes\n", val8);
-        printf("    Speaker subframe bit resolution: %d\n", ret);
+        printf("    Speaker audio subframe size: %d bytes\n", u8Val);
+        printf("    Speaker subframe bit resolution: %d\n", i8Ret);
     }
 
-    ret = UAC_GetBitResolution(uac_dev, UAC_MICROPHONE, &val8);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_bit_resolution(uac_dev, UAC_MICROPHONE, &u8Val);
+    if(i8Ret < 0)
         printf("    Failed to get microphone's bit resoltion.\n");
     else
     {
-        printf("    Microphone audio subframe size: %d bytes\n", val8);
-        printf("    Microphone subframe bit resolution: %d\n", ret);
+        printf("    Microphone audio subframe size: %d bytes\n", u8Val);
+        printf("    Microphone subframe bit resolution: %d\n", i8Ret);
     }
 
     printf("\nGet sampling rate list ===>\n");
@@ -214,31 +335,31 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     /*-------------------------------------------------------------*/
     /*  Get audio subframe bit resolution information              */
     /*-------------------------------------------------------------*/
-    ret = UAC_GetSamplingRate(uac_dev, UAC_SPEAKER, (uint32_t *)&srate[0], 4, &val8);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_sampling_rate(uac_dev, UAC_SPEAKER, (uint32_t *)&au32SRate[0], 4, &u8Val);
+    if(i8Ret < 0)
         printf("    Failed to get speaker's sampling rate.\n");
     else
     {
-        if(val8 == 0)
-            printf("    Speaker sampling rate range: %d ~ %d Hz\n", srate[0], srate[1]);
+        if(u8Val == 0)
+            printf("    Speaker sampling rate range: %d ~ %d Hz\n", au32SRate[0], au32SRate[1]);
         else
         {
-            for(i = 0; i < val8; i++)
-                printf("    Speaker sampling rate: %d\n", srate[i]);
+            for(i8Cnt = 0; i8Cnt < u8Val; i8Cnt++)
+                printf("    Speaker sampling rate: %d\n", au32SRate[i8Cnt]);
         }
     }
 
-    ret = UAC_GetSamplingRate(uac_dev, UAC_MICROPHONE, (uint32_t *)&srate[0], 4, &val8);
-    if(ret < 0)
+    i8Ret = usbh_uac_get_sampling_rate(uac_dev, UAC_MICROPHONE, (uint32_t *)&au32SRate[0], 4, &u8Val);
+    if(i8Ret < 0)
         printf("    Failed to get microphone's sampling rate.\n");
     else
     {
-        if(val8 == 0)
-            printf("    Microphone sampling rate range: %d ~ %d Hz\n", srate[0], srate[1]);
+        if(u8Val == 0)
+            printf("    Microphone sampling rate range: %d ~ %d Hz\n", au32SRate[0], au32SRate[1]);
         else
         {
-            for(i = 0; i < val8; i++)
-                printf("    Microphone sampling rate: %d\n", srate[i]);
+            for(i8Cnt = 0; i8Cnt < u8Val; i8Cnt++)
+                printf("    Microphone sampling rate: %d\n", au32SRate[i8Cnt]);
         }
     }
 
@@ -247,333 +368,338 @@ void  uac_control_example(UAC_DEV_T *uac_dev)
     /*-------------------------------------------------------------*/
     /*  Get current mute value of UAC device's speaker.            */
     /*-------------------------------------------------------------*/
-    if(UAC_MuteControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_MASTER, data) == UAC_RET_OK)
+    if(usbh_uac_mute_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_MASTER, au8Data) == UAC_RET_OK)
     {
-        printf("    Speaker mute state is %d.\n", data[0]);
+        printf("    Speaker mute state is %d.\n", au8Data[0]);
     }
     else
         printf("    Failed to get speaker mute state!\n");
 
     printf("\nSpeaker L(F) volume control ===>\n");
 
+#if 0
     /*--------------------------------------------------------------------------*/
     /*  Get current volume value of UAC device's speaker left channel.          */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker L(F) volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_LEFT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker L(F) volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get seaker L(F) volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get minimum volume value of UAC device's speaker left channel.          */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_MIN, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker L(F) minimum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MIN, UAC_CH_LEFT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker L(F) minimum volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker L(F) minimum volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get maximum volume value of UAC device's speaker left channel.          */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_MAX, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker L(F) maximum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MAX, UAC_CH_LEFT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker L(F) maximum volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker L(F) maximum volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get volume resolution of UAC device's speaker left channel.             */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_RES, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker L(F) volume resolution is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_RES, UAC_CH_LEFT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker L(F) volume resolution is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker L(F) volume resolution!\n");
-
 
     printf("\nSpeaker R(F) volume control ===>\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get current volume value of UAC device's speaker right channel.         */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_RIGHT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker R(F) volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_RIGHT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker R(F) volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker R(F) volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get minimum volume value of UAC device's speaker right channel.         */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_MIN, UAC_CH_RIGHT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker R(F) minimum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MIN, UAC_CH_RIGHT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker R(F) minimum volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker R(F) minimum volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get maximum volume value of UAC device's speaker right channel.         */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_MAX, UAC_CH_RIGHT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker R(F) maximum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MAX, UAC_CH_RIGHT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker R(F) maximum volume is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker R(F) maximum volume!\n");
 
     /*--------------------------------------------------------------------------*/
     /*  Get volume resolution of UAC device's speaker right channel.            */
     /*--------------------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_SPEAKER, UAC_GET_RES, UAC_CH_RIGHT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Speaker R(F) volume resolution is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_RES, UAC_CH_RIGHT_FRONT, &u16Val) == UAC_RET_OK)
+        printf("    Speaker R(F) volume resolution is 0x%x.\n", u16Val);
     else
         printf("    Failed to get speaker R(F) volume resolution!\n");
+#endif
 
+    printf("\nSpeaker master volume control ===>\n");
+
+    /*--------------------------------------------------------------------------*/
+    /*  Get minimum volume value of UAC device's speaker master channel.        */
+    /*--------------------------------------------------------------------------*/
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MIN, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+        printf("    Speaker minimum master volume is 0x%x.\n", u16Val);
+    else
+        printf("    Failed to get speaker master minimum volume!\n");
+
+    /*--------------------------------------------------------------------------*/
+    /*  Get maximum volume value of UAC device's speaker master channel.        */
+    /*--------------------------------------------------------------------------*/
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_MAX, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+        printf("    Speaker maximum master volume is 0x%x.\n", u16Val);
+    else
+        printf("    Failed to get speaker maximum master volume!\n");
+
+    /*--------------------------------------------------------------------------*/
+    /*  Get volume resolution of UAC device's speaker master channel.           */
+    /*--------------------------------------------------------------------------*/
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_RES, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+        printf("    Speaker master volume resolution is 0x%x.\n", u16Val);
+    else
+        printf("    Failed to get speaker master volume resolution!\n");
+
+    /*--------------------------------------------------------------------------*/
+    /*  Get current volume value of UAC device's speaker master channel.        */
+    /*--------------------------------------------------------------------------*/
+    if(usbh_uac_vol_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+        printf("    Speaker master volume is 0x%x.\n", u16Val);
+    else
+        printf("    Failed to get speaker master volume!\n");
+
+#if 0
+    printf("\nMixer master volume control ===>\n");
+
+    /*-------------------------------------------------------------*/
+    /*  Get current mute value of UAC device's microphone.         */
+    /*-------------------------------------------------------------*/
     printf("\nMicrophone mute control ===>\n");
-
-    /*-------------------------------------------------------------*/
-    /*  Get current mute value of UAC device's speaker.            */
-    /*-------------------------------------------------------------*/
-    if(UAC_MuteControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, data) == UAC_RET_OK)
-    {
-        printf("    Microphone mute state is %d.\n", data[0]);
-    }
+    if(usbh_uac_mute_control(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, au8Data) == UAC_RET_OK)
+        printf("    Microphone mute state is %d.\n", au8Data[0]);
     else
         printf("    Failed to get microphone mute state!\n");
+#endif
 
     printf("\nMicrophone volume control ===>\n");
 
     /*-------------------------------------------------------------*/
     /*  Get current volume value of UAC device's microphone.       */
     /*-------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, &val16) == UAC_RET_OK)
-    {
-        printf("    Microphone current volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, &g_u16VolCur) == UAC_RET_OK)
+        printf("    Microphone current volume is 0x%x.\n", g_u16VolCur);
     else
         printf("    Failed to get microphone current volume!\n");
 
     /*-------------------------------------------------------------*/
     /*  Get minimum volume value of UAC device's microphone.       */
     /*-------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_MIN, UAC_CH_MASTER, &val16) == UAC_RET_OK)
-    {
-        printf("    Microphone minimum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_GET_MIN, UAC_CH_MASTER, &g_u16VolMin) == UAC_RET_OK)
+        printf("    Microphone minimum volume is 0x%x.\n", g_u16VolMin);
     else
         printf("    Failed to get microphone minimum volume!\n");
 
     /*-------------------------------------------------------------*/
     /*  Get maximum volume value of UAC device's microphone.       */
     /*-------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_MAX, UAC_CH_MASTER, &val16) == UAC_RET_OK)
-    {
-        printf("    Microphone maximum volume is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_GET_MAX, UAC_CH_MASTER, &g_u16VolMax) == UAC_RET_OK)
+        printf("    Microphone maximum volume is 0x%x.\n", g_u16VolMax);
     else
         printf("    Failed to get microphone maximum volume!\n");
 
     /*-------------------------------------------------------------*/
     /*  Get resolution of UAC device's microphone volume value.    */
     /*-------------------------------------------------------------*/
-    if(UAC_VolumeControl(uac_dev, UAC_MICROPHONE, UAC_GET_RES, UAC_CH_LEFT_FRONT, &val16) == UAC_RET_OK)
-    {
-        printf("    Microphone volume resolution is 0x%x.\n", val16);
-    }
+    if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_GET_RES, UAC_CH_MASTER, &g_u16VolRes) == UAC_RET_OK)
+        printf("    Microphone volume resolution is 0x%x.\n", g_u16VolRes);
     else
         printf("    Failed to get microphone volume resolution!\n");
 
+#if 0
+    /*-------------------------------------------------------------*/
+    /*  Get current auto-gain setting of UAC device's microphone.  */
+    /*-------------------------------------------------------------*/
     printf("\nMicrophone automatic gain control ===>\n");
-
-    /*-------------------------------------------------------------*/
-    /*  Get current mute value of UAC device's speaker.            */
-    /*-------------------------------------------------------------*/
-    if(UAC_AutoGainControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, data) == UAC_RET_OK)
-    {
-        printf("    Microphone auto gain is %s.\n", data[0] ? "ON" : "OFF");
-    }
+    if(UAC_AutoGainControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, au8Data) == UAC_RET_OK)
+        printf("    Microphone auto gain is %s.\n", au8Data[0] ? "ON" : "OFF");
     else
         printf("    Failed to get microphone auto-gain state!\n");
+#endif
 
     printf("\nSampling rate control ===>\n");
 
     /*-------------------------------------------------------------*/
     /*  Get current sampling rate value of UAC device's speaker.   */
     /*-------------------------------------------------------------*/
-    if(UAC_SamplingRateControl(uac_dev, UAC_SPEAKER, UAC_GET_CUR, &val32) == UAC_RET_OK)
-    {
-        printf("    Speaker's current sampling rate is %d.\n", val32);
-    }
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, &u32Val) == UAC_RET_OK)
+        printf("    Speaker's current sampling rate is %d.\n", u32Val);
     else
         printf("    Failed to get speaker's current sampling rate!\n");
 
     /*-------------------------------------------------------------*/
     /*  Set new sampling rate value of UAC device's speaker.       */
     /*-------------------------------------------------------------*/
-    val32 = 48000;
-    if(UAC_SamplingRateControl(uac_dev, UAC_SPEAKER, UAC_SET_CUR, &val32) == UAC_RET_OK)
-    {
-        printf("    Speaker's current sampling rate is %d.\n", val32);
-    }
+    u32Val = 48000;
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_SPEAKER, UAC_SET_CUR, &u32Val) != UAC_RET_OK)
+        printf("    Failed to set Speaker's current sampling rate %d.\n", u32Val);
+
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_SPEAKER, UAC_GET_CUR, &u32Val) == UAC_RET_OK)
+        printf("    Speaker's current sampling rate is %d.\n", u32Val);
     else
-        printf("    Failed to set speaker's current sampling rate!\n");
+        printf("    Failed to get speaker's current sampling rate!\n");
 
     /*-------------------------------------------------------------*/
     /*  Get current sampling rate value of UAC device's microphone.*/
     /*-------------------------------------------------------------*/
-    if(UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, &val32) == UAC_RET_OK)
-    {
-        printf("    Microphone's current sampling rate is %d.\n", val32);
-    }
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, &u32Val) == UAC_RET_OK)
+        printf("    Microphone's current sampling rate is %d.\n", u32Val);
     else
         printf("    Failed to get microphone's current sampling rate!\n");
 
     /*-------------------------------------------------------------*/
     /*  Set new sampling rate value of UAC device's microphone.    */
     /*-------------------------------------------------------------*/
-    val32 = 48000;
-    if(UAC_SamplingRateControl(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, &val32) == UAC_RET_OK)
-    {
-        printf("    Microphone's current sampling rate is %d.\n", val32);
-    }
-    else
+    u32Val = 48000;
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, &u32Val) != UAC_RET_OK)
         printf("    Failed to set microphone's current sampling rate!\n");
+
+    if(usbh_uac_sampling_rate_control(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, &u32Val) == UAC_RET_OK)
+        printf("    Microphone's current sampling rate is %d.\n", u32Val);
+    else
+        printf("    Failed to get microphone's current sampling rate!\n");
 }
 
 
-void  int_read_callback(HID_DEV_T *hdev, uint8_t *rdata, int data_len)
-{
-    int  i;
-    printf("INT-in pipe data %d bytes received =>\n", data_len);
-    for(i = 0; i < data_len; i++)
-        printf("0x%02x ", rdata[i]);
-    printf("\n");
-}
-
-uint32_t CLK_GetUSBFreq(void)
-{  
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Get USB Peripheral Clock                                                                                */
-    /*---------------------------------------------------------------------------------------------------------*/  
-    /* USB Peripheral clock = PLL_CLOCK/USBDIV+1) */    
-    return CLK_GetPLLClockFreq()/(((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk)>>CLK_CLKDIV0_USBDIV_Pos)+1);
-}
-
-/*----------------------------------------------------------------------------
-  MAIN function
- *----------------------------------------------------------------------------*/
 int32_t main(void)
 {
     UAC_DEV_T    *uac_dev;
-    HID_DEV_T    *hdev;
+    HID_DEV_T    *hdev, *hdev_list;
+    int          i8Ch;
+    uint16_t     u16Val;
 
-    /* Lock protected registers */
-    if(SYS->REGLCTL == 1) // In end of main function, program issued CPU reset and write-protection will be disabled.
-        SYS_LockReg();
+    SYS_Init();                        /* Init System, IP clock and multi-function I/O */
 
-    /* Unlock protected registers */
-    SYS_UnlockReg();
-
-    SYS_Init(); //In the end of SYS_Init() will issue SYS_LockReg() to lock protected register. If user want to write protected register, please issue SYS_UnlockReg() to unlock protected register.
-
-    /* Lock protected registers */
-    SYS_LockReg();
-
-    /* Init UART0 for printf */
-    UART0_Init();
+    UART0_Init();                      /* Initialize UART0 */
 
     printf("\n\n");
-    printf(" System clock:   %d Hz.\n", SystemCoreClock);
-    printf(" USB Host clock: %d Hz.\n", CLK_GetUSBFreq());    
-    printf("+--------------------------------------+\n");
-    printf("|                                      |\n");
-    printf("|  M451 USB Host UAC sample program    |\n");
-    printf("|                                      |\n");
-    printf("+--------------------------------------+\n");
+    printf("+--------------------------------------------+\n");
+    printf("|                                            |\n");
+    printf("|    USB Host Audio Class sample program     |\n");
+    printf("|                                            |\n");
+    printf("+--------------------------------------------+\n");
 
-    USBH_Open();
+    enable_sys_tick(100);
 
-    USBH_HidInit();
-    UAC_Init();
+    usbh_core_init();
+    usbh_uac_init();
+    usbh_hid_init();
+    usbh_memory_used();
 
-    printf("Wait until any Audio Class devices connected...\n");
     while(1)
     {
-        USBH_ProcessHubEvents();             /* USB Host port detect polling and management */
-
-        uac_dev = UAC_GetDeviceList();
-        if(uac_dev != NULL)
-            break;
-    }
-
-    hdev = USBH_HidGetDeviceList();
-    if(hdev == NULL)
-    {
-        printf("HID device not found!\n");
-    }
-    else
-    {
-        printf("\nUSBH_HidStartIntReadPipe...\n");
-        if(USBH_HidStartIntReadPipe(hdev, int_read_callback) == HID_RET_OK)
+        if(usbh_pooling_hubs())               /* USB Host port detect polling and management */
         {
-            printf("Interrupt in transfer started...\n");
+            /*
+             *  Has hub port event.
+             */
+
+            uac_dev = usbh_uac_get_device_list();
+            if(uac_dev == NULL)
+                continue;
+
+            if(uac_dev != NULL)               /* should be newly connected UAC device */
+            {
+                usbh_uac_open(uac_dev);
+
+                uac_control_example(uac_dev);
+
+                usbh_uac_start_audio_out(uac_dev, audio_out_callback);
+
+                usbh_uac_start_audio_in(uac_dev, audio_in_callback);
+            }
+
+            hdev_list = usbh_hid_get_device_list();
+            hdev = hdev_list;
+            while(hdev != NULL)
+            {
+                if(is_a_new_hid_device(hdev))
+                {
+                    init_hid_device(hdev);
+                }
+                hdev = hdev->next;
+            }
+            update_hid_device_list(hdev_list);
         }
+
+        if(uac_dev == NULL)
+        {
+            g_i8AuInCnt = 0;
+            g_i8AuOutCnt = 0;
+
+            if(!kbhit())
+            {
+                i8Ch = getchar();
+                usbh_memory_used();
+            }
+
+            continue;
+        }
+
+        if(!kbhit())
+        {
+            i8Ch = getchar();
+
+            if((i8Ch == '+') && (g_u16VolCur + g_u16VolRes <= g_u16VolMax))
+            {
+                printf("+");
+                u16Val = g_u16VolCur + g_u16VolRes;
+                if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+                {
+                    printf("    Microphone set volume 0x%x success.\n", u16Val);
+                    g_u16VolCur = u16Val;
+                }
+                else
+                    printf("    Failed to set microphone volume 0x%x!\n", u16Val);
+            }
+            else if((i8Ch == '-') && (g_u16VolCur - g_u16VolRes >= g_u16VolMin))
+            {
+                printf("-");
+                u16Val = g_u16VolCur - g_u16VolRes;
+                if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_SET_CUR, UAC_CH_MASTER, &u16Val) == UAC_RET_OK)
+                {
+                    printf("    Microphone set volume 0x%x success.\n", u16Val);
+                    g_u16VolCur = u16Val;
+                }
+                else
+                    printf("    Failed to set microphone volume 0x%x!\n", u16Val);
+            }
+            else if((i8Ch == '0') && (g_u16VolCur - g_u16VolRes >= g_u16VolMin))
+            {
+                if(usbh_uac_vol_control(uac_dev, UAC_MICROPHONE, UAC_GET_CUR, UAC_CH_MASTER, &g_u16VolCur) == UAC_RET_OK)
+                    printf("    Microphone current volume is 0x%x.\n", g_u16VolCur);
+                else
+                    printf("    Failed to get microphone current volume!\n");
+            }
+            else
+            {
+                printf("IN: %d, OUT: %d\n", g_i8AuInCnt, g_i8AuOutCnt);
+                usbh_memory_used();
+            }
+
+        }  /* end of kbhit() */
     }
-
-    uac_control_example(uac_dev);
-
-    if(UAC_InstallIsoInCbFun(uac_dev, au_in_buff, 2048, audio_in_callback) != UAC_RET_OK)
-    {
-        printf("Failed to install audio-in callback function!\n");
-        goto err_out;
-    }
-
-    if(UAC_InstallIsoOutCbFun(uac_dev, audio_out_callback) != UAC_RET_OK)
-    {
-        printf("Failed to install audio-out callback function!\n");
-        goto err_out;
-    }
-
-    while(1)
-    {
-        au_in_cnt = 0;
-        au_out_cnt = 0;
-
-        printf("\nStart audio output stream...\n");
-        UAC_StartIsoOutPipe(uac_dev);
-
-        printf("\nStart audio input stream...\n");
-        UAC_StartIsoInPipe(uac_dev);
-
-        while(au_in_cnt < 64 * 1024);
-
-        UAC_StopIsoInPipe(uac_dev);
-        printf("64 KB bytes audio data received.\n");
-        printf("Audio input stream stopped.\n");
-
-        while(au_out_cnt < 64 * 1024) ;
-
-        UAC_StopIsoOutPipe(uac_dev);
-        printf("64 KB bytes audio data send.\n");
-        printf("Audio output stream stopped.\n");
-
-        getchar();
-    }
-
-err_out:
-    printf("\nFailed!\n");
-    while(1);
 }
 
 
-/*** (C) COPYRIGHT 2014~2015 Nuvoton Technology Corp. ***/
+/*** (C) COPYRIGHT 2017 Nuvoton Technology Corp. ***/

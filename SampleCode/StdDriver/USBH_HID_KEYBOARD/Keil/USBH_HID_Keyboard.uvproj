@@ -351,7 +351,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>3</Optim>
+            <Optim>0</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>1</OneElfS>
@@ -377,7 +377,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\..\..\..\Library\CMSIS\Include;..\..\..\..\Library\Device\Nuvoton\M451Series\Include;..\..\..\..\Library\StdDriver\inc;..\..\..\..\Library\UsbHostLib\Include;..\..\..\..\ThirdParty\FATFS\src</IncludePath>
+              <IncludePath>..\..\..\..\Library\CMSIS\Include;..\..\..\..\Library\Device\Nuvoton\M451Series\Include;..\..\..\..\Library\StdDriver\inc;..\..\..\..\Library\UsbHostLib\inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -462,54 +462,49 @@
               <FilePath>..\..\..\..\Library\StdDriver\src\clk.c</FilePath>
             </File>
             <File>
-              <FileName>sys.c</FileName>
+              <FileName>uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\StdDriver\src\sys.c</FilePath>
+              <FilePath>..\..\..\..\Library\StdDriver\src\uart.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>USBH_Core_Lib</GroupName>
+          <GroupName>UsbHostLib</GroupName>
           <Files>
             <File>
-              <FileName>usbh_core.c</FileName>
+              <FileName>hub.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Core\usbh_core.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_core\hub.c</FilePath>
             </File>
             <File>
-              <FileName>usbh_debug.c</FileName>
+              <FileName>mem_alloc.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Core\usbh_debug.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_core\mem_alloc.c</FilePath>
             </File>
             <File>
-              <FileName>usbh_hub.c</FileName>
+              <FileName>ohci.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Core\usbh_hub.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_core\ohci.c</FilePath>
             </File>
             <File>
-              <FileName>usbh_ohci.c</FileName>
+              <FileName>usb_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Core\usbh_ohci.c</FilePath>
-            </File>
-            <File>
-              <FileName>usbh_support.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Core\usbh_support.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_core\usb_core.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
-          <GroupName>USBH_HID_Lib</GroupName>
+          <GroupName>UsbHostLib_HID</GroupName>
           <Files>
             <File>
               <FileName>hid_core.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Hid\hid_core.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_hid\hid_core.c</FilePath>
             </File>
             <File>
               <FileName>hid_driver.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\..\..\..\Library\UsbHostLib\Source\Hid\hid_driver.c</FilePath>
+              <FilePath>..\..\..\..\Library\UsbHostLib\src_hid\hid_driver.c</FilePath>
             </File>
           </Files>
         </Group>

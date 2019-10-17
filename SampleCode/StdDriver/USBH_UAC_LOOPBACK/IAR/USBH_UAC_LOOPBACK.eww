@@ -2,7 +2,7 @@
 
 <workspace>
   <project>
-    <path>$WS_DIR$\USBH_UAC_LOOPBACK.ewp</path>
+    <path>$WS_DIR$\USBH_UAC_LoopBack.ewp</path>
   </project>
   <batchBuild/>
 </workspace>

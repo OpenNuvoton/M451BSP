@@ -1,185 +1,189 @@
 /**************************************************************************
  * @file     usbh_hid_kbd.c
  * @version  V1.00
- * $Revision: 1 $
- * $Date: 16/08/30 11:47a $
  * @brief    M451 MCU USB Host HID keyboard driver
  *
  * @note
- * Copyright (C) 2016 Nuvoton Technology Corp. All rights reserved.
+ * Copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 
 #include <stdio.h>
 #include <string.h>
 
 #include "M451Series.h"
-#include "usbh_core.h"
+
+#include "usbh_lib.h"
 #include "usbh_hid.h"
 #include "usbh_hid_kbd.h"
 
+struct hid_kbd_dev   g_kbd_dev;    /* Support one keyboard device at the same time.         */
+/* If you want to support mulitiple keyboards, please
+   implement an array and handle it.                     */
 
-static const uint8_t numKeys[] = { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')' };
-static const uint8_t symKeysUp[] = { '_', '+', '{', '}', '|', '~', ':', '"', '~', '<', '>', '?' };
-static const uint8_t symKeysLo[] = { '-', '=', '[', ']', '\\', ' ', ';', '\'', '`', ',', '.', '/' };
-static const uint8_t padKeys[] = { '/', '*', '-', '+', 0x13 };
+static const uint8_t au8NumKeys[] = { '!', '@', '#', '$', '%', '^', '&', '*', '(', ')' };
+static const uint8_t au8SymKeysUp[] = { '_', '+', '{', '}', '|', '~', ':', '"', '~', '<', '>', '?' };
+static const uint8_t au8SymKeysLo[] = { '-', '=', '[', ']', '\\', ' ', ';', '\'', '`', ',', '.', '/' };
+static const uint8_t au8PadKeys[] = { '/', '*', '-', '+', 0x13 };
 
 
-void  print_key(uint8_t mod, uint8_t key) 
+void  print_key(uint8_t u8Mod, uint8_t u8Key)
 {
     printf(" mod => ");
 
-   if (mod & LeftCtrl)
-       printf("L-Ctrl");
-   if (mod & LeftShift)
-       printf("L-Shift");
-   if (mod & Alt)
-       printf("Alt");
-   if (mod & LeftCmd)
-       printf("L-Cmd");
-   if (mod & RightCtrl)
-       printf("R-Ctrl");
-   if (mod & RightShift)
-       printf("R-Shift");
-   if (mod & AltGr)
-       printf("AltGr");
-   if (mod & RightCmd)
-      printf("R-Cmd");
+    if(u8Mod & LeftCtrl)
+        printf("L-Ctrl");
+    if(u8Mod & LeftShift)
+        printf("L-Shift");
+    if(u8Mod & Alt)
+        printf("Alt");
+    if(u8Mod & LeftCmd)
+        printf("L-Cmd");
+    if(u8Mod & RightCtrl)
+        printf("R-Ctrl");
+    if(u8Mod & RightShift)
+        printf("R-Shift");
+    if(u8Mod & AltGr)
+        printf("AltGr");
+    if(u8Mod & RightCmd)
+        printf("R-Cmd");
 
-   printf("  %c\n", key);
+    printf("  %c\n", u8Key);
 }
 
 
 /*
  *  Translate OEM key to ASCII code.
  */
-uint8_t  oem_key_to_ascii(HID_DEV_T *hdev, uint8_t mod, uint8_t key)
+uint8_t  oem_key_to_ascii(HID_DEV_T *hdev, uint8_t u8Mod, uint8_t u8Key)
 {
-	struct hid_kbd_dev  *kdev;
-	uint8_t    shift = (mod & 0x22);
-	
-	kdev = (struct hid_kbd_dev *)hdev->client;
+    uint8_t    u8Shift = (u8Mod & 0x22);
 
-	// [a-z]
-	if ((key > 0x03) && (key < 0x1e))
-	{
-		// Upper case letters
-		if ((!(kdev->bLED & LED_CapsLoock) && (mod & 2)) ||
-			 ((kdev->bLED & LED_CapsLoock) && ((mod & 2) == 0)))
-			return (key - 4 + 'A');
+    // [a-z]
+    if((u8Key > 0x03) && (u8Key < 0x1e))
+    {
+        // Upper case letters
+        if((!(g_kbd_dev.bLED & LED_CapsLoock) && (u8Mod & 2)) ||
+                ((g_kbd_dev.bLED & LED_CapsLoock) && ((u8Mod & 2) == 0)))
+            return (u8Key - 4 + 'A');
 
-		// Lower case letters
-		else
-			return (key - 4 + 'a');
-	}
-	// Numbers
-	else if ((key > 0x1d) && (key < 0x27))
-	{
-		if (shift)
-			return (numKeys[key - 0x1e]);
-		else
-			return (key - 0x1e + '1');
-	}
-	// Keypad Numbers
-	else if (key > 0x58 && key < 0x62)
-	{
-		if (kdev->bLED & LED_NumLock)
-			return (key - 0x59 + '1');
-	}
-	else if ((key > 0x2c) && (key < 0x39))
-		return ((shift) ? symKeysUp[key-0x2d] : symKeysLo[key-0x2d]);
-	else if ((key > 0x53) && (key < 0x59))
-		return padKeys[key - 0x54];
-	else
-	{
-		switch (key)
-		{
-			case KEY_SPACE:		return (0x20);
-			case KEY_ENTER:		return (0x13);
-			case KEY_ZERO:		return ((shift) ? ')' : '0');
-			case KEY_ZERO2:		return ((kdev->bLED & LED_NumLock) ? '0' : 0);
-			case KEY_PERIOD:	return ((kdev->bLED & LED_NumLock) ? '.' : 0);
-		}
-	}
-	return 0;
+        // Lower case letters
+        else
+            return (u8Key - 4 + 'a');
+    }
+    // Numbers
+    else if((u8Key > 0x1d) && (u8Key < 0x27))
+    {
+        if(u8Shift)
+            return (au8NumKeys[u8Key - 0x1e]);
+        else
+            return (u8Key - 0x1e + '1');
+    }
+    // Keypad Numbers
+    else if(u8Key > 0x58 && u8Key < 0x62)
+    {
+        if(g_kbd_dev.bLED & LED_NumLock)
+            return (u8Key - 0x59 + '1');
+    }
+    else if((u8Key > 0x2c) && (u8Key < 0x39))
+        return ((u8Shift) ? au8SymKeysUp[u8Key - 0x2d] : au8SymKeysLo[u8Key - 0x2d]);
+    else if((u8Key > 0x53) && (u8Key < 0x59))
+        return au8PadKeys[u8Key - 0x54];
+    else
+    {
+        switch(u8Key)
+        {
+            case KEY_SPACE:
+                return (0x20);
+            case KEY_ENTER:
+                return (0x13);
+            case KEY_ZERO:
+                return ((u8Shift) ? ')' : '0');
+            case KEY_ZERO2:
+                return ((g_kbd_dev.bLED & LED_NumLock) ? '0' : 0);
+            case KEY_PERIOD:
+                return ((g_kbd_dev.bLED & LED_NumLock) ? '.' : 0);
+        }
+    }
+    return 0;
 }
 
 
-uint8_t  update_locking_keys(HID_DEV_T *hdev, uint8_t key)
+uint8_t  update_locking_keys(HID_DEV_T *hdev, uint8_t u8Key)
 {
-	struct hid_kbd_dev  *kdev;
-	uint8_t old_LED;
-	
-	kdev = (struct hid_kbd_dev *)hdev->client;
-	old_LED = kdev->bLED;
+    uint8_t   u8OldLED;
+    int       i8Ret;
 
-	switch (key)
-	{
-		case KEY_NUM_LOCK:
-			kdev->bLED = kdev->bLED ^ LED_NumLock;
-			break;
-		case KEY_CAPS_LOCK:
-			kdev->bLED = kdev->bLED ^ LED_CapsLoock;
-			break;
-		case KEY_SCROLL_LOCK:
-			kdev->bLED = kdev->bLED ^ LED_ScrollLock;
-			break;
-	}
+    u8OldLED = g_kbd_dev.bLED;
 
-	if (kdev->bLED != old_LED)
-	{
-		return HID_HidSetReport(hdev, 2, 0, &kdev->bLED, 1);
-	}
+    switch(u8Key)
+    {
+        case KEY_NUM_LOCK:
+            g_kbd_dev.bLED = g_kbd_dev.bLED ^ LED_NumLock;
+            break;
+        case KEY_CAPS_LOCK:
+            g_kbd_dev.bLED = g_kbd_dev.bLED ^ LED_CapsLoock;
+            break;
+        case KEY_SCROLL_LOCK:
+            g_kbd_dev.bLED = g_kbd_dev.bLED ^ LED_ScrollLock;
+            break;
+    }
 
-	return 0;
+    if(g_kbd_dev.bLED != u8OldLED)
+    {
+        i8Ret = usbh_hid_set_report(hdev, 2, 0, &g_kbd_dev.bLED, 1);
+        if(i8Ret < 0)
+            printf("usbh_hid_set_report failed - %d\n", i8Ret);
+        return i8Ret;
+    }
+
+    return 0;
 }
 
 
-int  kbd_parse_report(HID_DEV_T *hdev, uint8_t *buf, int len)
+int  kbd_parse_report(HID_DEV_T *hdev, uint8_t *pu8Buf, int i8Len)
 {
-	struct hid_kbd_dev  *kdev;
-	int       i, j;
-	char      down, up;
-	uint8_t   key;
-	
-	kdev = (struct hid_kbd_dev *)hdev->client;
-	
-	// On error - return
-	if (buf[2] == 1)
-		return -1;
+    int       i8CntI, i8CntJ;
+    char      chDown, chUp;
+    uint8_t   u8Key;
 
-	for (i = 2; i < 8; ++i)
-	{
-        down = up = 0;
-        
-		for (j = 2; j < 8; j++)
-		{
-			if ((buf[i] == kdev->pre_data[j]) && (buf[i] != 1))
-				down = 1;
-			if ((buf[j] == kdev->pre_data[i]) && (kdev->pre_data[i] != 1))
-				up = 1;
-		}
+    // On error - return
+    if(pu8Buf[2] == 1)
+        return -1;
 
-		if (!down)
-		{
-			update_locking_keys(hdev, buf[i]);
-            printf("Pressed: 0x%x ", buf[i]);
-	        key = oem_key_to_ascii(hdev, buf[0], buf[i]);
-            print_key(buf[0], key);
-		}
+    for(i8CntI = 2; i8CntI < 8; ++i8CntI)
+    {
+        chDown = chUp = 0;
 
-		if (!up)
-		{
-            printf("Released: 0x%x ", buf[i]);
-	        key = oem_key_to_ascii(hdev, buf[0], buf[i]);
-            print_key(buf[0], key);
-		}
-	}
+        for(i8CntJ = 2; i8CntJ < 8; i8CntJ++)
+        {
+            if((pu8Buf[i8CntI] == g_kbd_dev.pre_data[i8CntJ]) && (pu8Buf[i8CntI] != 1))
+                chDown = 1;
+            if((pu8Buf[i8CntJ] == g_kbd_dev.pre_data[i8CntI]) && (g_kbd_dev.pre_data[i8CntI] != 1))
+                chUp = 1;
+        }
 
-	for (i = 0; i < 8; ++i)
-		kdev->pre_data[i] = buf[i];
-		
-	return 0;
+        if(!chDown)
+        {
+            update_locking_keys(hdev, pu8Buf[i8CntI]);
+            printf("Pressed: 0x%x ", pu8Buf[i8CntI]);
+            u8Key = oem_key_to_ascii(hdev, pu8Buf[0], pu8Buf[i8CntI]);
+            print_key(pu8Buf[0], u8Key);
+        }
+
+        if(!chUp)
+        {
+            printf("Released: 0x%x ", pu8Buf[i8CntI]);
+            u8Key = oem_key_to_ascii(hdev, pu8Buf[0], pu8Buf[i8CntI]);
+            print_key(pu8Buf[0], u8Key);
+        }
+    }
+
+    for(i8CntI = 0; i8CntI < 8; ++i8CntI)
+        g_kbd_dev.pre_data[i8CntI] = pu8Buf[i8CntI];
+
+    return 0;
 }
 
-/*** (C) COPYRIGHT 2016 Nuvoton Technology Corp. ***/
+
+/*** (C) COPYRIGHT 2017 Nuvoton Technology Corp. ***/
 

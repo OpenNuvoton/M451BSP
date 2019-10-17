@@ -143,7 +143,7 @@
         <option>
           <name>GBECoreSlave</name>
           <version>20</version>
-          <state>42</state>
+          <state>39</state>
         </option>
         <option>
           <name>OGUseCmsis</name>
@@ -297,11 +297,10 @@
         </option>
         <option>
           <name>CCIncludePath2</name>
-          <state>$PROJ_DIR$\..\..\..\..\Library\Device\Nuvoton\M451Series\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\Library\CMSIS\Include</state>
+          <state>$PROJ_DIR$\..\..\..\..\Library\Device\Nuvoton\M451Series\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\Library\StdDriver\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\ThirdParty\FATFS\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\Include</state>
+          <state>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\Inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -326,7 +325,7 @@
         <option>
           <name>CCOptStrategy</name>
           <version>0</version>
-          <state>0</state>
+          <state>1</state>
         </option>
         <option>
           <name>CCOptLevelSlave</name>
@@ -940,49 +939,43 @@
       <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\retarget.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\sys.c</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\uart.c</name>
     </file>
   </group>
   <group>
-    <name>USBH Core Library</name>
+    <name>UsbHostLib</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_core.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\hub.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_debug.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\mem_alloc.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_hub.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\ohci.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_ohci.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_support.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\usb_core.c</name>
     </file>
   </group>
   <group>
-    <name>USBH HID Library</name>
+    <name>UsbHostLib_HID</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Hid\hid_core.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_hid\hid_core.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Hid\hid_driver.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_hid\hid_driver.c</name>
     </file>
   </group>
   <group>
-    <name>USBH UAC Library</name>
+    <name>UsbHostLib_UAC</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\AudioClass\uac_core.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_uac\uac_core.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\AudioClass\uac_driver.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_uac\uac_driver.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\AudioClass\uac_parser.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_uac\uac_parser.c</name>
     </file>
   </group>
   <group>

@@ -1,42 +1,164 @@
 /**************************************************************************//**
  * @file     main.c
  * @version  V1.00
- * $Revision: 1 $
- * $Date: 16/08/30 11:47a $
- * @brief    This sample shows how to use USB Host driver to handle HID keyboard devices.
+ * @brief    Demonstrate reading key inputs from USB keyboards.
+ *           This sample includes an USB keyboard driver which is based on the HID driver.
  *
- * @note
- * Copyright (C) 2016 Nuvoton Technology Corp. All rights reserved.
+ *
+ * @copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include <string.h>
+
 #include "M451Series.h"
-#include "usbh_core.h"
+
+#include "usbh_lib.h"
 #include "usbh_hid.h"
 
-uint8_t  desc_buff[1024];
+#ifdef __ICCARM__
+#pragma data_alignment=32
+uint8_t  g_au8BuffPool[1024];
+#else
+uint8_t  g_au8BuffPool[1024] __attribute__((aligned(32)));
+#endif
 
-extern int  kbd_parse_report(HID_DEV_T *hdev, uint8_t *buf, int len);
+HID_DEV_T   *g_hid_list[CONFIG_HID_MAX_DEV];
 
-static HID_DEV_T  *hdev_kbd = NULL;
-static uint8_t    kbd_dat[8];
+extern int  kbd_parse_report(HID_DEV_T *hdev, uint8_t *pu8Buf, int i8Len);
 
+static HID_DEV_T  *hdev_ToDo = NULL;
+static uint8_t    g_au8DataToDo[8];
 
-void Delay(uint32_t delayCnt)
+extern int kbhit(void);                        /* function in retarget.c                 */
+
+volatile uint32_t  g_u32TickCnt;
+
+void SysTick_Handler(void)
 {
-    while(delayCnt--)
+    g_u32TickCnt++;
+}
+
+void enable_sys_tick(int ticks_per_second)
+{
+    g_u32TickCnt = 0;
+    if(SysTick_Config(SystemCoreClock / ticks_per_second))
     {
-        __NOP();
-        __NOP();
+        /* Setup SysTick Timer for 1 second interrupts  */
+        printf("Set system tick error!!\n");
+        while(1);
     }
 }
 
+uint32_t get_ticks()
+{
+    return g_u32TickCnt;
+}
+
+/*
+ *  This function is necessary for USB Host library.
+ */
+void delay_us(int usec)
+{
+    /*
+     *  Configure Timer0, clock source from XTL_12M. Prescale 12
+     */
+    /* TIMER0 clock from HXT */
+    CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_TMR0SEL_Msk)) | CLK_CLKSEL1_TMR0SEL_HXT;
+    CLK->APBCLK0 |= CLK_APBCLK0_TMR0CKEN_Msk;
+    TIMER0->CTL = 0;        /* disable timer */
+    TIMER0->INTSTS = (TIMER_INTSTS_TIF_Msk | TIMER_INTSTS_TWKF_Msk);   /* write 1 to clear for safety */
+    TIMER0->CMP = usec;
+    TIMER0->CTL = (11 << TIMER_CTL_PSC_Pos) | TIMER_ONESHOT_MODE | TIMER_CTL_CNTEN_Msk;
+
+    while(!TIMER0->INTSTS);
+}
+
+void  dump_buff_hex(uint8_t *pu8Buff, int i8Bytes)
+{
+    int     i8Idx, i8Cnt;
+
+    i8Idx = 0;
+    while(i8Bytes > 0)
+    {
+        printf("0x%04X  ", i8Idx);
+        for(i8Cnt = 0; (i8Cnt < 16) && (i8Bytes > 0); i8Cnt++)
+        {
+            printf("%02x ", pu8Buff[i8Idx + i8Cnt]);
+            i8Bytes--;
+        }
+        i8Idx += 16;
+        printf("\n");
+    }
+    printf("\n");
+}
+
+int  is_a_new_hid_device(HID_DEV_T *hdev)
+{
+    int    i;
+    for(i = 0; i < CONFIG_HID_MAX_DEV; i++)
+    {
+        if((g_hid_list[i] != NULL) && (g_hid_list[i] == hdev) &&
+                (g_hid_list[i]->uid == hdev->uid))
+            return 0;
+    }
+    return 1;
+}
+
+void update_hid_device_list(HID_DEV_T *hdev)
+{
+    int  i = 0;
+    memset(g_hid_list, 0, sizeof(g_hid_list));
+    while((i < CONFIG_HID_MAX_DEV) && (hdev != NULL))
+    {
+        g_hid_list[i++] = hdev;
+        hdev = hdev->next;
+    }
+}
+
+void  int_read_callback(HID_DEV_T *hdev, uint16_t u16EpAddr, int i8Status, uint8_t *pu8RData, uint32_t u32DataLen)
+{
+    /*
+     *  This callback is in interrupt context.
+     *  Copy the device and data and then handle it somewhere not in interrupt context.
+     */
+    //dump_buff_hex(pu8RData, u32DataLen);
+    hdev_ToDo = hdev;
+    memcpy(g_au8DataToDo, pu8RData, sizeof(g_au8DataToDo));
+}
+
+
+int  init_hid_device(HID_DEV_T *hdev)
+{
+    uint8_t   *pu8DataBuff;
+    int       i8Ret;
+
+    pu8DataBuff = (uint8_t *)((uint32_t)g_au8BuffPool);
+
+    printf("\n\n==================================\n");
+    printf("  Init HID device : 0x%x\n", (int)hdev);
+    printf("  VID: 0x%x, PID: 0x%x\n\n", hdev->idVendor, hdev->idProduct);
+
+    i8Ret = usbh_hid_get_report_descriptor(hdev, pu8DataBuff, 1024);
+    if(i8Ret > 0)
+    {
+        printf("\nDump report descriptor =>\n");
+        dump_buff_hex(pu8DataBuff, i8Ret);
+    }
+
+    printf("\nUSBH_HidStartIntReadPipe...\n");
+    i8Ret = usbh_hid_start_int_read(hdev, 0, int_read_callback);
+    if(i8Ret != HID_RET_OK)
+        printf("usbh_hid_start_int_read failed! %d\n", i8Ret);
+    else
+        printf("Interrupt in transfer started...\n");
+
+    return 0;
+}
 
 void SYS_Init(void)
 {
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init System Clock                                                                                       */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Unlock protected registers */
+    SYS_UnlockReg();
 
     /* Enable Internal RC 22.1184MHz clock */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
@@ -67,183 +189,91 @@ void SYS_Init(void)
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
     CLK_SetModuleClock(USBH_MODULE, 0, CLK_CLKDIV0_USB(3));
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init I/O Multi-function                                                                                 */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* Enable OTG clock */
+    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;
+
+    /* Configure OTG function as Host-Only */
+    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
+
     /* Set GPD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init USB Host clock                                                                                     */
-    /*---------------------------------------------------------------------------------------------------------*/
+    /* USB_VBUS_EN (USB 1.1 VBUS power enable pin) multi-function pin - PA.2 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA2MFP_Msk) | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN;
 
-    // Configure OTG function as Host-Only
-    SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk | SYS_USBPHY_USBROLE_STD_USBH;
-
-#ifdef AUTO_POWER_CONTROL
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PC.4 is VBUS_EN function pin and PC.3 VBUS_ST function pin             */
-    //SYS->GPC_MFPL &= ~(SYS_GPC_MFPL_PC4MFP_Msk | SYS_GPC_MFPL_PC3MFP_Msk);
-    //SYS->GPC_MFPL |=  (SYS_GPC_MFPL_PC3MFP_USB_VBUS_ST | SYS_GPC_MFPL_PC4MFP_USB_VBUS_EN);
-
-    /* Below settings is use power switch IC to enable/disable USB Host power.
-       Set PA.2 is VBUS_EN function pin and PA.3 VBUS_ST function pin             */
-    SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA2MFP_Msk | SYS_GPA_MFPL_PA3MFP_Msk);
-    SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST | SYS_GPA_MFPL_PA2MFP_USB_VBUS_EN);
-
-    CLK->APBCLK0 |= CLK_APBCLK0_OTGCKEN_Msk;   //Enable OTG_EN clock
-#else
-    /* Below settings is use GPIO to enable/disable USB Host power.
-       Set PC.4 output high to enable USB power                               */
-
-    SYS->GPC_MFPL &= ~SYS_GPC_MFPL_PC4MFP_Msk;
-    PC->MODE = (PC->MODE & ~GPIO_MODE_MODE4_Msk) | (0x1 << GPIO_MODE_MODE4_Pos);
-    PC->DOUT |= 0x10;
-#endif
-}
-
-
-void UART0_Init(void)
-{
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Init UART                                                                                               */
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Reset UART IP */
-    SYS->IPRST1 |=  SYS_IPRST1_UART0RST_Msk;
-    SYS->IPRST1 &= ~SYS_IPRST1_UART0RST_Msk;
-
-    /* Configure UART0 and set UART0 Baudrate */
-    UART0->BAUD = UART_BAUD_MODE2 | UART_BAUD_MODE2_DIVIDER(__HXT, 115200);
-    UART0->LINE = UART_WORD_LEN_8 | UART_PARITY_NONE | UART_STOP_BIT_1;
-}
-
-
-void  int_read_callback(HID_DEV_T *hdev, uint8_t *rdata, int data_len)
-{
-    int  i;
-
-	if ((hdev->bSubClassCode == 1) && (hdev->bProtocolCode == 1))
-	{
-		hdev_kbd = hdev;
-		memcpy(kbd_dat, rdata, sizeof(kbd_dat));
-	}
-	else
-	{
-    	printf("Device [0x%x,0x%x] %d bytes received =>\n",
-           	hdev->udev->descriptor.idVendor, hdev->udev->descriptor.idProduct, data_len);
-    	for(i = 0; i < data_len; i++)
-        	printf("0x%02x ", rdata[i]);
-    	printf("\n");
-    }
-}
-
-
-int  init_hid_device(HID_DEV_T *hdev)
-{
-    int   i, ret;
-
-    printf("\n\n==================================\n");
-    printf("  Init HID device : 0x%x\n", (int)hdev);
-    printf("  VID: 0x%x, PID: 0x%x\n\n", hdev->udev->descriptor.idVendor, hdev->udev->descriptor.idProduct);
-
-    ret = HID_HidGetReportDescriptor(hdev, desc_buff, 1024);
-    if(ret > 0)
-    {
-        printf("\nDump report descriptor =>\n");
-        for(i = 0; i < ret; i++)
-        {
-            if((i % 16) == 0)
-                printf("\n");
-            printf("%02x ", desc_buff[i]);
-        }
-        printf("\n\n");
-    }
-
-    /*
-     *  SET_REPORT with report ID 0, report type RT_OUTPUT.
-     *  Some keyboard device require this command to trigger.
-     */
-    desc_buff[0] = 0;
-    HID_HidSetReport(hdev, RT_OUTPUT, 0, desc_buff, 1);
-
-    printf("\nUSBH_HidStartIntReadPipe...\n");
-    if(USBH_HidStartIntReadPipe(hdev, int_read_callback) == HID_RET_OK)
-    {
-        printf("Interrupt in transfer started...\n");
-    }
-    return 0;
-}
-
-uint32_t CLK_GetUSBFreq(void)
-{  
-    /*---------------------------------------------------------------------------------------------------------*/
-    /* Get USB Peripheral Clock                                                                                */
-    /*---------------------------------------------------------------------------------------------------------*/  
-    /* USB Peripheral clock = PLL_CLOCK/USBDIV+1) */    
-    return CLK_GetPLLClockFreq()/(((CLK->CLKDIV0 & CLK_CLKDIV0_USBDIV_Msk)>>CLK_CLKDIV0_USBDIV_Pos)+1);
-}
-
-/*----------------------------------------------------------------------------
-  MAIN function
- *----------------------------------------------------------------------------*/
-int32_t main(void)
-{
-    HID_DEV_T    *hdev;
-
-    /* Lock protected registers */
-    if(SYS->REGLCTL == 1) // In end of main function, program issued CPU reset and write-protection will be disabled.
-        SYS_LockReg();
-
-    /* Unlock protected registers */
-    SYS_UnlockReg();
-
-    SYS_Init(); //In the end of SYS_Init() will issue SYS_LockReg() to lock protected register. If user want to write protected register, please issue SYS_UnlockReg() to unlock protected register.
+    /* USB_VBUS_ST (USB 1.1 over-current detect pin) multi-function pin - PA.3 */
+    SYS->GPA_MFPL = (SYS->GPA_MFPL & ~SYS_GPA_MFPL_PA3MFP_Msk) | SYS_GPA_MFPL_PA3MFP_USB_VBUS_ST;
 
     /* Lock protected registers */
     SYS_LockReg();
+}
 
-    /* Init UART0 for printf */
-    UART0_Init();
+void UART0_Init(void)
+{
+    /* Configure UART0 and set UART0 baud rate */
+    UART_Open(UART0, 115200);
+}
+
+
+int32_t main(void)
+{
+    HID_DEV_T    *hdev, *hdev_list;
+
+    SYS_Init();                        /* Init System, IP clock and multi-function I/O */
+
+    UART0_Init();                      /* Initialize UART0 */
+
+    enable_sys_tick(100);
 
     printf("\n\n");
-    printf(" System clock:   %d Hz.\n", SystemCoreClock);
-    printf(" USB Host clock: %d Hz.\n", CLK_GetUSBFreq());    
-    printf("+--------------------------------------+\n");
-    printf("|                                      |\n");
-    printf("|  M451 USB Host HID sample program    |\n");
-    printf("|                                      |\n");
-    printf("+--------------------------------------+\n");
+    printf("+--------------------------------------------+\n");
+    printf("|                                            |\n");
+    printf("|       USB Host HID class sample demo       |\n");
+    printf("|                                            |\n");
+    printf("+--------------------------------------------+\n");
 
-    USBH_Open();
+    usbh_core_init();
+    usbh_hid_init();
+    usbh_memory_used();
 
-    USBH_HidInit();
-
-    printf("Wait until any HID devices connected...\n");
+    memset(g_hid_list, 0, sizeof(g_hid_list));
 
     while(1)
     {
-        if(USBH_ProcessHubEvents())              /* USB Host port detect polling and management */
+        if(usbh_pooling_hubs())              /* USB Host port detect polling and management */
         {
-            hdev = USBH_HidGetDeviceList();
-            if(hdev == NULL)
-                continue;
+            usbh_memory_used();              /* print out USB memory allocating information */
 
+            printf("\n Has hub events.\n");
+            hdev_list = usbh_hid_get_device_list();
+            hdev = hdev_list;
             while(hdev != NULL)
             {
-                init_hid_device(hdev);
-
-                if(hdev != NULL)
-                    hdev = hdev->next;
+                if(is_a_new_hid_device(hdev))
+                {
+                    init_hid_device(hdev);
+                }
+                hdev = hdev->next;
             }
+
+            update_hid_device_list(hdev_list);
+            usbh_memory_used();
         }
 
-        if (hdev_kbd != NULL)
+        if(hdev_ToDo != NULL)
         {
-			kbd_parse_report(hdev_kbd, kbd_dat, 8);
-			hdev_kbd = NULL;
-		}
+            kbd_parse_report(hdev_ToDo, g_au8DataToDo, 8);
+            hdev_ToDo = NULL;
+        }
+
+        if(!kbhit())
+        {
+            getchar();
+            usbh_memory_used();
+        }
     }
 }
 
-/*** (C) COPYRIGHT 2016 Nuvoton Technology Corp. ***/
+
+/*** (C) COPYRIGHT 2017 Nuvoton Technology Corp. ***/

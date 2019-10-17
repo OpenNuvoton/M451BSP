@@ -143,7 +143,7 @@
         <option>
           <name>GBECoreSlave</name>
           <version>20</version>
-          <state>40</state>
+          <state>39</state>
         </option>
         <option>
           <name>OGUseCmsis</name>
@@ -297,12 +297,10 @@
         </option>
         <option>
           <name>CCIncludePath2</name>
-          <state>$PROJ_DIR$\..\..\..\..\Library\Device\Nuvoton\M451Series\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\Library\CMSIS\Include</state>
+          <state>$PROJ_DIR$\..\..\..\..\Library\Device\Nuvoton\M451Series\Include</state>
           <state>$PROJ_DIR$\..\..\..\..\Library\StdDriver\inc</state>
-          <state>$PROJ_DIR$\..\..\..\..\ThirdParty\FATFS\src</state>
-          <state>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\Include</state>
-          <state>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\Include\inc_mass</state>
+          <state>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\Inc</state>
         </option>
         <option>
           <name>CCStdIncCheck</name>
@@ -577,7 +575,7 @@
         </option>
         <option>
           <name>OOCOutputFile</name>
-          <state>usbh_vcom.bin</state>
+          <state>USBH_VCOM.bin</state>
         </option>
         <option>
           <name>OOCCommandLineProducer</name>
@@ -631,7 +629,7 @@
         </option>
         <option>
           <name>IlinkOutputFile</name>
-          <state>usbh_vcom.out</state>
+          <state>USBH_VCOM.out</state>
         </option>
         <option>
           <name>IlinkDebugInfoEnable</name>
@@ -695,7 +693,7 @@
         </option>
         <option>
           <name>IlinkIcfFile</name>
-          <state>$PROJ_DIR$\usbh_vcom.icf</state>
+          <state>$PROJ_DIR$\USBH_VCOM.icf</state>
         </option>
         <option>
           <name>IlinkIcfFileSlave</name>
@@ -938,46 +936,37 @@
       <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\clk.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\ThirdParty\FATFS\src\ff.c</name>
-    </file>
-    <file>
       <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\retarget.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\sys.c</name>
     </file>
     <file>
       <name>$PROJ_DIR$\..\..\..\..\Library\StdDriver\src\uart.c</name>
     </file>
   </group>
   <group>
-    <name>USBH Core Files</name>
+    <name>UsbHostLib</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_core.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\hub.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_debug.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\mem_alloc.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_hub.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\ohci.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_ohci.c</name>
-    </file>
-    <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\Core\usbh_support.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_core\usb_core.c</name>
     </file>
   </group>
   <group>
-    <name>USBH CDC Files</name>
+    <name>UsbHostLib_VCOM</name>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\CDC\cdc_core.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_cdc\cdc_core.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\CDC\cdc_driver.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_cdc\cdc_driver.c</name>
     </file>
     <file>
-      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\SOURCE\CDC\cdc_parser.c</name>
+      <name>$PROJ_DIR$\..\..\..\..\Library\UsbHostLib\src_cdc\cdc_parser.c</name>
     </file>
   </group>
   <group>

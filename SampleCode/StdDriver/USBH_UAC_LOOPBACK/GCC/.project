@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>USBH_UAC_LOOPBACK</name>
+	<name>USBH_UAC_LoopBack</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -45,14 +45,14 @@
 			<locationURI>PARENT-4-PROJECT_LOC/Library/StdDriver/src</locationURI>
 		</link>
 		<link>
-			<name>USBH_Core_Lib/USBH_Core_Lib</name>
+			<name>UsbHostLib/UsbHostLib</name>
 			<type>2</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/SOURCE/Core</locationURI>
+			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/src_core</locationURI>
 		</link>
 		<link>
-			<name>USBH_UAC_Lib/USBH_UAC_Lib</name>
+			<name>UsbHostLib_UAC/UsbHostLib_UAC</name>
 			<type>2</type>
-			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/SOURCE/AudioClass</locationURI>
+			<locationURI>PARENT-4-PROJECT_LOC/Library/UsbHostLib/src_uac</locationURI>
 		</link>
 		<link>
 			<name>User/main.c</name>
@@ -81,6 +81,42 @@
 			<type>5</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.andFilterMatcher</id>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1570172564560</id>
+			<name>UsbHostLib/UsbHostLib</name>
+			<type>9</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-*.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1570178847190</id>
+			<name>UsbHostLib_UAC/UsbHostLib_UAC</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-uac_driver.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1570178847206</id>
+			<name>UsbHostLib_UAC/UsbHostLib_UAC</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-uac_core.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1570178847221</id>
+			<name>UsbHostLib_UAC/UsbHostLib_UAC</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-uac_parser.c</arguments>
 			</matcher>
 		</filter>
 	</filteredResources>

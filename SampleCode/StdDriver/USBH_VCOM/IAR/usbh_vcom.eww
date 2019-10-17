@@ -2,7 +2,7 @@
 
 <workspace>
   <project>
-    <path>$WS_DIR$\usbh_vcom.ewp</path>
+    <path>$WS_DIR$\USBH_VCOM.ewp</path>
   </project>
   <batchBuild/>
 </workspace>

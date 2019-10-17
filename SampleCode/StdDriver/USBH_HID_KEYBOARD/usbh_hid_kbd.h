@@ -2,31 +2,29 @@
  * @file     usbh_hid_kbd.h
  * @brief    M451 USB Host HID keyboard driver header file
  * @version  V1.00
- * $Revision: 1 $
- * $Date: 16/08/30 11:47a $
  *
  * @note
- * Copyright (C) 2016 Nuvoton Technology Corp. All rights reserved.
+ * Copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
-#ifndef __USBD_KBD_H__
-#define __USBD_KBD_H__
+#ifndef __USBH_HID_KBD_H__
+#define __USBH_HID_KBD_H__
 
 
 /* Keyboard Modifiers */
 enum kbd_mod
 {
-	LeftCtrl   = 0x01,
-	LeftShift  = 0x02,
-	Alt        = 0x04,
-	LeftCmd    = 0x08,
-	RightCtrl  = 0x10,
-	RightShift = 0x20,
-	AltGr      = 0x40,
-	RightCmd   = 0x80
+    LeftCtrl   = 0x01,
+    LeftShift  = 0x02,
+    Alt        = 0x04,
+    LeftCmd    = 0x08,
+    RightCtrl  = 0x10,
+    RightShift = 0x20,
+    AltGr      = 0x40,
+    RightCmd   = 0x80
 };
 
 
-#define LED_NumLock		  0x01
+#define LED_NumLock       0x01
 #define LED_CapsLoock     0x02
 #define LED_ScrollLock    0x04
 
@@ -44,10 +42,13 @@ enum kbd_mod
 
 struct hid_kbd_dev
 {
-	uint8_t    pre_data[8];     /* previous recevied report */
-	uint8_t    bLED;
+    uint8_t    pre_data[8];     /* previous received report */
+    uint8_t    bLED;
 };
 
-#endif  /* __USBH_HID_KBD_H_ */
 
-/*** (C) COPYRIGHT 2016 Nuvoton Technology Corp. ***/
+
+
+#endif  /* __USBH_HID_KBD_H__ */
+
+/*** (C) COPYRIGHT 2017 Nuvoton Technology Corp. ***/
