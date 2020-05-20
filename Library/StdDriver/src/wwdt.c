@@ -6,6 +6,7 @@
  * @brief    M451 series WWDT driver source file
  *
  * @note
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include "M451Series.h"

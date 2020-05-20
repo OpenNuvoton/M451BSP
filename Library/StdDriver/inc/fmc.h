@@ -6,6 +6,7 @@
  * @brief    M451 Series Flash Memory Controller Driver Header File
  *
  * @note
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2011~2015 Nuvoton Technology Corp. All rights reserved.
  *
  ******************************************************************************/

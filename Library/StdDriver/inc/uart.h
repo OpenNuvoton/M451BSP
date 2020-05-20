@@ -6,6 +6,7 @@
  * @brief    M451 series UART driver header file
  *
  * @note
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #ifndef __UART_H__

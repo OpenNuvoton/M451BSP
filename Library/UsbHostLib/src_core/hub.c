@@ -4,6 +4,7 @@
  * @brief   USB Host library hub class driver.
  *
  * @note
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 

@@ -4,6 +4,7 @@
  * @brief    M451 MCU USB Host Audio Class driver
  *
  * @note     Support mono and stereo audio input and output.
+ * SPDX-License-Identifier: Apache-2.0
  * Copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 

@@ -6,6 +6,7 @@
 ; * @brief    CMSIS Cortex-M4 Core Device Startup File for NUC451 Series MCU
 ; *
 ; * @note
+; * SPDX-License-Identifier: Apache-2.0
 ; * Copyright (C) 2014 Nuvoton Technology Corp. All rights reserved.
 ;*****************************************************************************/
 
