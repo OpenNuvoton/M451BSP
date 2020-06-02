@@ -81,7 +81,6 @@ void SYS_Init(void)
 
     /* Enable peripheral clock */
     CLK_EnableModuleClock(UART0_MODULE);
-    CLK_EnableModuleClock(CRC_MODULE);
 
     /* Peripheral clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_PLL, CLK_CLKDIV0_UART(1));
@@ -101,7 +100,7 @@ void UART0_Init()
 
 void MPU_Test(void)
 {
-    uint8_t u8TestItem = 0;
+    int32_t i32TestItem = 0;
 
     /*------------------------------
       Configure MPU memory regions
@@ -110,8 +109,8 @@ void MPU_Test(void)
     /*
       Region 1 (Flash Memory Space)
       Start address = 0x0
-      Permission = Full access
       Size = 128KB
+      Permission = Full access
     */
     /* Base address = Base address :OR: Region number :OR: VALID bit */
     MPU->RBAR = ((0x00000000 & MPU_RBAR_ADDR_Msk) | (0x1 & MPU_RBAR_REGION_Msk) | MPU_RBAR_VALID_Msk);
@@ -121,8 +120,8 @@ void MPU_Test(void)
     /*
       Region 2 (SRAM Memory Space)
       Start address = 0x20000000
-      Permission = Full access
       Size = 16KB
+      Permission = Full access
     */
 
     /* Base address = Base address :OR: Region number :OR: VALID bit */
@@ -133,8 +132,8 @@ void MPU_Test(void)
     /*
       Region 3 (Test Memory Space)
       Start address = 0x20004000
-      Permission = No Access
       Size = 1KB
+      Permission = No Access
     */
     /* Base address = Base address :OR: Region number :OR: VALID bit */
     MPU->RBAR = ((0x20004000 & MPU_RBAR_ADDR_Msk) | (0x3 & MPU_RBAR_REGION_Msk) | MPU_RBAR_VALID_Msk);
@@ -146,22 +145,48 @@ void MPU_Test(void)
     /* Enable MPU */
     MPU->CTRL |= MPU_CTRL_PRIVDEFENA_Msk | MPU_CTRL_ENABLE_Msk;
 
-    printf("\n Please Press '1' to read memory from region 1 (Flash Memory)\n");
+    printf("\n\n ==============================================\n");
+    printf(" Memory Region 1 (Flash Memory) configuration:\n");
+    printf(" ==============================================\n");
+    printf(" Start address : 0x00000000\n");
+    printf(" End address   : 0x0001FFFF\n");
+    printf(" Size          : 128 KB\n");
+    printf(" Permission    : Full access\n");
+    printf(" ----------------------------------------------\n");
+    printf(" Please Press '1' to read memory successfully from region 1 (Flash Memory).\n");
 
-    while(u8TestItem != '1') u8TestItem = getchar();
+    while(i32TestItem != '1') i32TestItem = getchar();
 
-    ReadMemCore(0x00000000);
+    printf("\n Read value from 0x00000000 is 0x%08X.\n", ReadMemCore(0x00000000));
 
-    printf("\n Please Press '2' to read memory from region 2 (SRAM)\n");
+    printf("\n\n ==============================================\n");
+    printf(" Memory Region 2 (SRAM Memory) configuration:\n");
+    printf(" ==============================================\n");
+    printf(" Start address : 0x20000000\n");
+    printf(" End address   : 0x20003FFF\n");
+    printf(" Size          : 16 KB\n");
+    printf(" Permission    : Full access\n");
+    printf(" ----------------------------------------------\n");
+    printf(" Please Press '2' to read memory successfully from region 2 (SRAM Memory).\n");
 
-    while(u8TestItem != '2') u8TestItem = getchar();
+    while(i32TestItem != '2') i32TestItem = getchar();
 
-    ReadMemCore(0x20000000);
+    printf("\n Read value from 0x20000000 is 0x%08X.\n", ReadMemCore(0x20000000));
 
-    printf("\n Please Press '3' to read memory from region 3 (Test Memory)\n");
+    printf("\n\n ==============================================\n");
+    printf(" Memory Region 3 (Test Memory) configuration:\n");
+    printf(" ==============================================\n");
+    printf(" Start address : 0x20004000\n");
+    printf(" End address   : 0x200043FF\n");
+    printf(" Size          : 1 KB\n");
+    printf(" Permission    : No access\n");
+    printf(" ----------------------------------------------\n");
+    printf(" Please Press '3' to read memory from region 3 (Test Memory).\n");
+    printf(" (It should trigger a memory fault exception!)\n");
 
-    while(u8TestItem != '3') u8TestItem = getchar();
+    while(i32TestItem != '3') i32TestItem = getchar();
 
+    /* Read memory from address 0x20004000 */
     ReadMemCore(0x20004000);
 }
 
