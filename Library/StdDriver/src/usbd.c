@@ -143,9 +143,9 @@ void USBD_GetSetupPacket(uint8_t *buf)
 void USBD_ProcessSetupPacket(void)
 {
     g_usbd_CtrlOutToggle = 0;
-
     /* Get SETUP packet from USB buffer */
     USBD_MemCopy(g_usbd_SetupPacket, (uint8_t *)USBD_BUF_BASE, 8);
+
     /* Check the request type */
     switch(g_usbd_SetupPacket[0] & 0x60)
     {
@@ -235,7 +235,7 @@ void USBD_GetDescriptor(void)
         // Get HID Descriptor
         case DESC_HID:
         {
-            /* CV3.0 HID Class Descriptor Test, 
+            /* CV3.0 HID Class Descriptor Test,
                Need to indicate index of the HID Descriptor within gu8ConfigDescriptor, specifically HID Composite device. */
             uint32_t u32ConfigDescOffset;   // u32ConfigDescOffset is configuration descriptor offset (HID descriptor start index)
             u32Len = Minimum(u32Len, LEN_HID);
@@ -726,7 +726,7 @@ void USBD_SetConfigCallback(SET_CONFIG_CB pfnSetConfigCallback)
  *
  * @return      None
  *
- * @details     This function is used to lock relative endpoint to avoid stall clear by SET FEATURE requst.
+ * @details     This function is used to lock relative endpoint to avoid stall clear by SET FEATURE request.
  *              If ep stall locked, user needs to reset USB device or re-configure device to clear it.
  */
 void USBD_LockEpStall(uint32_t u32EpBitmap)

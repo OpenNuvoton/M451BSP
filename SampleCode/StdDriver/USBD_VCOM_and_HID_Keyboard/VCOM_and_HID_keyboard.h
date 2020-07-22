@@ -100,6 +100,7 @@ extern volatile uint16_t comTtail;
 extern volatile uint8_t *gpu8RxBuf;
 extern volatile uint32_t gu32RxSize;
 extern volatile uint32_t gu32TxSize;
+extern uint8_t volatile g_u8Suspend;
 
 /*-------------------------------------------------------------*/
 

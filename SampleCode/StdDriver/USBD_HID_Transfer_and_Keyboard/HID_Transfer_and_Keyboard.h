@@ -79,6 +79,8 @@ void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size);
 void EP4_Handler(void);
 void HID_UpdateKbData(void);
 
+extern uint8_t volatile g_u8Suspend;
+
 #endif  /* __USBD_HID_H_ */
 
 /*** (C) COPYRIGHT 2013~2015 Nuvoton Technology Corp. ***/

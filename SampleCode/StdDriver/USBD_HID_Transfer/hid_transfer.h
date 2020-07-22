@@ -72,6 +72,8 @@ void EP3_Handler(void);
 void HID_SetInReport(void);
 void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size);
 
+extern uint8_t volatile g_u8Suspend;
+
 #endif  /* __USBD_HID_H_ */
 
 /*** (C) COPYRIGHT 2013~2015 Nuvoton Technology Corp. ***/

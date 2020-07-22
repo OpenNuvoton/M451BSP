@@ -231,12 +231,20 @@ extern "C"
 #define SPI_TRIGGER_TX_PDMA(spi)   ((spi)->PDMACTL |= SPI_PDMACTL_TXPDMAEN_Msk)
 
 /**
+  * @brief      Trigger TX and RX PDMA function.
+  * @param[in]  spi The pointer of the specified SPI module.
+  * @return     None.
+  * @details    Set TXPDMAEN bit and RXPDMAEN bit of SPI_PDMACTL register to enable TX and RX PDMA transfer function.
+  */
+#define SPI_TRIGGER_TX_RX_PDMA(spi)   ((spi)->PDMACTL |= (SPI_PDMACTL_TXPDMAEN_Msk | SPI_PDMACTL_RXPDMAEN_Msk))
+
+/**
   * @brief      Disable RX PDMA transfer.
   * @param[in]  spi The pointer of the specified SPI module.
   * @return     None.
   * @details    Clear RXPDMAEN bit of SPI_PDMACTL register to disable RX PDMA transfer function.
   */
-#define SPI_DISABLE_RX_PDMA(spi) ( (spi)->PDMACTL &= ~SPI_PDMACTL_RXPDMAEN_Msk )
+#define SPI_DISABLE_RX_PDMA(spi)   ((spi)->PDMACTL &= ~SPI_PDMACTL_RXPDMAEN_Msk)
 
 /**
   * @brief      Disable TX PDMA transfer.
@@ -244,7 +252,15 @@ extern "C"
   * @return     None.
   * @details    Clear TXPDMAEN bit of SPI_PDMACTL register to disable TX PDMA transfer function.
   */
-#define SPI_DISABLE_TX_PDMA(spi) ( (spi)->PDMACTL &= ~SPI_PDMACTL_TXPDMAEN_Msk )
+#define SPI_DISABLE_TX_PDMA(spi)   ((spi)->PDMACTL &= ~SPI_PDMACTL_TXPDMAEN_Msk)
+
+/**
+  * @brief      Disable TX and RX PDMA transfer.
+  * @param[in]  spi The pointer of the specified SPI module.
+  * @return     None.
+  * @details    Clear TXPDMAEN bit and RXPDMAEN bit of SPI_PDMACTL register to disable TX and RX PDMA transfer function.
+  */
+#define SPI_DISABLE_TX_RX_PDMA(spi)   ((spi)->PDMACTL &= ~(SPI_PDMACTL_TXPDMAEN_Msk | SPI_PDMACTL_RXPDMAEN_Msk))
 
 /**
   * @brief      Get the count of available data in RX FIFO.

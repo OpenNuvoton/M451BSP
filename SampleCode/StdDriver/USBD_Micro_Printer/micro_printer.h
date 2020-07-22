@@ -58,6 +58,8 @@ void PTR_Init(void);
 void PTR_ClassRequest(void);
 void PTR_Data_Receive(void);
 
+extern uint8_t volatile g_u8Suspend;
+
 #endif  /* __USBD_PRINTER_H_ */
 
 /*** (C) COPYRIGHT 2013~2015 Nuvoton Technology Corp. ***/

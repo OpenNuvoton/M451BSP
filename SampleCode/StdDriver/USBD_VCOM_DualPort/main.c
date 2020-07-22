@@ -65,6 +65,8 @@ volatile uint32_t gu32TxSize1 = 0;
 
 volatile int8_t gi8BulkOutReady1 = 0;
 
+int IsDebugFifoEmpty(void);
+
 /*--------------------------------------------------------------------------*/
 
 
@@ -444,6 +446,28 @@ void VCOM_TransferData(void)
     }
 }
 
+void PowerDown()
+{
+    /* Unlock protected registers */
+    SYS_UnlockReg();
+
+    printf("Enter power down ...\n");
+    while(!IsDebugFifoEmpty());
+
+    /* Wakeup Enable */
+    USBD_ENABLE_INT(USBD_INTEN_WKEN_Msk);
+
+    CLK_PowerDown();
+
+    /* Clear PWR_DOWN_EN if it is not clear by itself */
+    if(CLK->PWRCTL & CLK_PWRCTL_PDEN_Msk)
+        CLK->PWRCTL ^= CLK_PWRCTL_PDEN_Msk;
+
+    printf("device wakeup!\n");
+
+    /* Lock protected registers */
+    SYS_LockReg();
+}
 
 /*---------------------------------------------------------------------------------------------------------*/
 /*  Main Function                                                                                          */
@@ -473,6 +497,10 @@ int32_t main(void)
 
     while(1)
     {
+        /* Enter power down when USB suspend */
+        if(g_u8Suspend)
+            PowerDown();
+
         VCOM_TransferData();
     }
 }

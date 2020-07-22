@@ -37,37 +37,37 @@ uint32_t LogicSector = 0;
 // definition;
 COMMAND __I command_list[] =
 {
-    { 0, NO, 0x95, CMD, R1, NO }, // CMD0;  GO_IDLE_STATE: reset card;
-    { 1, NO, 0xFF, CMD, R1, NO }, // CMD1;  SEND_OP_COND: initialize card;
-    { 8, YES, 0xFF, CMD, R7, NO }, // CMD8;  SEND_IF_COND
-    { 9, NO, 0xFF, RD, R1, NO },  // CMD9;  SEND_CSD: get card specific data;
-    {10, NO, 0xFF, RD, R1, NO },  // CMD10; SEND_CID: get card identifier;
-    {12, NO, 0xFF, CMD, R1b, NO }, // CMD12; STOP_TRANSMISSION: end read;
-    {13, NO, 0xFF, CMD, R2, NO }, // CMD13; SEND_STATUS: read card status;
-    {16, YES, 0xFF, CMD, R1, NO }, // CMD16; SET_BLOCKLEN: set block size;
-    {17, YES, 0xFF, RDB, R1, NO }, // CMD17; READ_SINGLE_BLOCK: read 1 block;
-    {18, YES, 0xFF, RD, R1, YES}, // CMD18; READ_MULTIPLE_BLOCK: read > 1;
-    {23, NO, 0xFF, CMD, R1, NO }, // CMD23; SET_BLOCK_COUNT
-    {24, YES, 0xFF, WR, R1, NO }, // CMD24; WRITE_BLOCK: write 1 block;
-    {25, YES, 0xFF, WR, R1, YES}, // CMD25; WRITE_MULTIPLE_BLOCK: write > 1;
-    {27, NO, 0xFF, CMD, R1, NO }, // CMD27; PROGRAM_CSD: program CSD;
+    { 0, NO , 0x95, CMD, R1 , NO }, // CMD0;  GO_IDLE_STATE: reset card;
+    { 1, NO , 0xFF, CMD, R1 , NO }, // CMD1;  SEND_OP_COND: initialize card;
+    { 8, YES, 0xFF, CMD, R7 , NO }, // CMD8;  SEND_IF_COND
+    { 9, NO , 0xFF, RD , R1 , NO }, // CMD9;  SEND_CSD: get card specific data;
+    {10, NO , 0xFF, RD , R1 , NO }, // CMD10; SEND_CID: get card identifier;
+    {12, NO , 0xFF, CMD, R1b, NO }, // CMD12; STOP_TRANSMISSION: end read;
+    {13, NO , 0xFF, CMD, R2 , NO }, // CMD13; SEND_STATUS: read card status;
+    {16, YES, 0xFF, CMD, R1 , NO }, // CMD16; SET_BLOCKLEN: set block size;
+    {17, YES, 0xFF, RDB , R1 , NO }, // CMD17; READ_SINGLE_BLOCK: read 1 block;
+    {18, YES, 0xFF, RD , R1 , YES}, // CMD18; READ_MULTIPLE_BLOCK: read > 1;
+    {23, NO , 0xFF, CMD, R1 , NO }, // CMD23; SET_BLOCK_COUNT
+    {24, YES, 0xFF, WR , R1 , NO }, // CMD24; WRITE_BLOCK: write 1 block;
+    {25, YES, 0xFF, WR , R1 , YES}, // CMD25; WRITE_MULTIPLE_BLOCK: write > 1;
+    {27, NO , 0xFF, CMD, R1 , NO }, // CMD27; PROGRAM_CSD: program CSD;
     {28, YES, 0xFF, CMD, R1b, NO }, // CMD28; SET_WRITE_PROT: set wp for group;
     {29, YES, 0xFF, CMD, R1b, NO }, // CMD29; CLR_WRITE_PROT: clear group wp;
-    {30, YES, 0xFF, CMD, R1, NO }, // CMD30; SEND_WRITE_PROT: check wp status;
-    {32, YES, 0xFF, CMD, R1, NO }, // CMD32; TAG_SECTOR_START: tag 1st erase;
-    {33, YES, 0xFF, CMD, R1, NO }, // CMD33; TAG_SECTOR_END: tag end(single);
-    {34, YES, 0xFF, CMD, R1, NO }, // CMD34; UNTAG_SECTOR: deselect for erase;
-    {35, YES, 0xFF, CMD, R1, NO }, // CMD35; TAG_ERASE_GROUP_START;
-    {36, YES, 0xFF, CMD, R1, NO }, // CMD36; TAG_ERASE_GROUP_END;
-    {37, YES, 0xFF, CMD, R1, NO }, // CMD37; UNTAG_ERASE_GROUP;
+    {30, YES, 0xFF, CMD, R1 , NO }, // CMD30; SEND_WRITE_PROT: check wp status;
+    {32, YES, 0xFF, CMD, R1 , NO }, // CMD32; TAG_SECTOR_START: tag 1st erase;
+    {33, YES, 0xFF, CMD, R1 , NO }, // CMD33; TAG_SECTOR_END: tag end(single);
+    {34, YES, 0xFF, CMD, R1 , NO }, // CMD34; UNTAG_SECTOR: deselect for erase;
+    {35, YES, 0xFF, CMD, R1 , NO }, // CMD35; TAG_ERASE_GROUP_START;
+    {36, YES, 0xFF, CMD, R1 , NO }, // CMD36; TAG_ERASE_GROUP_END;
+    {37, YES, 0xFF, CMD, R1 , NO }, // CMD37; UNTAG_ERASE_GROUP;
     {38, YES, 0xFF, CMD, R1b, NO }, // CMD38; ERASE: erase all tagged sectors;
-    {42, YES, 0xFF, CMD, R1, NO }, // CMD42; LOCK_UNLOCK;
-    {55, NO, 0xFF, CMD, R1, NO }, // CMD55; APP_CMD
-    {58, NO, 0xFF, CMD, R3, NO }, // CMD58; READ_OCR: read OCR register;
-    {59, YES, 0xFF, CMD, R1, NO }, // CMD59; CRC_ON_OFF: toggles CRC checking;
-    {0x80 + 13, NO, 0xFF, CMD, R2, NO }, // ACMD13; SD_SEND_STATUS: read card status;
-    {0x80 + 23, YES, 0xFF, CMD, R1, NO }, // ACMD23;SD_SET_WR_BLK_ERASE_COUNT
-    {0x80 + 41, YES, 0xFF, CMD, R1, NO } // ACMD41; SD_SEND_OP_COND: initialize card;
+    {42, YES, 0xFF, CMD, R1 , NO }, // CMD42; LOCK_UNLOCK;
+    {55, NO , 0xFF, CMD, R1 , NO }, // CMD55; APP_CMD
+    {58, NO , 0xFF, CMD, R3 , NO }, // CMD58; READ_OCR: read OCR register;
+    {59, YES, 0xFF, CMD, R1 , NO }, // CMD59; CRC_ON_OFF: toggles CRC checking;
+    {0x80 + 13, NO , 0xFF, CMD, R2 , NO }, // ACMD13; SD_SEND_STATUS: read card status;
+    {0x80 + 23, YES, 0xFF, CMD, R1 , NO }, // ACMD23;SD_SET_WR_BLK_ERASE_COUNT
+    {0x80 + 41, YES, 0xFF, CMD, R1 , NO } // ACMD41; SD_SEND_OP_COND: initialize card;
 };
 /// @endcond HIDDEN_SYMBOLS
 /** @addtogroup M451_SDCARD_EXPORTED_FUNCTIONS SDCARD Library Exported Functions

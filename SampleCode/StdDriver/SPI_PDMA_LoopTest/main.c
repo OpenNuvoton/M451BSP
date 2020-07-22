@@ -148,7 +148,7 @@ void SPI_Init(void)
     /* Configure SPI1 */
     /* Configure SPI1 as a slave, clock idle low, 32-bit transaction, drive output on falling clock edge and latch input on rising edge. */
     /* Configure SPI1 as a low level active device. SPI peripheral clock rate = f_PCLK1 */
-    SPI_Open(SPI1, SPI_SLAVE, SPI_MODE_0, 32, NULL);
+    SPI_Open(SPI1, SPI_SLAVE, SPI_MODE_0, 32, (uint32_t)NULL);
 }
 
 void SpiLoopTest_WithPDMA(void)
@@ -207,7 +207,7 @@ void SpiLoopTest_WithPDMA(void)
     /* Single request type */
     PDMA_SetBurstType(SPI_SLAVE_RX_DMA_CH, PDMA_REQ_SINGLE, PDMA_BURST_128);
     /* Disable table interrupt */
-    PDMA->DSCT[SPI_MASTER_RX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
+    PDMA->DSCT[SPI_SLAVE_RX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
 
     /* SPI slave PDMA TX channel configuration */
     /* Set transfer width (32 bits) and transfer count */
@@ -223,11 +223,9 @@ void SpiLoopTest_WithPDMA(void)
 
 
     /* Enable SPI slave DMA function */
-    SPI_TRIGGER_RX_PDMA(SPI1);
-    SPI_TRIGGER_TX_PDMA(SPI1);
+    SPI_TRIGGER_TX_RX_PDMA(SPI1);
     /* Enable SPI master DMA function */
-    SPI_TRIGGER_TX_PDMA(SPI0);
-    SPI_TRIGGER_RX_PDMA(SPI0);
+    SPI_TRIGGER_TX_RX_PDMA(SPI0);
 
 
 
@@ -251,8 +249,7 @@ void SpiLoopTest_WithPDMA(void)
                     /* Clear the DMA transfer done flags */
                     PDMA_CLR_TD_FLAG((1 << SPI_MASTER_TX_DMA_CH) | (1 << SPI_MASTER_RX_DMA_CH) | (1 << SPI_SLAVE_TX_DMA_CH) | (1 << SPI_SLAVE_RX_DMA_CH));
                     /* Disable SPI master's DMA transfer function */
-                    SPI_DISABLE_TX_PDMA(SPI0);
-                    SPI_DISABLE_RX_PDMA(SPI0);
+                    SPI_DISABLE_TX_RX_PDMA(SPI0);
                     /* Check the transfer data */
                     for(u32DataCount = 0; u32DataCount < TEST_COUNT; u32DataCount++)
                     {
@@ -303,8 +300,7 @@ void SpiLoopTest_WithPDMA(void)
                     PDMA_SetTransferMode(SPI_MASTER_RX_DMA_CH, PDMA_SPI0_RX, FALSE, 0);
 
                     /* Enable SPI master DMA function */
-                    SPI_TRIGGER_TX_PDMA(SPI0);
-                    SPI_TRIGGER_RX_PDMA(SPI0);
+                    SPI_TRIGGER_TX_RX_PDMA(SPI0);
                     break;
                 }
             }

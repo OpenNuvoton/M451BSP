@@ -62,7 +62,6 @@
 #define UFI_READ_CAPACITY                       0x25
 #define UFI_READ_10                             0x28
 #define UFI_READ_12                             0xA8
-#define UFI_READ_16                             0x9E
 #define UFI_WRITE_10                            0x2A
 #define UFI_WRITE_12                            0xAA
 #define UFI_VERIFY_10                           0x2F

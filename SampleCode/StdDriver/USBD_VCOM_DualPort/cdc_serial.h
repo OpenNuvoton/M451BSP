@@ -102,6 +102,8 @@ extern volatile uint16_t comTtail1;
 extern volatile uint8_t *gpu8RxBuf1;
 extern volatile uint32_t gu32RxSize1;
 extern volatile uint32_t gu32TxSize1;
+extern uint8_t volatile g_u8Suspend;
+
 /*-------------------------------------------------------------*/
 void VCOM_Init(void);
 void VCOM_ClassRequest(void);

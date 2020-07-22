@@ -66,6 +66,8 @@ void HID_ClassRequest(void);
 void EP2_Handler(void);
 void HID_UpdateMouseData(void);
 
+extern uint8_t volatile g_u8Suspend;
+
 #endif  /* __USBD_HID_H_ */
 
 /*** (C) COPYRIGHT 2013~2015 Nuvoton Technology Corp. ***/

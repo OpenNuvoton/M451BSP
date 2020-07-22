@@ -15,6 +15,7 @@
 #define CLK_PLLCON_72MHz_XTAL     0xC02E // 72MHz
 #define CLK_PLLCON_144MHz_XTAL    0x402E // 144MHz
 
+int IsDebugFifoEmpty(void);
 
 void EnableCLKO(uint32_t u32ClkSrc, uint32_t u32ClkDiv)
 {
@@ -92,6 +93,29 @@ void UART0_Init(void)
     UART_Open(UART0, 115200);
 }
 
+void PowerDown()
+{
+    /* Unlock protected registers */
+    SYS_UnlockReg();
+
+    printf("Enter power down ...\n");
+    while(!IsDebugFifoEmpty());
+
+    /* Wakeup Enable */
+    USBD_ENABLE_INT(USBD_INTEN_WKEN_Msk);
+
+    CLK_PowerDown();
+
+    /* Clear PWR_DOWN_EN if it is not clear by itself */
+    if(CLK->PWRCTL & CLK_PWRCTL_PDEN_Msk)
+        CLK->PWRCTL ^= CLK_PWRCTL_PDEN_Msk;
+
+    printf("device wakeup!\n");
+
+    /* Lock protected registers */
+    SYS_LockReg();
+}
+
 /*---------------------------------------------------------------------------------------------------------*/
 /*  Main Function                                                                                          */
 /*---------------------------------------------------------------------------------------------------------*/
@@ -116,6 +140,10 @@ int32_t main(void)
 
     while(1)
     {
+        /* Enter power down when USB suspend */
+        if(g_u8Suspend)
+            PowerDown();
+
         HID_UpdateMouseData();
     }
 }

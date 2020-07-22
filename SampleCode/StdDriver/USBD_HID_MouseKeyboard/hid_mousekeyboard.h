@@ -77,6 +77,7 @@ void EP3_Handler(void);
 void HID_UpdateMouseData(void);
 void HID_UpdateKbData(void);
 
+extern uint8_t volatile g_u8Suspend;
 
 #endif  /* __USBD_HID_H_ */
 

@@ -12,6 +12,7 @@
 #include "cdc_serial.h"
 
 uint32_t volatile g_u32OutToggle0 = 0, g_u32OutToggle1 = 0;
+uint8_t volatile g_u8Suspend = 0;
 
 /*--------------------------------------------------------------------------*/
 void USBD_IRQHandler(void)
@@ -20,15 +21,18 @@ void USBD_IRQHandler(void)
     uint32_t u32State = USBD_GET_BUS_STATE();
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_FLDET) {
+    if(u32IntSts & USBD_INTSTS_FLDET)
+    {
         // Floating detect
         USBD_CLR_INT_FLAG(USBD_INTSTS_FLDET);
 
-        if (USBD_IS_ATTACHED()) {
+        if(USBD_IS_ATTACHED())
+        {
             /* USB Plug In */
             USBD_ENABLE_USB();
         }
-        else {
+        else
+        {
             /* USB Un-plug */
             USBD_DISABLE_USB();
         }
@@ -42,30 +46,41 @@ void USBD_IRQHandler(void)
     }
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_BUS) {
+    if(u32IntSts & USBD_INTSTS_BUS)
+    {
         /* Clear event flag */
         USBD_CLR_INT_FLAG(USBD_INTSTS_BUS);
 
-        if (u32State & USBD_STATE_USBRST) {
+        if(u32State & USBD_STATE_USBRST)
+        {
             /* Bus reset */
             USBD_ENABLE_USB();
             USBD_SwReset();
             g_u32OutToggle0 = g_u32OutToggle1 = 0;
+            g_u8Suspend = 0;
         }
-        if (u32State & USBD_STATE_SUSPEND) {
+        if(u32State & USBD_STATE_SUSPEND)
+        {
+            /* Enter power down to wait USB attached */
+            g_u8Suspend = 1;
+
             /* Enable USB but disable PHY */
             USBD_DISABLE_PHY();
         }
-        if (u32State & USBD_STATE_RESUME) {
+        if(u32State & USBD_STATE_RESUME)
+        {
             /* Enable USB and enable PHY */
             USBD_ENABLE_USB();
+            g_u8Suspend = 0;
         }
     }
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_USB) {
+    if(u32IntSts & USBD_INTSTS_USB)
+    {
         // USB event
-        if (u32IntSts & USBD_INTSTS_SETUP) {
+        if(u32IntSts & USBD_INTSTS_SETUP)
+        {
             // Setup packet
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_SETUP);
@@ -78,7 +93,8 @@ void USBD_IRQHandler(void)
         }
 
         // EP events
-        if (u32IntSts & USBD_INTSTS_EP0) {
+        if(u32IntSts & USBD_INTSTS_EP0)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP0);
 
@@ -86,7 +102,8 @@ void USBD_IRQHandler(void)
             USBD_CtrlIn();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP1) {
+        if(u32IntSts & USBD_INTSTS_EP1)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP1);
 
@@ -94,38 +111,44 @@ void USBD_IRQHandler(void)
             USBD_CtrlOut();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP2) {
+        if(u32IntSts & USBD_INTSTS_EP2)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP2);
             // Bulk IN
             EP2_Handler();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP3) {
+        if(u32IntSts & USBD_INTSTS_EP3)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP3);
             // Bulk Out
             EP3_Handler();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP4) {
+        if(u32IntSts & USBD_INTSTS_EP4)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP4);
         }
 
-        if (u32IntSts & USBD_INTSTS_EP5) {
+        if(u32IntSts & USBD_INTSTS_EP5)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP5);
         }
 
-        if (u32IntSts & USBD_INTSTS_EP6) {
+        if(u32IntSts & USBD_INTSTS_EP6)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP6);
             // Bulk Out
             EP6_Handler();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP7) {
+        if(u32IntSts & USBD_INTSTS_EP7)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP7);
             // Bulk IN
@@ -224,7 +247,7 @@ void VCOM_Init(void)
     USBD_CONFIG_EP(EP4, USBD_CFG_EPMODE_IN | INT_IN_EP_NUM);
     /* Buffer offset for EP4 ->  */
     USBD_SET_EP_BUF_ADDR(EP4, EP4_BUF_BASE);
-    
+
     /*****************************************************/
     /* EP5 ==> Interrupt IN endpoint, address 6 */
     USBD_CONFIG_EP(EP5, USBD_CFG_EPMODE_IN | INT_IN_EP_NUM_1);
@@ -317,11 +340,11 @@ void VCOM_ClassRequest(void)
                 /* Status stage */
                 USBD_SET_DATA1(EP0);
                 USBD_SET_PAYLOAD_LEN(EP0, 0);
-                
+
                 /* UART setting */
-                if (buf[4] == 0) /* VCOM-1 */
+                if(buf[4] == 0)  /* VCOM-1 */
                     VCOM_LineCoding(0);
-                if (buf[4] == 2) /* VCOM-2 */
+                if(buf[4] == 2)  /* VCOM-2 */
                     VCOM_LineCoding(1);
 
                 break;
@@ -347,7 +370,7 @@ void VCOM_LineCoding(uint8_t port)
     if(port == 0)
     {
         NVIC_DisableIRQ(UART0_IRQn);
-        
+
         u32Baudrate = gLineCoding0.u32DTERate;
         u32Tmp = 65 * u32Baudrate;
         u32SysTmp = PllClock / 1000;
@@ -358,7 +381,7 @@ void VCOM_LineCoding(uint8_t port)
 
         /* Update UART peripheral clock frequency. */
         u32SysTmp = PllClock / (u32Div + 1);
-        
+
         // Reset software fifo
         comRbytes0 = 0;
         comRhead0 = 0;
@@ -371,10 +394,10 @@ void VCOM_LineCoding(uint8_t port)
         // Reset hardware fifo
         UART0->FIFO = 0x6;
 
-		// Set baudrate, clock source and clock divider
+        // Set baudrate, clock source and clock divider
         UART0->BAUD = 0x30000000 + ((u32SysTmp + gLineCoding0.u32DTERate / 2) / gLineCoding0.u32DTERate - 2);
         CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_PLL, CLK_CLKDIV0_UART(u32Div + 1));
-			
+
         // Set parity
         if(gLineCoding0.u8ParityType == 0)
             u32Reg = 0; // none parity
@@ -416,7 +439,7 @@ void VCOM_LineCoding(uint8_t port)
     else
     {
         NVIC_DisableIRQ(UART1_IRQn);
-        
+
         u32Baudrate = gLineCoding1.u32DTERate;
         u32Tmp = 65 * u32Baudrate;
         u32SysTmp = PllClock / 1000;
@@ -427,7 +450,7 @@ void VCOM_LineCoding(uint8_t port)
 
         /* Update UART peripheral clock frequency. */
         u32SysTmp = PllClock / (u32Div + 1);
-        
+
         // Reset software fifo
         comRbytes1 = 0;
         comRhead1 = 0;
@@ -440,7 +463,7 @@ void VCOM_LineCoding(uint8_t port)
         // Reset hardware fifo
         UART1->FIFO = 0x6;
 
-		// Set baudrate, clock source and clock divider
+        // Set baudrate, clock source and clock divider
         UART1->BAUD = 0x30000000 + ((u32SysTmp + gLineCoding1.u32DTERate / 2) / gLineCoding1.u32DTERate - 2);
         CLK_SetModuleClock(UART1_MODULE, CLK_CLKSEL1_UARTSEL_PLL, CLK_CLKDIV0_UART(u32Div + 1));
 

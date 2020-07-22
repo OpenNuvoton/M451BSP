@@ -30,7 +30,7 @@ typedef struct s_usbd_info
     const uint8_t **gu8StringDesc;        /*!< Pointer for USB String Descriptor pointers */
     const uint8_t **gu8HidReportDesc;     /*!< Pointer for USB HID Report Descriptor      */
     const uint32_t *gu32HidReportSize;    /*!< Pointer for HID Report descriptor Size */
-    const uint32_t *gu32ConfigHidDescIdx; /*!< Pointer for HID Descriptor start index */	
+    const uint32_t *gu32ConfigHidDescIdx; /*!< Pointer for HID Descriptor start index */
 
 } S_USBD_INFO_T;
 

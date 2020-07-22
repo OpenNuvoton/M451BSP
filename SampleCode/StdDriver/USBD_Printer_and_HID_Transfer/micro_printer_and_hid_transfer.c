@@ -7,10 +7,12 @@
  ******************************************************************************/
 #include <stdio.h>
 #include <string.h>
-#include  "M451Series.h"
-#include  "micro_printer_and_hid_transfer.h"
+#include "M451Series.h"
+#include "micro_printer_and_hid_transfer.h"
 
 uint32_t volatile g_u32OutToggle = 0;
+uint8_t volatile g_u8Suspend = 0;
+uint8_t g_u8Idle = 0, g_u8Protocol = 0;
 
 /*--------------------------------------------------------------------------*/
 void USBD_IRQHandler(void)
@@ -19,15 +21,18 @@ void USBD_IRQHandler(void)
     uint32_t u32State = USBD_GET_BUS_STATE();
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_FLDET) {
+    if(u32IntSts & USBD_INTSTS_FLDET)
+    {
         // Floating detect
         USBD_CLR_INT_FLAG(USBD_INTSTS_FLDET);
 
-        if (USBD_IS_ATTACHED()) {
+        if(USBD_IS_ATTACHED())
+        {
             /* USB Plug In */
             USBD_ENABLE_USB();
         }
-        else {
+        else
+        {
             /* USB Un-plug */
             USBD_DISABLE_USB();
         }
@@ -41,30 +46,41 @@ void USBD_IRQHandler(void)
     }
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_BUS) {
+    if(u32IntSts & USBD_INTSTS_BUS)
+    {
         /* Clear event flag */
         USBD_CLR_INT_FLAG(USBD_INTSTS_BUS);
 
-        if (u32State & USBD_STATE_USBRST) {
+        if(u32State & USBD_STATE_USBRST)
+        {
             /* Bus reset */
             USBD_ENABLE_USB();
             USBD_SwReset();
             g_u32OutToggle = 0;
+            g_u8Suspend = 0;
         }
-        if (u32State & USBD_STATE_SUSPEND) {
+        if(u32State & USBD_STATE_SUSPEND)
+        {
+            /* Enter power down to wait USB attached */
+            g_u8Suspend = 1;
+
             /* Enable USB but disable PHY */
             USBD_DISABLE_PHY();
         }
-        if (u32State & USBD_STATE_RESUME) {
+        if(u32State & USBD_STATE_RESUME)
+        {
             /* Enable USB and enable PHY */
             USBD_ENABLE_USB();
+            g_u8Suspend = 0;
         }
     }
 
 //------------------------------------------------------------------
-    if (u32IntSts & USBD_INTSTS_USB) {
+    if(u32IntSts & USBD_INTSTS_USB)
+    {
         // USB event
-        if (u32IntSts & USBD_INTSTS_SETUP) {
+        if(u32IntSts & USBD_INTSTS_SETUP)
+        {
             // Setup packet
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_SETUP);
@@ -77,7 +93,8 @@ void USBD_IRQHandler(void)
         }
 
         // EP events
-        if (u32IntSts & USBD_INTSTS_EP0) {
+        if(u32IntSts & USBD_INTSTS_EP0)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP0);
 
@@ -85,7 +102,8 @@ void USBD_IRQHandler(void)
             USBD_CtrlIn();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP1) {
+        if(u32IntSts & USBD_INTSTS_EP1)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP1);
 
@@ -93,12 +111,14 @@ void USBD_IRQHandler(void)
             USBD_CtrlOut();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP2) {
+        if(u32IntSts & USBD_INTSTS_EP2)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP2);
         }
 
-        if (u32IntSts & USBD_INTSTS_EP3) {
+        if(u32IntSts & USBD_INTSTS_EP3)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP3);
             if(g_u32OutToggle == (USBD->EPSTS & USBD_EPSTS_EPSTS3_Msk))
@@ -113,26 +133,30 @@ void USBD_IRQHandler(void)
             }
         }
 
-        if (u32IntSts & USBD_INTSTS_EP4) {
+        if(u32IntSts & USBD_INTSTS_EP4)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP4);
         }
 
-        if (u32IntSts & USBD_INTSTS_EP5) {
+        if(u32IntSts & USBD_INTSTS_EP5)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP5);
             // Interrupt IN
             EP5_Handler();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP6) {
+        if(u32IntSts & USBD_INTSTS_EP6)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP6);
             // Interrupt OUT
-            EP6_Handler();					
+            EP6_Handler();
         }
 
-        if (u32IntSts & USBD_INTSTS_EP7) {
+        if(u32IntSts & USBD_INTSTS_EP7)
+        {
             /* Clear event flag */
             USBD_CLR_INT_FLAG(USBD_INTSTS_EP7);
         }
@@ -214,50 +238,86 @@ void PTR_ClassRequest(void)
 
     USBD_GetSetupPacket(buf);
 
-    if (buf[0] & 0x80) { /* request data transfer direction */
+    if(buf[0] & 0x80)    /* request data transfer direction */
+    {
         // Device to host
-        switch (buf[1]) {
-        case GET_PORT_STATUS: {
-            /* Data stage */
-            USBD_SET_DATA1(EP0);
-            USBD_SET_PAYLOAD_LEN(EP0, 0);
-            /* Status stage */
-            USBD_PrepareCtrlOut(0,0);
-            break;
+        switch(buf[1])
+        {
+            case GET_PORT_STATUS:
+            {
+                /* Data stage */
+                USBD_SET_DATA1(EP0);
+                USBD_SET_PAYLOAD_LEN(EP0, 0);
+                /* Status stage */
+                USBD_PrepareCtrlOut(0, 0);
+                break;
+            }
+            case GET_IDLE:
+            {
+                USBD_SET_PAYLOAD_LEN(EP1, buf[6]);
+                /* Data stage */
+                USBD_PrepareCtrlIn(&g_u8Idle, buf[6]);
+                /* Status stage */
+                USBD_PrepareCtrlOut(0, 0);
+                break;
+            }
+            case GET_PROTOCOL:
+            {
+                USBD_SET_PAYLOAD_LEN(EP1, buf[6]);
+                /* Data stage */
+                USBD_PrepareCtrlIn(&g_u8Protocol, buf[6]);
+                /* Status stage */
+                USBD_PrepareCtrlOut(0, 0);
+                break;
+            }
+            default:
+            {
+                /* Setup error, stall the device */
+                USBD_SetStall(EP0);
+                USBD_SetStall(EP1);
+                break;
+            }
         }
-        default: {
-            /* Setup error, stall the device */
-            USBD_SetStall(0);
-            break;
-        }
-        }
-    } else {
+    }
+    else
+    {
         // Host to device
-        switch (buf[1]) {
-        case SET_REPORT: {
-            if (buf[3] == 3) {
-                /* Request Type = Feature */
-                USBD_SET_DATA1(EP1);
-                USBD_SET_PAYLOAD_LEN(EP1, 0);							  
-            }					  
-            break;
-        }
-        case SET_IDLE: {
-            /* Status stage */
-            USBD_SET_DATA1(EP0);
-            USBD_SET_PAYLOAD_LEN(EP0, 0);
-            break;
-        }        
-        case SET_PROTOCOL:
-//             {
-//                 break;
-//             }
-        default: {
-            // Stall
-            /* Setup error, stall the device */
-            USBD_SetStall(0);
-            break;
-        }
+        switch(buf[1])
+        {
+            case SET_REPORT:
+            {
+                if(buf[3] == 3)
+                {
+                    /* Request Type = Feature */
+                    USBD_SET_DATA1(EP1);
+                    USBD_SET_PAYLOAD_LEN(EP1, 0);
+                }
+                break;
+            }
+            case SET_IDLE:
+            {
+                g_u8Idle = buf[3];
+                /* Status stage */
+                USBD_SET_DATA1(EP0);
+                USBD_SET_PAYLOAD_LEN(EP0, 0);
+                break;
+            }
+            case SET_PROTOCOL:
+            {
+                g_u8Protocol = buf[2];
+                /* Status stage */
+                USBD_SET_DATA1(EP0);
+                USBD_SET_PAYLOAD_LEN(EP0, 0);
+                break;
+            }
+            default:
+            {
+                // Stall
+                /* Setup error, stall the device */
+                USBD_SetStall(EP0);
+                USBD_SetStall(EP1);
+                break;
+            }
         }
     }
 }
@@ -297,7 +357,7 @@ typedef struct
     uint32_t u32Checksum;
 } __attribute__((packed)) CMD_T;
 
-CMD_T gCmd;    
+CMD_T gCmd;
 
 static uint8_t  g_u8PageBuff[PAGE_SIZE] = {0};    /* Page buffer to upload/download through HID report */
 static uint32_t g_u32BytesInPageBuf = 0;          /* The bytes of data in g_u8PageBuff */
@@ -357,13 +417,13 @@ int32_t HID_CmdWritePages(CMD_T *pCmd)
 {
     uint32_t u32StartPage;
     uint32_t u32Pages;
-    
+
     u32StartPage = pCmd->u32Arg1;
     u32Pages     = pCmd->u32Arg2;
 
     printf("Write command - Start page: %d    Pages Numbers: %d\n", u32StartPage, u32Pages);
     g_u32BytesInPageBuf = 0;
-    
+
     /* The signature is used to page counter */
     pCmd->u32Signature = 0;
 
@@ -376,24 +436,24 @@ int32_t HID_CmdTest(CMD_T *pCmd)
 {
     int32_t i;
     uint8_t *pu8;
-    
+
     pu8 = (uint8_t *)pCmd;
     printf("Get test command #%d (%d bytes)\n", gi32CmdTestCnt++, pCmd->u8Size);
-    for(i=0;i<pCmd->u8Size;i++)
+    for(i = 0; i < pCmd->u8Size; i++)
     {
-        if((i&0xF) == 0)
+        if((i & 0xF) == 0)
         {
             printf("\n");
         }
         printf(" %02x", pu8[i]);
     }
-    
+
     printf("\n");
-    
-    
+
+
     /* To note the command has been done */
     pCmd->u8Cmd = HID_CMD_NONE;
-    
+
     return 0;
 }
 
@@ -407,7 +467,7 @@ uint32_t CalCheckSum(uint8_t *buf, uint32_t size)
     sum = 0;
     while(size--)
     {
-        sum+=buf[i++];
+        sum += buf[i++];
     }
 
     return sum;
@@ -419,38 +479,38 @@ int32_t ProcessCommand(uint8_t *pu8Buffer, uint32_t u32BufferLen)
 {
     uint32_t u32sum;
 
-	
+
     USBD_MemCopy((uint8_t *)&gCmd, pu8Buffer, u32BufferLen);
-    
+
     /* Check size */
-    if((gCmd.u8Size > sizeof(gCmd)) || (gCmd.u8Size > u32BufferLen))    
+    if((gCmd.u8Size > sizeof(gCmd)) || (gCmd.u8Size > u32BufferLen))
         return -1;
 
     /* Check signature */
     if(gCmd.u32Signature != HID_CMD_SIGNATURE)
         return -1;
-        
-    /* Calculate checksum & check it*/        
+
+    /* Calculate checksum & check it */
     u32sum = CalCheckSum((uint8_t *)&gCmd, gCmd.u8Size);
     if(u32sum != gCmd.u32Checksum)
         return -1;
-    
+
     switch(gCmd.u8Cmd)
     {
         case HID_CMD_ERASE:
         {
             HID_CmdEraseSectors(&gCmd);
             break;
-        }		
+        }
         case HID_CMD_READ:
         {
             HID_CmdReadPages(&gCmd);
             break;
-        }		
+        }
         case HID_CMD_WRITE:
         {
             HID_CmdWritePages(&gCmd);
-            break;		
+            break;
         }
         case HID_CMD_TEST:
         {
@@ -459,8 +519,8 @@ int32_t ProcessCommand(uint8_t *pu8Buffer, uint32_t u32BufferLen)
         }
         default:
             return -1;
-    }	
-	
+    }
+
     return 0;
 }
 
@@ -477,10 +537,10 @@ void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size)
     u32StartPage = gCmd.u32Arg1;
     u32Pages     = gCmd.u32Arg2;
     u32PageCnt   = gCmd.u32Signature; /* The signature word is used to count pages */
-    
+
 
     /* Check if it is in the data phase of write command */
-    if((u8Cmd == HID_CMD_WRITE) &&  (u32PageCnt < u32Pages))
+    if((u8Cmd == HID_CMD_WRITE) && (u32PageCnt < u32Pages))
     {
         /* Process the data phase of write command */
 
@@ -499,7 +559,7 @@ void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size)
             /* Write command complete! */
             if(u32PageCnt >= u32Pages)
             {
-                u8Cmd = HID_CMD_NONE;	
+                u8Cmd = HID_CMD_NONE;
 
                 printf("Write command complete.\n");
             }
@@ -517,7 +577,7 @@ void HID_GetOutReport(uint8_t *pu8EpBuf, uint32_t u32Size)
         if(ProcessCommand(pu8EpBuf, sizeof(gCmd)))
         {
             printf("Unknown HID command!\n");
-        }        
+        }
     }
 }
 
@@ -526,12 +586,12 @@ void HID_SetInReport(void)
     uint32_t u32StartPage;
     uint32_t u32TotalPages;
     uint32_t u32PageCnt;
-		uint8_t *ptr;
+    uint8_t *ptr;
     uint8_t u8Cmd;
-    
+
     u8Cmd        = gCmd.u8Cmd;
     u32StartPage = gCmd.u32Arg1;
-    u32TotalPages= gCmd.u32Arg2;
+    u32TotalPages = gCmd.u32Arg2;
     u32PageCnt   = gCmd.u32Signature;
 
     /* Check if it is in data phase of read command */
@@ -543,7 +603,7 @@ void HID_SetInReport(void)
             /* The data transfer is complete. */
             u8Cmd = HID_CMD_NONE;
             printf("Read command complete!\n");
-        }    
+        }
         else
         {
             if(g_u32BytesInPageBuf == 0)
@@ -558,8 +618,8 @@ void HID_SetInReport(void)
                 /* Update the page counter */
                 u32PageCnt++;
             }
-	    
-            /* Prepare the data for next HID IN transfer */	    
+
+            /* Prepare the data for next HID IN transfer */
             ptr = (uint8_t *)(USBD_BUF_BASE + USBD_GET_EP_BUF_ADDR(EP5));
             USBD_MemCopy(ptr, (void *)&g_u8PageBuff[PAGE_SIZE - g_u32BytesInPageBuf], EP5_MAX_PKT_SIZE);
             USBD_SET_PAYLOAD_LEN(EP5, EP5_MAX_PKT_SIZE);
@@ -568,5 +628,5 @@ void HID_SetInReport(void)
     }
 
     gCmd.u8Cmd        = u8Cmd;
-    gCmd.u32Signature = u32PageCnt; 	
+    gCmd.u32Signature = u32PageCnt;
 }

@@ -9,6 +9,7 @@
 #include "M451Series.h"
 #include "micro_printer.h"
 
+int IsDebugFifoEmpty(void);
 
 /*--------------------------------------------------------------------------*/
 void SYS_Init(void)
@@ -75,7 +76,28 @@ void UART0_Init(void)
     UART_Open(UART0, 115200);
 }
 
+void PowerDown()
+{
+    /* Unlock protected registers */
+    SYS_UnlockReg();
 
+    printf("Enter power down ...\n");
+    while(!IsDebugFifoEmpty());
+
+    /* Wakeup Enable */
+    USBD_ENABLE_INT(USBD_INTEN_WKEN_Msk);
+
+    CLK_PowerDown();
+
+    /* Clear PWR_DOWN_EN if it is not clear by itself */
+    if(CLK->PWRCTL & CLK_PWRCTL_PDEN_Msk)
+        CLK->PWRCTL ^= CLK_PWRCTL_PDEN_Msk;
+
+    printf("device wakeup!\n");
+
+    /* Lock protected registers */
+    SYS_LockReg();
+}
 
 /*---------------------------------------------------------------------------------------------------------*/
 /*  Main Function                                                                                          */
@@ -83,7 +105,7 @@ void UART0_Init(void)
 int32_t main(void)
 {
     uint8_t Str[9];
-    
+
     /* Unlock protected registers */
     SYS_UnlockReg();
 
@@ -94,7 +116,7 @@ int32_t main(void)
     printf("+--------------------------------------------------------+\n");
     printf("|         NuMicro USB Micro Printer Sample Code          |\n");
     printf("+--------------------------------------------------------+\n");
-    
+
     USBD_Open(&gsInfo, PTR_ClassRequest, NULL);
 
     /* Endpoint configuration */
@@ -103,8 +125,13 @@ int32_t main(void)
     NVIC_EnableIRQ(USBD_IRQn);
 
     PB->MODE = 0x5000;   // PB.6, PB.7 output mode
-  
-    while(1) {
+
+    while(1)
+    {
+        /* Enter power down when USB suspend */
+        if(g_u8Suspend)
+            PowerDown();
+
         CLK_SysTickDelay(2000);   // delay
         if(++Str[1] > 0x39)
             Str[1] = 0x30;      // increase 1 to 10 than reset to 0

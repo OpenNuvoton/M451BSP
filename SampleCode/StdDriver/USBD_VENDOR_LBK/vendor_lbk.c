@@ -23,6 +23,7 @@ volatile uint8_t  g_Int_Buff[64];
 volatile uint8_t  g_Bulk_Buff[64];
 volatile uint8_t  g_Iso_Buff[256];
 
+uint8_t volatile g_u8Suspend = 0;
 
 void USBD_IRQHandler(void)
 {
@@ -58,9 +59,13 @@ void USBD_IRQHandler(void)
             /* Bus reset */
             USBD_ENABLE_USB();
             USBD_SwReset();
+            g_u8Suspend = 0;
         }
         if(u32State & USBD_STATE_SUSPEND)
         {
+            /* Enter power down to wait USB attached */
+            g_u8Suspend = 1;
+
             /* Enable USB but disable PHY */
             USBD_DISABLE_PHY();
         }
@@ -68,6 +73,7 @@ void USBD_IRQHandler(void)
         {
             /* Enable USB and enable PHY */
             USBD_ENABLE_USB();
+            g_u8Suspend = 0;
         }
     }
 
