@@ -725,7 +725,7 @@
         <option>
           <name>IlinkExtraOptions</name>
           <state>--image_input $PROJ_DIR$\Release\Exe\FMC_IAP_LD.bin,loaderImageBase,.bin_image,4</state>
-          <state>--image_input $PROJ_DIR$\dummy.bin,loaderImageLimit,.bin_image,4</state>
+          <state>--image_input $PROJ_DIR$\Release\Exe\FMC_IAP_LD.bin,loaderImageLimit,.bin_image,4</state>
         </option>
         <option>
           <name>IlinkLowLevelInterfaceSlave</name>
