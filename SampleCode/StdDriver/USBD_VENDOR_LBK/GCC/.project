@@ -44,6 +44,21 @@
 			<type>2</type>
 			<locationURI>PARENT-4-PROJECT_LOC/Library/StdDriver/src</locationURI>
 		</link>
+		<link>
+			<name>User/main.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/main.c</locationURI>
+		</link>
+		<link>
+			<name>User/descriptors.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/descriptors.c</locationURI>
+		</link>
+		<link>
+			<name>User/vendor_lbk.c</name>
+			<type>1</type>
+			<locationURI>PARENT-1-PROJECT_LOC/vendor_lbk.c</locationURI>
+		</link>
 	</linkedResources>
 	<filteredResources>
 		<filter>
