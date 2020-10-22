@@ -20,47 +20,71 @@ void SYS_Init(void)
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Enable Internal RC 22.1184MHz clock */
-    CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
+    /* Enable HIRC clock (Internal RC 22.1184MHz) */
+    CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
 
-    /* Waiting for Internal RC clock ready */
-    CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
+    /* Waiting for HIRC clock ready */
+    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Switch HCLK clock source to Internal RC and HCLK source divide 1 */
-    CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
+    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
+    CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
+    CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
+    CLK->CLKDIV0 |= CLK_CLKDIV0_HCLK(1);
 
-    /* Enable external XTAL 12MHz clock */
-    CLK_EnableXtalRC(CLK_PWRCTL_HXTEN_Msk);
+    /* Enable HXT clock (external XTAL 12MHz) */
+    CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
-    /* Waiting for external XTAL clock ready */
-    CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
+    /* Waiting for HXT clock ready */
+    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
 
     /* Set core clock as PLL_CLOCK from PLL */
-    CLK_SetCoreClock(PLL_CLOCK);
+    CLK->PLLCTL = PLLCTL_SETTING;
+    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    CLK->CLKSEL0 &= (~CLK_CLKSEL0_HCLKSEL_Msk);
+    CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_PLL;
 
-    /* Enable UART module clock */
-    CLK_EnableModuleClock(UART0_MODULE);
+    /* Update System Core Clock */
+    /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CycylesPerUs automatically. */
+    //SystemCoreClockUpdate();
+    PllClock        = PLL_CLOCK;            // PLL
+    SystemCoreClock = PLL_CLOCK / 1;        // HCLK
+    CyclesPerUs     = PLL_CLOCK / 1000000;  // For CLK_SysTickDelay()
 
-    /* Select UART module clock source */
-    CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
+    /* Enable UART module clock and I2C controller */
+    CLK->APBCLK0 |= CLK_APBCLK0_UART0CKEN_Msk;
 
+    /* Select UART module clock source as HXT and UART module clock divider as 1 */
+    CLK->CLKSEL1 &= ~CLK_CLKSEL1_UARTSEL_Msk;
+    CLK->CLKSEL1 |= CLK_CLKSEL1_UARTSEL_HXT;
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-
-    /* Set PD multi-function pins for UART0 RXD and TXD */
+    /* Set PD multi-function pins for UART0 RXD, TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
+    /* Lock protected registers */
+    SYS_LockReg();
+
 }
 
-void UART_Init()
+void UART0_Init()
 {
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init UART                                                                                               */
     /*---------------------------------------------------------------------------------------------------------*/
-    UART_Open(UART0, 115200);
+    /*---------------------------------------------------------------------------------------------------------*/
+    /* Init UART                                                                                               */
+    /*---------------------------------------------------------------------------------------------------------*/
+    /* Reset UART module */
+    SYS->IPRST1 |=  SYS_IPRST1_UART0RST_Msk;
+    SYS->IPRST1 &= ~SYS_IPRST1_UART0RST_Msk;
+
+    /* Configure UART0 and set UART0 baud rate */
+    UART0->BAUD = UART_BAUD_MODE2 | UART_BAUD_MODE2_DIVIDER(__HXT, 115200);
+    UART0->LINE = UART_WORD_LEN_8 | UART_PARITY_NONE | UART_STOP_BIT_1;
 }
 
 
@@ -72,7 +96,7 @@ int main()
     SYS_UnlockReg();
 
     SYS_Init();
-    UART_Init();
+    UART0_Init();
 
     printf("\n\n");
     printf("M451 FMC IAP Sample Code [LDROM code]\n");
@@ -80,8 +104,7 @@ int main()
     /* Enable FMC ISP function */
     FMC_Open();
 
-    printf("\n\nPress any key to branch to APROM...\n");
-    getchar();
+    printf("\n\nTo branch to APROM...\n");
 
     printf("\n\nChange VECMAP and branch to LDROM...\n");
     UART_WAIT_TX_EMPTY(UART0);
