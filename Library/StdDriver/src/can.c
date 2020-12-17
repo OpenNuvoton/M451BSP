@@ -1,13 +1,12 @@
 /**************************************************************************//**
  * @file     can.c
- * @version  V2.00
+ * @version  V2.01
  * $Revision: 9 $
  * $Date: 2/19/16 2:26p $
  * @brief    M451 series CAN driver source file
  *
- * @note
- * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include "M451Series.h"
 
@@ -990,11 +989,11 @@ int32_t CAN_SetRxMsgAndMsk(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32IDType,
   */
 int32_t CAN_SetMultiRxMsg(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32MsgCount, uint32_t u32IDType, uint32_t u32ID)
 {
-    uint32_t i = 0;
+    uint32_t i;
     uint32_t u32TimeOutCount;
     uint32_t u32EOB_Flag = 0;
 
-    for(i = 1; i < u32MsgCount; i++)
+    for(i = 1; i <= u32MsgCount; i++)
     {
         u32TimeOutCount = 0;
 
