@@ -164,6 +164,7 @@ void UART_DataWakeUp(void)
 
     /* Enable UART data wake-up interrupt */
     UART_EnableInt(UART1, UART_INTEN_WKDATIEN_Msk);
+    NVIC_EnableIRQ(UART1_IRQn);
 
     printf("System enter to Power-down mode.\n");
     printf("Send data with baud rate 110bps to UART1 to wake-up system.\n");
@@ -198,6 +199,7 @@ void UART_CTSWakeUp(void)
 
     /* Enable UART CTS wake-up interrupt */
     UART_EnableInt(UART1, UART_INTEN_WKCTSIEN_Msk);
+    NVIC_EnableIRQ(UART1_IRQn);
 
     printf("System enter to Power-down mode.\n");
     printf("Toggle nCTS of UART1 to wake-up system.\n");

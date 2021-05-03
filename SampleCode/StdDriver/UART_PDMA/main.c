@@ -298,7 +298,8 @@ void PDMA_UART(int32_t i32option)
     /* Enable UART0 RDA interrupt */
     if(g_u32TwoChannelPdmaTest==0)
     {
-        UART_EnableInt(UART0, UART_INTEN_RDAIEN_Msk);  
+        UART_EnableInt(UART0, UART_INTEN_RDAIEN_Msk);
+        NVIC_EnableIRQ(UART0_IRQn);
     }
 	
     /* Enable UART Tx and Rx PDMA function */
@@ -328,7 +329,8 @@ void PDMA_UART(int32_t i32option)
     NVIC_DisableIRQ(PDMA_IRQn);    
     
     /* Disable UART0 RDA interrupt */
-    UART_DisableInt(UART0, UART_INTEN_RDAIEN_Msk);   	
+    UART_DisableInt(UART0, UART_INTEN_RDAIEN_Msk);
+    NVIC_DisableIRQ(UART0_IRQn);
 }
 
 void SYS_Init(void)
