@@ -188,7 +188,7 @@ void PDMA_SetTransferMode(uint32_t u32Ch, uint32_t u32Peripheral, uint32_t u32Sc
             PDMA->REQSEL8_11 = (PDMA->REQSEL8_11 & ~PDMA_REQSEL8_11_REQSRC11_Msk) | (u32Peripheral << PDMA_REQSEL8_11_REQSRC11_Pos);
             break;
         default:
-            ;
+            break;
     }
 
     if(u32ScatterEn)
@@ -298,9 +298,14 @@ void PDMA_SetTimeOut(uint32_t u32Ch, uint32_t u32OnOff, uint32_t u32TimeOutCnt)
             PDMA->TOC6_7 = (PDMA->TOC6_7 & ~PDMA_TOC6_7_TOC7_Msk) | (u32TimeOutCnt << PDMA_TOC6_7_TOC7_Pos);
             break;
 
-        default:
-            ;
+    default:
+        break;
     }
+
+    if (u32OnOff)
+        PDMA->TOUTEN |= (1ul << u32Ch);
+    else
+        PDMA->TOUTEN &= ~(1ul << u32Ch);
 }
 
 /**
@@ -346,8 +351,8 @@ void PDMA_EnableInt(uint32_t u32Ch, uint32_t u32Mask)
             PDMA->TOUTIEN |= (1 << u32Ch);
             break;
 
-        default:
-            ;
+    default:
+        break;
     }
 }
 
@@ -379,8 +384,8 @@ void PDMA_DisableInt(uint32_t u32Ch, uint32_t u32Mask)
             PDMA->TOUTIEN &= ~(1 << u32Ch);
             break;
 
-        default:
-            ;
+    default:
+        break;
     }
 }
 
