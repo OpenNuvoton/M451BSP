@@ -122,6 +122,7 @@ void UART0_Init(void)
 
     /* Enable UART0 RX Time-Out Interrupt and RX Data Available Interrupt */
     UART_EnableInt(UART0, UART_INTEN_RXTOIEN_Msk | UART_INTEN_THREIEN_Msk | UART_INTEN_RDAIEN_Msk);
+    NVIC_EnableIRQ(UART0_IRQn);
 }
 
 
