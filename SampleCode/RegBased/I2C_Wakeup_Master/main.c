@@ -227,6 +227,9 @@ void SYS_Init(void)
     /* Set I2C PA multi-function pins */
     SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA2MFP_Msk | SYS_GPA_MFPL_PA3MFP_Msk);
     SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA2MFP_I2C0_SDA | SYS_GPA_MFPL_PA3MFP_I2C0_SCL);
+
+    /* I2C pins enable schmitt trigger */
+    PA->SMTEN |= (GPIO_SMTEN_SMTEN2_Msk | GPIO_SMTEN_SMTEN3_Msk);
 }
 
 void UART0_Init(void)
@@ -249,7 +252,7 @@ void UART0_Init(void)
 void I2C0_Init(uint32_t u32BusClock)
 {
     uint32_t u32Div, u32Pclk;
-	
+
     /* Reset I2C0 */
     SYS->IPRST1 |=  SYS_IPRST1_I2C0RST_Msk;
     SYS->IPRST1 &= ~SYS_IPRST1_I2C0RST_Msk;
@@ -259,7 +262,7 @@ void I2C0_Init(uint32_t u32BusClock)
 
     /* Get I2C0 PCLK0 Clock */
     u32Pclk = SystemCoreClock / (1<<(GET_PCLK0_DIV()));
-	
+
     /* Calculate */
     u32Div = (uint32_t)(((u32Pclk * 10u) / (u32BusClock * 4u) + 5u) / 10u - 1u); /* Compute proper divider for I2C clock */
     I2C0->CLKDIV = u32Div;
