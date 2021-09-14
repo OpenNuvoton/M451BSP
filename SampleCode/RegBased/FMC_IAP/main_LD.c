@@ -172,7 +172,6 @@ int32_t IAP_Func3(int32_t n)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    int32_t i;
 
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
