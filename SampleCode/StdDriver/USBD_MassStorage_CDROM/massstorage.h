@@ -87,7 +87,7 @@ static __INLINE uint32_t get_be32(uint8_t *buf)
 
 static __INLINE uint16_t get_be16(uint8_t * buf)
 {
-	return (((uint16_t) buf[0] << 8) | ((uint16_t) buf[1]));
+    return (((uint16_t) buf[0] << 8) | ((uint16_t) buf[1]));
 }
 
 /******************************************************************************/
@@ -154,7 +154,7 @@ void MSC_ReadFormatCapacity(void);
 void MSC_Read(void);
 void MSC_ReadCapacity(void);
 void MSC_Write(void);
-void MSC_ModeSense10(void);
+uint32_t MSC_ModeSense10(void);
 void MSC_ReadTrig(void);
 void MSC_ClassRequest(void);
 
