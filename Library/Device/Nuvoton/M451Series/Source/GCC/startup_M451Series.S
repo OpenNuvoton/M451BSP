@@ -266,31 +266,21 @@ Reset_Handler:
 	ldr	r1, =0x88
 	str	r1, [r0]
 
-#ifndef ENABLE_SPIM_CACHE
-	ldr	r0, =0x40000200            /* R0 = Clock Controller Register Base Address */
-	ldr	r1, [r0,#0x4]              /* R1 = 0x40000204  (AHBCLK) */
-	orr	r1, r1, #0x4000
-	str	r1, [r0,#0x4]              /* CLK->AHBCLK |= CLK_AHBCLK_SPIMCKEN_Msk; */
+/* Init POR */
+	ldr	r0, =0x40000024
+	ldr	r1, =0x00005AA5
+	str	r1, [r0]
 
-	ldr	r0, =0x40007000            /* R0 = SPIM Register Base Address */
-	ldr	r1, [r0,#4]                /* R1 = SPIM->CTL1 */
-	orr	r1, r1,#2                  /* R1 |= SPIM_CTL1_CACHEOFF_Msk */
-	str	r1, [r0,#4]                /* _SPIM_DISABLE_CACHE() */
-	ldr	r1, [r0,#4]                /* R1 = SPIM->CTL1 */
-	orr	r1, r1, #4                 /* R1 |= SPIM_CTL1_CCMEN_Msk */
-	str	r1, [r0,#4]                /* _SPIM_ENABLE_CCM() */
-#endif
+/* Select INV Type */
+    ldr r2, =0x40000200
+    ldr r1, [r2]
+    bic r1, r1, #0x1000
+    str r1, [r2]
 
 #ifndef __NO_SYSTEM_INIT
 	bl	SystemInit
 #endif
 
-/* Init POR */
-#if 0
-	ldr	r0, =0x40000024
-	ldr	r1, =0x00005AA5
-	str	r1, [r0]
-#endif
 
 /* Lock register */
 	ldr	r0, =0x40000100

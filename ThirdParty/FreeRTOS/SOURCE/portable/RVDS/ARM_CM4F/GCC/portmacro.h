@@ -162,6 +162,8 @@ not necessary for to use this port.  They are defined so the common demo files
 	#define portASSERT_IF_INTERRUPT_PRIORITY_INVALID() 	vPortValidateInterruptPriority()
 #endif
 
+#define portALIGNMENT_ASSERT_pxCurrentTCB ( void )
+
 /* portNOP() is not required by this port. */
 #define portNOP()
 
