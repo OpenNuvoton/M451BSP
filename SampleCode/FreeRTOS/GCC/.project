@@ -81,7 +81,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1504748890773</id>
+			<id>1651044966360</id>
 			<name>FreeRTOS/FreeRTOS</name>
 			<type>9</type>
 			<matcher>
@@ -90,7 +90,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1504748890787</id>
+			<id>1651044966372</id>
 			<name>FreeRTOS/FreeRTOS</name>
 			<type>9</type>
 			<matcher>
@@ -207,6 +207,42 @@
 			</matcher>
 		</filter>
 		<filter>
+			<id>1651044471052</id>
+			<name>FreeRTOS/FreeRTOS/Source</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-queue.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651044471075</id>
+			<name>FreeRTOS/FreeRTOS/Source</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-tasks.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651044471095</id>
+			<name>FreeRTOS/FreeRTOS/Source</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-timers.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651044471110</id>
+			<name>FreeRTOS/FreeRTOS/Source</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-list.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
 			<id>1541746534500</id>
 			<name>FreeRTOS/FreeRTOS/DEMO/COMMON</name>
 			<type>10</type>
@@ -252,12 +288,75 @@
 			</matcher>
 		</filter>
 		<filter>
+			<id>1651043832775</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common</name>
+			<type>9</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-Minimal</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043832788</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-flash.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043832802</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-PollQ.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043832814</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-QueueSet</arguments>
+			</matcher>
+		</filter>
+		<filter>
 			<id>1541731995369</id>
 			<name>FreeRTOS/FreeRTOS/SOURCE/portable</name>
 			<type>10</type>
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
 				<arguments>1.0-name-matches-false-false-IAR</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651045289993</id>
+			<name>FreeRTOS/FreeRTOS/Source/portable</name>
+			<type>9</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-MemMang</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651045290007</id>
+			<name>FreeRTOS/FreeRTOS/Source/portable</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-heap_2.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651045290018</id>
+			<name>FreeRTOS/FreeRTOS/Source/portable</name>
+			<type>9</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-GCC</arguments>
 			</matcher>
 		</filter>
 		<filter>
@@ -285,6 +384,33 @@
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
 				<arguments>1.0-name-matches-false-false-flash.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043717485</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common/Minimal</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-flash.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043717498</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common/Minimal</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-PollQ.c</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651043717509</id>
+			<name>FreeRTOS/FreeRTOS/Demo/Common/Minimal</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-QueueSet.c</arguments>
 			</matcher>
 		</filter>
 		<filter>
@@ -321,6 +447,24 @@
 			<matcher>
 				<id>org.eclipse.ui.ide.multiFilter</id>
 				<arguments>1.0-name-matches-false-false-ARM7_LPC21xx</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651044005358</id>
+			<name>FreeRTOS/FreeRTOS/Source/portable/GCC</name>
+			<type>9</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-ARM_CM4F</arguments>
+			</matcher>
+		</filter>
+		<filter>
+			<id>1651045360326</id>
+			<name>FreeRTOS/FreeRTOS/Source/portable/MemMang</name>
+			<type>5</type>
+			<matcher>
+				<id>org.eclipse.ui.ide.multiFilter</id>
+				<arguments>1.0-name-matches-false-false-heap_2.c</arguments>
 			</matcher>
 		</filter>
 		<filter>
