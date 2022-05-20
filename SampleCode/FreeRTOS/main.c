@@ -236,7 +236,7 @@ int main(void)
 
 
 #ifdef CHECK_TEST
-    xTaskCreate(vCheckTask, (signed portCHAR *) "Check", mainCHECK_TASK_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL);
+    xTaskCreate(vCheckTask, "Check", mainCHECK_TASK_STACK_SIZE, NULL, mainCHECK_TASK_PRIORITY, NULL);
 #endif
 
 
