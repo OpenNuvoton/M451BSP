@@ -41,11 +41,11 @@ uint32_t I2C_Open(I2C_T *i2c, uint32_t u32BusClock)
 {
     uint32_t u32Div;
     uint32_t u32Pclk;
-	
-    if(i2c == I2C1) 
+
+    if(i2c == I2C1)
     {
         u32Pclk = CLK_GetPCLK1Freq();
-    } 
+    }
     else
     {
         u32Pclk = CLK_GetPCLK0Freq();
@@ -96,7 +96,7 @@ void I2C_Close(I2C_T *i2c)
     *
   * @return     None
   *
-  * @details    When Time-out flag will be set, use this function to clear I2C Bus Time-out counter flag .
+  * @details    When Time-out flag will be set, use this function to clear I2C Bus Time-out counter flag.
     *
   */
 void I2C_ClearTimeoutFlag(I2C_T *i2c)
@@ -180,7 +180,7 @@ uint32_t I2C_GetBusClockFreq(I2C_T *i2c)
 
     if(i2c == I2C1)
     {
-        u32Pclk = CLK_GetPCLK1Freq();    
+        u32Pclk = CLK_GetPCLK1Freq();
     }
     else
     {
@@ -205,15 +205,15 @@ uint32_t I2C_SetBusClockFreq(I2C_T *i2c, uint32_t u32BusClock)
     uint32_t u32Div;
     uint32_t u32Pclk;
 
-    if(i2c == I2C1) 
+    if(i2c == I2C1)
     {
         u32Pclk = CLK_GetPCLK1Freq();
-    } 
+    }
     else
     {
         u32Pclk = CLK_GetPCLK0Freq();
     }
-    
+
     u32Div = (uint32_t)(((u32Pclk * 10u) / (u32BusClock * 4u) + 5u) / 10u - 1u); /* Compute proper divider for I2C clock */
     i2c->CLKDIV = u32Div;
 

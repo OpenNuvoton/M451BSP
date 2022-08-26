@@ -62,7 +62,7 @@ void SYS_Init(void)
     /* Waiting for clock ready */
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk | CLK_STATUS_LXTSTB_Msk);
 
-    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2*/
+    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2 */
     CLK_SetCoreClock(PLL_CLOCK);
     CLK_SetSysTickClockSrc(CLK_CLKSEL0_STCLKSEL_HCLK_DIV2);
 
@@ -76,7 +76,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set PD multi-function pins for UART0 RXD, TXD */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 }
@@ -131,7 +131,12 @@ int main(void)
     sWriteRTC.u32Minute     = 30;
     sWriteRTC.u32Second     = 30;
     sWriteRTC.u32TimeScale  = RTC_CLOCK_24;
-    RTC_Open(&sWriteRTC);
+    if( RTC_Open(&sWriteRTC) < 0 )
+    {
+        printf("\n RTC initial fail!!");
+        printf("\n Please check h/w setting!!");
+        goto lexit;
+    }
 
     /* Enable RTC tick interrupt, one RTC tick is 1/4 second */
     RTC_EnableInt(RTC_INTEN_TICKIEN_Msk);
@@ -168,7 +173,7 @@ int main(void)
             if(u32Sec == sReadRTC.u32Second)
             {
                 printf("\nRTC tick period time is incorrect.\n");
-                while(1);
+                goto lexit;
             }
 
             u32Sec = sReadRTC.u32Second;
@@ -187,6 +192,10 @@ int main(void)
             }
         }
     }
+
+lexit:
+
+    while(1);
 }
 
 /*** (C) COPYRIGHT 2013~2015 Nuvoton Technology Corp. ***/

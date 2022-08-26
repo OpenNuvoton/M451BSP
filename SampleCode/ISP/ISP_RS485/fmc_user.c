@@ -12,6 +12,7 @@
 int FMC_Proc(unsigned int u32Cmd, unsigned int addr_start, unsigned int addr_end, unsigned int *data)
 {
     unsigned int u32Addr, Reg;
+    uint32_t u32TimeOutCnt;
 
     for (u32Addr = addr_start; u32Addr < addr_end; data++) {
         FMC->ISPCMD = u32Cmd;
@@ -24,7 +25,12 @@ int FMC_Proc(unsigned int u32Cmd, unsigned int addr_start, unsigned int addr_end
         FMC->ISPTRG = 0x1;
         __ISB();
 
-        while (FMC->ISPTRG & 0x1) ;  /* Wait for ISP command done. */
+        /* Wait for ISP command done. */
+        u32TimeOutCnt = FMC_TIMEOUT_WRITE;
+        while (FMC->ISPTRG & 0x1) {
+            if(--u32TimeOutCnt == 0)
+                return -1;
+        }
 
         Reg = FMC->ISPCTL;
 
@@ -59,7 +65,7 @@ int FMC_Proc(unsigned int u32Cmd, unsigned int addr_start, unsigned int addr_end
  * @note
  *             Please make sure that Register Write-Protection Function has been disabled
  *             before using this function. User can check the status of
- *             Register Write-Protection Function with DrvSYS_IsProtectedRegLocked().
+ *             Register Write-Protection Function with SYS_IsRegLocked().
  */
 int FMC_Write_User(unsigned int u32Addr, unsigned int u32Data)
 {
@@ -78,7 +84,7 @@ int FMC_Write_User(unsigned int u32Addr, unsigned int u32Data)
  * @note
  *              Please make sure that Register Write-Protection Function has been disabled
  *              before using this function. User can check the status of
- *              Register Write-Protection Function with DrvSYS_IsProtectedRegLocked().
+ *              Register Write-Protection Function with SYS_IsRegLocked().
  */
 int FMC_Read_User(unsigned int u32Addr, unsigned int *data)
 {
@@ -96,7 +102,7 @@ int FMC_Read_User(unsigned int u32Addr, unsigned int *data)
  * @note
  *             Please make sure that Register Write-Protection Function has been disabled
  *             before using this function. User can check the status of
- *             Register Write-Protection Function with DrvSYS_IsProtectedRegLocked().
+ *             Register Write-Protection Function with SYS_IsRegLocked().
  */
 int FMC_Erase_User(unsigned int u32Addr)
 {

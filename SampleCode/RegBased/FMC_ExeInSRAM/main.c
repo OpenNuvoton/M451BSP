@@ -15,6 +15,7 @@
 #define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
+int32_t g_FMC_i32ErrCode;
 
 void SYS_Init(void)
 {
@@ -56,7 +57,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set PD multi-function pins for UART0 RXD, TXD */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 }
@@ -125,7 +126,7 @@ int main()
         if(u32Data != u32RData)
         {
             printf("[Read/Write FAIL]\n");
-            while(1);
+            break;
         }
     }
     /* Disable FMC ISP function */

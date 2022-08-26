@@ -52,10 +52,10 @@ void RS485_HANDLE()
 
     if(UART_GET_INT_FLAG(UART1, UART_INTSTS_RLSINT_Msk) && UART_GET_INT_FLAG(UART1, UART_INTSTS_RDAINT_Msk))      /* RLS INT & RDA INT */
     {
-        if(UART_RS485_GET_ADDR_FLAG(UART1))         /* ADD_IF, RS485 mode */
+        if(UART_RS485_GET_ADDR_FLAG(UART1))         /* RS485 address byte detect flag */
         {
             addr = UART_READ(UART1);
-            UART_RS485_CLEAR_ADDR_FLAG(UART1);      /* clear ADD_IF flag */
+            UART_RS485_CLEAR_ADDR_FLAG(UART1);      /* Clear RS485 address byte detect flag */
             printf("\nAddr=0x%x,Get:", addr);
 
 #if (IS_USE_RS485NMM ==1) //RS485_NMM
@@ -92,12 +92,13 @@ void RS485_HANDLE()
 /*---------------------------------------------------------------------------------------------------------*/
 void RS485_9bitModeSlave()
 {
+    uint32_t u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+
     /* Set Data Format, only need parity enable whatever parity ODD/EVEN */
     UART_SetLine_Config(UART1, 0, UART_WORD_LEN_8, UART_PARITY_EVEN, UART_STOP_BIT_1);
 
     /* Set RTS pin active level as high level active */
-    UART1->MODEM &= ~UART_MODEM_RTSACTLV_Msk;
-    UART1->MODEM |= UART_RTS_IS_HIGH_LEV_ACTIVE;
+    UART1->MODEM = (UART1->MODEM & (~UART_MODEM_RTSACTLV_Msk)) | UART_RTS_IS_HIGH_LEV_ACTIVE;
 
 #if(IS_USE_RS485NMM == 1)
     printf("+-----------------------------------------------------------+\n");
@@ -146,6 +147,7 @@ void RS485_9bitModeSlave()
     while(UART_GET_RX_EMPTY(UART1) == 0)
     {
         UART_READ(UART1);
+        if(--u32TimeOutCnt == 0) break;
     }
 
     /* Disable RDA/RLS/RTO interrupt */
@@ -169,8 +171,8 @@ void RS485_FunctionTest()
     printf("+-----------------------------------------------------------+\n");
     printf("|  ______                                            _____  |\n");
     printf("| |      |                                          |     | |\n");
-    printf("| |Master|--UART1_TXD(PB.3)  <==>  UART1_RXD(PB.2)--|Slave| |\n");
-    printf("| |      |--UART1_nRTS(PB.8) <==> UART1_nRTS(PB.8)--|     | |\n");
+    printf("| |Master|--UART1_TXD(PB.3)        UART1_RXD(PB.2)--|Slave| |\n");
+    printf("| |      |--UART1_nRTS(PB.8)      UART1_nRTS(PB.8)--|     | |\n");
     printf("| |______|                                          |_____| |\n");
     printf("|                                                           |\n");
     printf("+-----------------------------------------------------------+\n");
@@ -184,8 +186,7 @@ void RS485_FunctionTest()
             2.Master will send four different address with 10 bytes data to test Slave.
             3.Address bytes : the parity bit should be '1'. (Set UART_LINE = 0x2B)
             4.Data bytes : the parity bit should be '0'. (Set UART_LINE = 0x3B)
-            5.RTS pin is low in idle state. When master is sending,
-              RTS pin will be pull high.
+            5.RTS pin is low in idle state. When master is sending, RTS pin will be pull high.
 
         Slave:
             1.Set AAD and AUD mode firstly. RTSACTLV is set to '0'.
@@ -200,6 +201,17 @@ void RS485_FunctionTest()
               Check the ADDRESS is match or not by user in UART_IRQHandler.
               If the ADDRESS is match, clear RXOFF bit to receive data byte.
               If the ADDRESS is not match, set RXOFF bit to avoid data byte stored in FIFO.
+
+        Note: User can measure transmitted data waveform on TXD and RXD pin.
+              RTS pin is used for RS485 transceiver to control transmission direction.
+              RTS pin is low in idle state. When master is sending data, RTS pin will be pull high.
+              The connection to RS485 transceiver is as following figure for reference.
+               __________     ___________      ___________      __________
+              |          |   |           |    |           |    |          |
+              |Master    |   |RS485      |    |RS485      |    |Slave     |
+              | UART_TXD |---|Transceiver|<==>|Transceiver|----| UART_RXD |
+              | UART_nRTS|---|           |    |           |----| UART_nRTS|
+              |__________|   |___________|    |___________|    |__________|
     */
 
     RS485_9bitModeSlave();
@@ -219,7 +231,7 @@ void SYS_Init(void)
     /* Wait for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK source divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */

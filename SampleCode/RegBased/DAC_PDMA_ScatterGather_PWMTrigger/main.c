@@ -65,7 +65,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -125,7 +125,7 @@ void SYS_Init(void)
     SYS->GPB_MFPL &= ~SYS_GPB_MFPL_PB0MFP_Msk;
     SYS->GPB_MFPL |= SYS_GPB_MFPL_PB0MFP_DAC;
 
-    /* Set PC multi-function pins for PWMA Channel0 */
+    /* Set PC multi-function pins for PWM0 Channel 0 */
     SYS->GPC_MFPL = (SYS->GPC_MFPL & (~SYS_GPC_MFPL_PC0MFP_Msk));
     SYS->GPC_MFPL |= SYS_GPC_MFPL_PC0MFP_PWM0_CH0;
 

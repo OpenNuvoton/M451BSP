@@ -59,7 +59,7 @@ void SYS_Init(void)
     /* Waiting for clock ready */
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
 
-    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2*/
+    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2 */
     CLK_SetCoreClock(PLL_CLOCK);
     CLK_SetSysTickClockSrc(CLK_CLKSEL0_STCLKSEL_HCLK_DIV2);
 
@@ -78,10 +78,10 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set PD multi-function pins for UART0 RXD, TXD */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-    
+
     /* Set PD multi-function pins for Timer0 toggle-output pin and Timer2 event counter pin */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD4MFP_Msk | SYS_GPD_MFPL_PD3MFP_Msk);
     SYS->GPD_MFPL |= SYS_GPD_MFPL_PD4MFP_T0 | SYS_GPD_MFPL_PD3MFP_T2;
@@ -156,7 +156,7 @@ int main(void)
     /* Enable Timer2 NVIC */
     NVIC_EnableIRQ(TMR2_IRQn);
 
-    /* Open Timer0 in toggle-output mode and toggle-output frequency is 500 Hz*/
+    /* Open Timer0 in toggle-output mode and toggle-output frequency is 500 Hz */
     TIMER_Open(TIMER0, TIMER_TOGGLE_MODE, 1000);
 
     /* Open Timer3 in toggle-output mode and toggle-output frequency is 1 Hz */
@@ -192,19 +192,21 @@ int main(void)
                 if(u32CAPDiff != 500)
                 {
                     printf("*** FAIL ***\n");
-                    while(1);
+                    goto lexit;
                 }
             }
             u32InitCount = g_au32TMRINTCount[2];
         }
     }
 
+    printf("*** PASS ***\n");
+
+lexit:
+
     /* Stop Timer0, Timer2 and Timer3 counting */
     TIMER0->CTL = 0;
     TIMER2->CTL = 0;
     TIMER3->CTL = 0;
-
-    printf("*** PASS ***\n");
 
     while(1);
 }

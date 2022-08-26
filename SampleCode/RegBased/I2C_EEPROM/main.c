@@ -110,7 +110,7 @@ void I2C_MasterTx(uint32_t u32Status)
 {
     if(u32Status == 0x08)                       /* START has been transmitted */
     {
-        I2C0->DAT = g_u8DeviceAddr << 1;     /* Write SLA+W to Register I2CDAT */
+        I2C0->DAT = g_u8DeviceAddr << 1;        /* Write SLA+W to Register I2CDAT */
         I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
     }
     else if(u32Status == 0x18)                  /* SLA+W has been transmitted and ACK has been received */
@@ -156,7 +156,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -179,12 +179,12 @@ void SYS_Init(void)
     SystemCoreClockUpdate();
     //PllClock        = PLL_CLOCK;            // PLL
     //SystemCoreClock = PLL_CLOCK / 1;        // HCLK
-    //CyclesPerUs     = PLL_CLOCK / 1000000;  // For SYS_SysTickDelay()
+    //CyclesPerUs     = PLL_CLOCK / 1000000;  // For CLK_SysTickDelay()
 
     /* Enable UART module clock and I2C controller */
     CLK->APBCLK0 |= (CLK_APBCLK0_UART0CKEN_Msk | CLK_APBCLK0_I2C0CKEN_Msk);
 
-    /* Select UART module clock source as HXT and UART module clock divider as 1 */
+    /* Select UART module clock source as HXT */
     CLK->CLKSEL1 &= ~CLK_CLKSEL1_UARTSEL_Msk;
     CLK->CLKSEL1 |= CLK_CLKSEL1_UARTSEL_HXT;
 
@@ -192,7 +192,7 @@ void SYS_Init(void)
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Set PD multi-function pins for UART0 RXD, TXD and */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
@@ -276,7 +276,7 @@ void I2C0_Close(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    uint32_t i;
+    uint32_t i, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -287,7 +287,7 @@ int32_t main(void)
     /* Lock protected registers */
     SYS_LockReg();
 
-    /* Init UART3 for printf */
+    /* Init UART0 for printf */
     UART0_Init();
 
     /*
@@ -317,10 +317,18 @@ int32_t main(void)
         s_I2C0HandlerFn = (I2C_FUNC)I2C_MasterTx;
 
         /* I2C as master sends START signal */
-        I2C_SET_CONTROL_REG(I2C0,   I2C_CTL_STA);
+        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
         /* Wait I2C Tx Finish */
-        while(g_u8EndFlag == 0);
+        u32TimeOutCnt = I2C_TIMEOUT;
+        while(g_u8EndFlag == 0)
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for I2C Tx finish time-out!\n");
+                goto lexit;
+            }
+        }
         g_u8EndFlag = 0;
 
         /* I2C function to read data from slave */
@@ -330,19 +338,29 @@ int32_t main(void)
         g_u8DataLen = 0;
         g_u8DeviceAddr = 0x50;
 
-        I2C_SET_CONTROL_REG(I2C0,   I2C_CTL_STA);
+        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
         /* Wait I2C Rx Finish */
-        while(g_u8EndFlag == 0);
+        u32TimeOutCnt = I2C_TIMEOUT;
+        while(g_u8EndFlag == 0)
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for I2C Rx finish time-out!\n");
+                goto lexit;
+            }
+        }
 
         /* Compare data */
         if(g_u8RxData != g_au8TxData[2])
         {
             printf("I2C Byte Write/Read Failed, Data 0x%x\n", g_u8RxData);
-            return -1;
+            goto lexit;
         }
     }
     printf("I2C Access EEPROM Test OK\n");
+
+lexit:
 
     s_I2C0HandlerFn = NULL;
 

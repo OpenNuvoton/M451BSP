@@ -240,7 +240,7 @@ void TIMER_DisableEventCounter(TIMER_T *timer)
   */
 uint32_t TIMER_GetModuleClock(TIMER_T *timer)
 {
-    uint32_t u32Src;
+    uint32_t u32Src, u32Clk;
     const uint32_t au32Clk[] = {__HXT, __LXT, 0, 0, 0, __LIRC, 0, __HIRC};
 
     if(timer == TIMER0)
@@ -254,10 +254,21 @@ uint32_t TIMER_GetModuleClock(TIMER_T *timer)
 
     if(u32Src == 2)
     {
-        return (SystemCoreClock);
+        if((timer == TIMER0) || (timer == TIMER1))
+        {
+            u32Clk = CLK_GetPCLK0Freq();
+        }
+        else
+        {
+            u32Clk = CLK_GetPCLK1Freq();
+        }
+    }
+    else
+    {
+        u32Clk = au32Clk[u32Src];
     }
 
-    return (au32Clk[u32Src]);
+    return u32Clk;
 }
 
 /*@}*/ /* end of group TIMER_EXPORTED_FUNCTIONS */

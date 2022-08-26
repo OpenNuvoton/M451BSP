@@ -3,7 +3,7 @@
  * @version  V3.00
  * $Revision: 7 $
  * $Date: 15/09/02 10:04a $
- * @brief    Implement timer1 event counter function to count the external input event.
+ * @brief    Implement timer2 event counter function to count the external input event.
  * @note
  * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
@@ -71,7 +71,7 @@ void SYS_Init(void)
     /* Waiting for clock ready */
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
 
-    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2*/
+    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2 */
     CLK_SetCoreClock(PLL_CLOCK);
     CLK_SetSysTickClockSrc(CLK_CLKSEL0_STCLKSEL_HCLK_DIV2);
 
@@ -89,10 +89,10 @@ void SYS_Init(void)
     /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-    
+
     /* Set PD multi-function pin for Timer2 event counter pin */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD3MFP_Msk);
-    SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD3MFP_T2);	
+    SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD3MFP_T2);
 }
 
 void UART0_Init(void)
@@ -113,6 +113,7 @@ void UART0_Init(void)
 int main(void)
 {
     volatile uint32_t u32InitCount;
+    uint32_t u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -163,10 +164,7 @@ int main(void)
     if(TIMER_GetCounter(TIMER2) != 0)
     {
         printf("Default counter value is not 0. (%d)\n", TIMER_GetCounter(TIMER2));
-
-        /* Stop Timer2 counting */
-        TIMER_Close(TIMER2);
-        while(1);
+        goto lexit;
     }
 
     printf("Start to check Timer2 counter value ......\n\n");
@@ -175,25 +173,31 @@ int main(void)
     GenerateEventCounterSource(3, 4, 1);
 
     /* To check if counter value of Timer2 should be 1 */
-    while(TIMER_GetCounter(TIMER2) == 0);
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(TIMER_GetCounter(TIMER2) == 0)
+        if(--u32TimeOutCnt == 0) break;
     if(TIMER_GetCounter(TIMER2) != 1)
     {
         printf("Get unexpected counter value. (%d)\n", TIMER_GetCounter(TIMER2));
-
-        /* Stop Timer2 counting */
-        TIMER_Close(TIMER2);
-        while(1);
+        goto lexit;
     }
 
     /* To generate remains counts to T2 pin */
     GenerateEventCounterSource(3, 4, (56789 - 1));
 
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
     while(1)
     {
         if(g_au32TMRINTCount[2] == 1)
         {
             printf("# Timer2 interrupt event occurred.\n");
             break;
+        }
+
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for Timer2 interrupt time-out!\n");
+            goto lexit;
         }
     }
 
@@ -206,6 +210,8 @@ int main(void)
     {
         printf("FAIL.\n");
     }
+
+lexit:
 
     /* Stop Timer2 counting */
     TIMER_Close(TIMER2);

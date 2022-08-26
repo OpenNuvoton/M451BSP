@@ -76,11 +76,19 @@ extern "C"
 #define RTC_SNOOPER_DETECT_Msk      0xAUL       /*!< Snooper pin detected mask bits */
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  RTC Miscellaneous Constant Definitions                                                                         */
+/*  RTC Miscellaneous Constant Definitions                                                                 */
 /*---------------------------------------------------------------------------------------------------------*/
 #define RTC_WAIT_COUNT          0xFFFFFFFF      /*!< Initial Time-out Value */
 #define RTC_YEAR2000            2000            /*!< RTC Reference for compute year data */
 #define RTC_FCR_REFERENCE       32761           /*!< RTC Reference for frequency compensation */
+
+/*---------------------------------------------------------------------------------------------------------*/
+/* RTC Define Error Code                                                                                   */
+/*---------------------------------------------------------------------------------------------------------*/
+#define RTC_TIMEOUT         SystemCoreClock     /*!< RTC time-out counter (1 second time-out) */
+#define RTC_OK              ( 0L)               /*!< RTC operation OK */
+#define RTC_ERR_FAIL        (-1L)               /*!< RTC operation failed */
+#define RTC_ERR_TIMEOUT     (-2L)               /*!< RTC operation abort due to timeout error */
 
 /*@}*/ /* end of group RTC_EXPORTED_CONSTANTS */
 
@@ -230,15 +238,22 @@ typedef struct
   */
 static __INLINE void RTC_WaitAccessEnable(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /* To wait RWENF bit is cleared and enable RWENF bit (Access Enable bit) again */
-    while((RTC->RWEN & RTC_RWEN_RWENF_Msk) == RTC_RWEN_RWENF_Msk);
+    u32TimeOutCnt = RTC_TIMEOUT;
+    while((RTC->RWEN & RTC_RWEN_RWENF_Msk) == RTC_RWEN_RWENF_Msk)
+        if(--u32TimeOutCnt == 0) break;
+
     RTC->RWEN = RTC_WRITE_KEY;
 
     /* To wait RWENF bit is set and user can access the protected-register of RTC from now on */
-    while((RTC->RWEN & RTC_RWEN_RWENF_Msk) == 0x0);
+    u32TimeOutCnt = RTC_TIMEOUT;
+    while((RTC->RWEN & RTC_RWEN_RWENF_Msk) == 0x0)
+        if(--u32TimeOutCnt == 0) break;
 }
 
-void RTC_Open(S_RTC_TIME_DATA_T *sPt);
+int32_t RTC_Open(S_RTC_TIME_DATA_T *sPt);
 void RTC_Close(void);
 void RTC_32KCalibration(int32_t i32FrequencyX100);
 void RTC_GetDateAndTime(S_RTC_TIME_DATA_T *sPt);
@@ -253,7 +268,7 @@ uint32_t RTC_GetDayOfWeek(void);
 void RTC_SetTickPeriod(uint32_t u32TickSelection);
 void RTC_EnableInt(uint32_t u32IntFlagMask);
 void RTC_DisableInt(uint32_t u32IntFlagMask);
-void RTC_EnableSpareAccess(void);
+int32_t RTC_EnableSpareAccess(void);
 void RTC_DisableSpareRegister(void);
 void RTC_EnableSnooperDetection(uint32_t u32PinCondition);
 void RTC_DisableSnooperDetection(void);

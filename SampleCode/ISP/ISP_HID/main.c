@@ -11,8 +11,10 @@
 #define PLLCTL_SETTING      CLK_PLLCTL_144MHz_HXT
 #define PLL_CLOCK           144000000
 
-void SYS_Init(void)
+int32_t SYS_Init(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
@@ -21,22 +23,27 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
 
     /* Waiting for Internal RC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
 
     /* Enable external XTAL 12 MHz clock */
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for external XTAL clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
 
     /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(1);
 
-    /* Set core clock as PLL_CLOCK from PLL */
+    /* Set core clock from PLL */
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
     CLK->PLLCTL = PLLCTL_SETTING;
-
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+        if(--u32TimeOutCnt == 0) return -1;
 
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
     CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(2);
@@ -52,6 +59,8 @@ void SYS_Init(void)
 
     /* Enable USB LDO33 */
     SYS->USBPHY = SYS_USBPHY_LDO33EN_Msk;
+
+    return 0;
 }
 
 void USBD_IRQHandler(void);
@@ -64,7 +73,7 @@ int32_t main(void)
     SYS_UnlockReg();
 
     /* Init system and multi-function I/O */
-    SYS_Init();
+    if( SYS_Init() < 0 ) goto _APROM;
     CLK->AHBCLK |= CLK_AHBCLK_ISPCKEN_Msk;
     FMC->ISPCTL |= FMC_ISPCTL_ISPEN_Msk;
 
@@ -97,6 +106,8 @@ int32_t main(void)
             }
         }
     }
+
+_APROM:
 
     SYS->RSTSTS = (SYS_RSTSTS_PORF_Msk | SYS_RSTSTS_PINRF_Msk);//clear bit
     FMC->ISPCTL &=  ~(FMC_ISPCTL_ISPEN_Msk | FMC_ISPCTL_BS_Msk);

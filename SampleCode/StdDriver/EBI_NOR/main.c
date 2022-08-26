@@ -107,7 +107,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set PD multi-function pins for UART0 RXD, TXD */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 }
@@ -178,7 +178,7 @@ int main(void)
     if((u16IDTable[0] != 0xC2) || (u16IDTable[1] != 0x22A8))
     {
         printf("FAIL !!!\n\n");
-        while(1);
+        goto lexit;
     }
     else
     {
@@ -188,7 +188,7 @@ int main(void)
 
     /* Step 2, erase chip */
     if(NOR_MX29LV320T_EraseChip(EBI_BANK1, TRUE) < 0)
-        while(1);
+        goto lexit;
 
 
     /* Step 3, program flash and compare data */
@@ -200,7 +200,7 @@ int main(void)
         if(NOR_MX29LV320T_WRITE(EBI_BANK1, u32Addr, u16WData) < 0)
         {
             printf("Program [0x%08X]: [0x%08X] FAIL !!!\n\n", (uint32_t)EBI_BANK0_BASE_ADDR + (0x100000 * EBI_BANK1) + u32Addr, u16WData);
-            while(1);
+            goto lexit;
         }
         else
         {
@@ -217,7 +217,7 @@ int main(void)
         if(u16WData != u16RData)
         {
             printf("Compare [0x%08X] FAIL !!! (W:0x%08X, R:0x%08X)\n\n", (uint32_t)EBI_BANK0_BASE_ADDR + (0x100000 * EBI_BANK1) + u32Addr, u16WData, u16RData);
-            while(1);
+            goto lexit;
         }
         else
         {
@@ -227,6 +227,8 @@ int main(void)
         }
     }
     printf(">> Program flash OK !!!                             \n\n");
+
+lexit:
 
     /* Disable EBI function */
     EBI_Close(EBI_BANK1);

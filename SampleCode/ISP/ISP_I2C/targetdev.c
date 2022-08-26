@@ -25,7 +25,7 @@ uint32_t GetApromSize()
         }
     }
 
-    while (1);	// Error, trap MCU
+    return 0;	// Error
 }
 
 void GetDataFlashInfo(uint32_t *addr, uint32_t *size)

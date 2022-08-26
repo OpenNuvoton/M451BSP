@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK       72000000
 
 static uint32_t slave_buff_addr;
@@ -54,7 +53,7 @@ void I2C0_IRQHandler(void)
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  I2C TRx Callback Function                                                                               */
+/*  I2C TRx Callback Function                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 void I2C_SlaveTRx(uint32_t u32Status)
 {
@@ -157,12 +156,11 @@ void SYS_Init(void)
     /* Select UART module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
 
-
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Set PD multi-function pins for UART0 RXD, TXD and */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
@@ -229,7 +227,7 @@ void I2C0_Close(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    uint32_t i;
+    uint32_t i, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -294,13 +292,12 @@ int32_t main(void)
         if(g_u8SlvTRxAbortFlag)
         {
             g_u8SlvTRxAbortFlag = 0;
+            u32TimeOutCnt = I2C_TIMEOUT;
+            while(I2C0->CTL & I2C_CTL_SI_Msk)
+                if(--u32TimeOutCnt == 0) break;
 
-            while(I2C0->CTL & I2C_CTL_SI_Msk);
             printf("I2C Slave re-start. status[0x%x]\n", I2C0->STATUS);
             I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI_AA);
         }
     }
 }
-
-
-

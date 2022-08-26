@@ -34,7 +34,7 @@ extern "C"
 */
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  I2C_CTL constant definitions.                                                                            */
+/*  I2C_CTL constant definitions.                                                                          */
 /*---------------------------------------------------------------------------------------------------------*/
 #define I2C_CTL_STA_SI            0x28UL /*!< I2C_CTL setting for I2C control bits. It would set STA and SI bits          */
 #define I2C_CTL_STA_SI_AA         0x2CUL /*!< I2C_CTL setting for I2C control bits. It would set STA, SI and AA bits      */
@@ -60,7 +60,17 @@ extern "C"
 #define I2C_PECTX_ENABLE            1    /*!< Enable  SMBus Packet Error Check Transmit function                          */
 #define I2C_PECTX_DISABLE           0    /*!< Disable SMBus Packet Error Check Transmit function                          */
 
+/*---------------------------------------------------------------------------------------------------------*/
+/* I2C Define Error Code                                                                                   */
+/*---------------------------------------------------------------------------------------------------------*/
+#define I2C_TIMEOUT     SystemCoreClock  /*!< I2C time-out counter (1 second time-out)                                    */
+#define I2C_OK          ( 0L)            /*!< I2C operation OK                                                            */
+#define I2C_ERR_FAIL    (-1L)            /*!< I2C operation failed                                                        */
+#define I2C_ERR_TIMEOUT (-2L)            /*!< I2C operation abort due to timeout error                                    */
+
 /*@}*/ /* end of group I2C_EXPORTED_CONSTANTS */
+
+extern int32_t g_I2C_i32ErrCode;
 
 /** @addtogroup I2C_EXPORTED_FUNCTIONS I2C Exported Functions
   @{
@@ -368,9 +378,13 @@ extern "C"
  */
 static __INLINE void I2C_STOP(I2C_T *i2c)
 {
+    uint32_t u32TimeOutCount = I2C_TIMEOUT;
 
     (i2c)->CTL |= (I2C_CTL_SI_Msk | I2C_CTL_STO_Msk);
-    while(i2c->CTL & I2C_CTL_STO_Msk);
+    while(i2c->CTL & I2C_CTL_STO_Msk)
+    {
+        if(--u32TimeOutCount == 0) break;
+    }
 }
 
 void I2C_ClearTimeoutFlag(I2C_T *i2c);

@@ -22,6 +22,7 @@
   @{
 */
 
+int32_t g_FMC_i32ErrCode = 0; /*!< FMC global error code */
 
 /** @addtogroup FMC_EXPORTED_FUNCTIONS FMC Exported Functions
   @{
@@ -230,15 +231,24 @@ uint32_t FMC_ReadDataFlashBaseAddr(void)
   * @details     This function is used to read the settings of user configuration.
   *              if u32Count = 1, Only CONFIG0 will be returned to the buffer specified by u32Config.
   *              if u32Count = 2, Both CONFIG0 and CONFIG1 will be returned.
+  *
+  * @note        Global error code g_FMC_i32ErrCode
+  *              -1  Read failed
   */
 int32_t FMC_ReadConfig(uint32_t *u32Config, uint32_t u32Count)
 {
-    int32_t i;
+    uint32_t i;
+    int32_t i32ret = 0;
+
+    g_FMC_i32ErrCode = 0;
 
     for(i = 0; i < u32Count; i++)
+    {
         u32Config[i] = FMC_Read(FMC_CONFIG_BASE + i * 4);
+        if (g_FMC_i32ErrCode != 0) i32ret = -1;
+    }
 
-    return 0;
+    return i32ret;
 }
 
 
@@ -248,26 +258,34 @@ int32_t FMC_ReadConfig(uint32_t *u32Config, uint32_t u32Count)
   * @param[in]  u32Config The word buffer to store the User Configuration data.
   * @param[in]  u32Count The word count to program to User Configuration.
   *
-  * @retval     0 Success
-  * @retval    -1 Failed
+  * @retval      0 Success
+  * @retval     -1 Failed
   *
   * @details    User must enable User Configuration update before writing it.
   *             User must erase User Configuration before writing it.
   *             User Configuration is also be page erase. User needs to backup necessary data
   *             before erase User Configuration.
+  *
+  * @note     Global error code g_FMC_i32ErrCode
+  *           -1  Program failed or time-out
   */
 int32_t FMC_WriteConfig(uint32_t *u32Config, uint32_t u32Count)
 {
-    int32_t i;
+    uint32_t i;
+    int32_t i32ret = 0;
+
+    g_FMC_i32ErrCode = 0;
 
     for(i = 0; i < u32Count; i++)
     {
         FMC_Write(FMC_CONFIG_BASE + i * 4, u32Config[i]);
-        if(FMC_Read(FMC_CONFIG_BASE + i * 4) != u32Config[i])
-            return -1;
+        if (g_FMC_i32ErrCode != 0) i32ret = -1;
+
+        if(FMC_Read(FMC_CONFIG_BASE + i * 4) != u32Config[i]) i32ret = -1;
+        if (g_FMC_i32ErrCode != 0) i32ret = -1;
     }
 
-    return 0;
+    return i32ret;
 }
 
 /**

@@ -42,12 +42,12 @@
  *    @details      The function is used to clear UART specified interrupt flag.
  */
 
-void UART_ClearIntFlag(UART_T* uart , uint32_t u32InterruptFlag)
+void UART_ClearIntFlag(UART_T* uart, uint32_t u32InterruptFlag)
 {
 
     if(u32InterruptFlag & UART_INTSTS_RLSINT_Msk)   /* Clear Receive Line Status Interrupt */
     {
-        uart->FIFOSTS = UART_FIFOSTS_BIF_Msk | UART_FIFOSTS_FEF_Msk | UART_FIFOSTS_PEF_Msk;
+        uart->FIFOSTS = UART_FIFOSTS_BIF_Msk | UART_FIFOSTS_FEF_Msk | UART_FIFOSTS_PEF_Msk | UART_FIFOSTS_ADDRDETF_Msk;
         uart->FIFOSTS = UART_FIFOSTS_ADDRDETF_Msk;
     }
 
@@ -122,7 +122,7 @@ void UART_DisableFlowCtrl(UART_T* uart)
  *                                      - \ref UART_INTEN_MODEMIEN_Msk   : Modem status interrupt
  *                                      - \ref UART_INTEN_RLSIEN_Msk     : Receive Line status interrupt
  *                                      - \ref UART_INTEN_THREIEN_Msk    : Tx empty interrupt
- *                                      - \ref UART_INTEN_RDAIEN_Msk     : Rx ready interrupt *
+ *                                      - \ref UART_INTEN_RDAIEN_Msk     : Rx ready interrupt
  *
  *    @return       None
  *
@@ -142,7 +142,7 @@ void UART_DisableInt(UART_T*  uart, uint32_t u32InterruptFlag)
  *
  *    @return       None
  *
- *    @details      The function is used to Enable UART auto flow control.
+ *    @details      The function is used to enable UART auto flow control.
  */
 void UART_EnableFlowCtrl(UART_T* uart)
 {
@@ -158,7 +158,7 @@ void UART_EnableFlowCtrl(UART_T* uart)
 
 
 /**
- *    @brief        The function is used to enable UART specified interrupt and enable NVIC UART IRQ.
+ *    @brief        Enable UART specified interrupt
  *
  *    @param[in]    uart                The pointer of the specified UART module.
  *    @param[in]    u32InterruptFlag    The specified interrupt of UART module:
@@ -170,7 +170,7 @@ void UART_EnableFlowCtrl(UART_T* uart)
  *                                      - \ref UART_INTEN_MODEMIEN_Msk   : Modem status interrupt
  *                                      - \ref UART_INTEN_RLSIEN_Msk     : Receive Line status interrupt
  *                                      - \ref UART_INTEN_THREIEN_Msk    : Tx empty interrupt
- *                                      - \ref UART_INTEN_RDAIEN_Msk     : Rx ready interrupt *
+ *                                      - \ref UART_INTEN_RDAIEN_Msk     : Rx ready interrupt
  *
  *    @return       None
  *
@@ -196,7 +196,7 @@ void UART_EnableInt(UART_T*  uart, uint32_t u32InterruptFlag)
 void UART_Open(UART_T* uart, uint32_t u32baudrate)
 {
     uint8_t u8UartClkSrcSel, u8UartClkDivNum;
-    uint32_t u32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
+    uint32_t au32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
     uint32_t u32Baud_Div = 0;
 
     /* Get UART clock source selection */
@@ -216,15 +216,15 @@ void UART_Open(UART_T* uart, uint32_t u32baudrate)
 
     /* Get PLL clock frequency if UART clock source selection is PLL */
     if(u8UartClkSrcSel == 1)
-        u32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
+        au32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
 
     /* Set UART baud rate */
     if(u32baudrate != 0)
     {
-        u32Baud_Div = UART_BAUD_MODE2_DIVIDER((u32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate);
+        u32Baud_Div = UART_BAUD_MODE2_DIVIDER((au32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate);
 
         if(u32Baud_Div > 0xFFFF)
-            uart->BAUD = (UART_BAUD_MODE0 | UART_BAUD_MODE0_DIVIDER((u32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate));
+            uart->BAUD = (UART_BAUD_MODE0 | UART_BAUD_MODE0_DIVIDER((au32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate));
         else
             uart->BAUD = (UART_BAUD_MODE2 | u32Baud_Div);
     }
@@ -236,7 +236,7 @@ void UART_Open(UART_T* uart, uint32_t u32baudrate)
  *
  *    @param[in]    uart            The pointer of the specified UART module.
  *    @param[in]    pu8RxBuf        The buffer to receive the data of receive FIFO.
- *    @param[in]    u32ReadBytes    The the read bytes number of data.
+ *    @param[in]    u32ReadBytes    The read bytes number of data.
  *
  *    @return       u32Count Receive byte count
  *
@@ -268,7 +268,7 @@ uint32_t UART_Read(UART_T* uart, uint8_t *pu8RxBuf, uint32_t u32ReadBytes)
  *    @brief        Set UART line configuration
  *
  *    @param[in]    uart            The pointer of the specified UART module.
- *    @param[in]    u32baudrate     The register value of baudrate of UART module.
+ *    @param[in]    u32baudrate     The baudrate of UART module.
  *                                  If u32baudrate = 0, UART baudrate will not change.
  *    @param[in]    u32data_width   The data length of UART module.
  *                                  - \ref UART_WORD_LEN_5
@@ -293,7 +293,7 @@ uint32_t UART_Read(UART_T* uart, uint8_t *pu8RxBuf, uint32_t u32ReadBytes)
 void UART_SetLine_Config(UART_T* uart, uint32_t u32baudrate, uint32_t u32data_width, uint32_t u32parity, uint32_t  u32stop_bits)
 {
     uint8_t u8UartClkSrcSel, u8UartClkDivNum;
-    uint32_t u32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
+    uint32_t au32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
     uint32_t u32Baud_Div = 0;
 
     /* Get UART clock source selection */
@@ -304,15 +304,15 @@ void UART_SetLine_Config(UART_T* uart, uint32_t u32baudrate, uint32_t u32data_wi
 
     /* Get PLL clock frequency if UART clock source selection is PLL */
     if(u8UartClkSrcSel == 1)
-        u32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
+        au32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
 
     /* Set UART baud rate */
     if(u32baudrate != 0)
     {
-        u32Baud_Div = UART_BAUD_MODE2_DIVIDER((u32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate);
+        u32Baud_Div = UART_BAUD_MODE2_DIVIDER((au32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate);
 
         if(u32Baud_Div > 0xFFFF)
-            uart->BAUD = (UART_BAUD_MODE0 | UART_BAUD_MODE0_DIVIDER((u32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate));
+            uart->BAUD = (UART_BAUD_MODE0 | UART_BAUD_MODE0_DIVIDER((au32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32baudrate));
         else
             uart->BAUD = (UART_BAUD_MODE2 | u32Baud_Div);
     }
@@ -352,13 +352,13 @@ void UART_SetTimeoutCnt(UART_T* uart, uint32_t u32TOC)
  *                                  - \ref UART_IRDA_RXEN
  *
  *    @return       None
-  *
+ *
  *    @details      The function is used to configure IrDA relative settings. It consists of TX or RX mode and baudrate.
  */
 void UART_SelectIrDAMode(UART_T* uart, uint32_t u32Buadrate, uint32_t u32Direction)
 {
     uint8_t u8UartClkSrcSel, u8UartClkDivNum;
-    uint32_t u32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
+    uint32_t au32ClkTbl[4] = {__HXT, 0, __LXT, __HIRC};
     uint32_t u32Baud_Div;
 
     /* Select IrDA function mode */
@@ -372,12 +372,12 @@ void UART_SelectIrDAMode(UART_T* uart, uint32_t u32Buadrate, uint32_t u32Directi
 
     /* Get PLL clock frequency if UART clock source selection is PLL */
     if(u8UartClkSrcSel == 1)
-        u32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
+        au32ClkTbl[u8UartClkSrcSel] = CLK_GetPLLClockFreq();
 
     /* Set UART IrDA baud rate in mode 0 */
     if(u32Buadrate != 0)
     {
-        u32Baud_Div = UART_BAUD_MODE0_DIVIDER((u32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32Buadrate);
+        u32Baud_Div = UART_BAUD_MODE0_DIVIDER((au32ClkTbl[u8UartClkSrcSel]) / (u8UartClkDivNum + 1), u32Buadrate);
 
         if(u32Baud_Div < 0xFFFF)
             uart->BAUD = (UART_BAUD_MODE0 | u32Baud_Div);
@@ -386,12 +386,12 @@ void UART_SelectIrDAMode(UART_T* uart, uint32_t u32Buadrate, uint32_t u32Directi
     /* Configure IrDA relative settings */
     if(u32Direction == UART_IRDA_RXEN)
     {
-        uart->IRDA |= UART_IRDA_RXINV_Msk;     //Rx signal is inverse
+        uart->IRDA |= UART_IRDA_RXINV_Msk;     /* Rx signal is inverse */
         uart->IRDA &= ~UART_IRDA_TXEN_Msk;
     }
     else
     {
-        uart->IRDA &= ~UART_IRDA_TXINV_Msk;    //Tx signal is not inverse
+        uart->IRDA &= ~UART_IRDA_TXINV_Msk;    /* Tx signal is not inverse */
         uart->IRDA |= UART_IRDA_TXEN_Msk;
     }
 
@@ -417,7 +417,7 @@ void UART_SelectRS485Mode(UART_T* uart, uint32_t u32Mode, uint32_t u32Addr)
     /* Select UART RS485 function mode */
     uart->FUNCSEL = UART_FUNCSEL_RS485;
 
-    /* Set RS585 configuration */
+    /* Set RS485 configuration */
     uart->ALTCTL &= ~(UART_ALTCTL_RS485NMM_Msk | UART_ALTCTL_RS485AUD_Msk | UART_ALTCTL_RS485AAD_Msk | UART_ALTCTL_ADDRMV_Msk);
     uart->ALTCTL |= (u32Mode | (u32Addr << UART_ALTCTL_ADDRMV_Pos));
 }
@@ -430,7 +430,7 @@ void UART_SelectRS485Mode(UART_T* uart, uint32_t u32Mode, uint32_t u32Addr)
  *    @param[in]    u32Mode         The LIN direction :
  *                                  - \ref UART_ALTCTL_LINTXEN_Msk
  *                                  - \ref UART_ALTCTL_LINRXEN_Msk
- *    @param[in]    u32BreakLength  The breakfield length.
+ *    @param[in]    u32BreakLength  The break field length.
  *
  *    @return       None
  *

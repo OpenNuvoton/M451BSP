@@ -21,7 +21,7 @@
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int main(void);
+int32_t main(void);
 void IrDA_FunctionTxTest(void);
 
 
@@ -85,7 +85,7 @@ void IrDA_FunctionTxTest()
     UART1->FUNCSEL = UART_FUNCSEL_IrDA;
 
     /* Set IrDA Tx mode */
-    UART1->IRDA = UART_IRDA_TXEN_Msk;
+    UART1->IRDA |= UART_IRDA_TXEN_Msk;
     UART1->IRDA &= ~UART_IRDA_TXINV_Msk;    //Tx signal is not inverse
 
     /* Wait Terminal input to send data to UART1 TX pin */
@@ -190,7 +190,7 @@ void UART1_Init()
 /* MAIN function                                                                                           */
 /*---------------------------------------------------------------------------------------------------------*/
 
-int main(void)
+int32_t main(void)
 {
 
     /* Unlock protected registers */

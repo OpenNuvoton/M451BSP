@@ -54,7 +54,7 @@ void I2C0_IRQHandler(void)
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  I2C TRx Callback Function                                                                               */
+/*  I2C TRx Callback Function                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 void I2C_SlaveTRx(uint32_t u32Status)
 {
@@ -136,7 +136,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -159,12 +159,12 @@ void SYS_Init(void)
     SystemCoreClockUpdate();
     //PllClock        = PLL_CLOCK;            // PLL
     //SystemCoreClock = PLL_CLOCK / 1;        // HCLK
-    //CyclesPerUs     = PLL_CLOCK / 1000000;  // For SYS_SysTickDelay()
+    //CyclesPerUs     = PLL_CLOCK / 1000000;  // For CLK_SysTickDelay()
 
     /* Enable UART module clock and I2C controller */
     CLK->APBCLK0 |= (CLK_APBCLK0_UART0CKEN_Msk | CLK_APBCLK0_I2C0CKEN_Msk);
 
-    /* Select UART module clock source as HXT and UART module clock divider as 1 */
+    /* Select UART module clock source as HXT */
     CLK->CLKSEL1 &= ~CLK_CLKSEL1_UARTSEL_Msk;
     CLK->CLKSEL1 |= CLK_CLKSEL1_UARTSEL_HXT;
 
@@ -172,7 +172,7 @@ void SYS_Init(void)
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Set PD multi-function pins for UART0 RXD, TXD and */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
@@ -263,7 +263,7 @@ void I2C0_Close(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    uint32_t i;
+    uint32_t i, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -325,12 +325,15 @@ int32_t main(void)
             g_u8TimeoutFlag = 0;
             g_u8SlvTRxAbortFlag = 1;
         }
-        /* When I2C abort, clear SI to enter non-addressed SLV mode*/
+        /* When I2C abort, clear SI to enter non-addressed SLV mode */
         if(g_u8SlvTRxAbortFlag)
         {
             g_u8SlvTRxAbortFlag = 0;
 
-            while(I2C0->CTL & I2C_CTL_SI_Msk);
+            u32TimeOutCnt = I2C_TIMEOUT;
+            while(I2C0->CTL & I2C_CTL_SI_Msk)
+                if(--u32TimeOutCnt == 0) break;
+
             printf("I2C Slave re-start. status[0x%x]\n", I2C0->STATUS);
             I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI_AA);
         }

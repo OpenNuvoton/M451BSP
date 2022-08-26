@@ -28,7 +28,7 @@
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int main(void);
+int32_t main(void);
 void RS485_SendAddressByte(uint8_t u8data);
 void RS485_SendDataByte(uint8_t *pu8TxBuf, uint32_t u32WriteBytes);
 void RS485_9bitModeMaster(void);
@@ -80,17 +80,16 @@ void RS485_9bitModeMaster()
 
     /* Set RS485-Master as AUD mode */
     /* Enable AUD mode to HW control RTS pin automatically */
-    /* You also can use GPIO to control RTS pin for replacing AUD mode*/
+    /* You also can use GPIO to control RTS pin for replacing AUD mode */
     UART_SelectRS485Mode(UART1, UART_ALTCTL_RS485AUD_Msk, 0);
 
     /* Set RTS pin active level as high level active */
-    UART1->MODEM &= ~UART_MODEM_RTSACTLV_Msk;
-    UART1->MODEM |= UART_RTS_IS_HIGH_LEV_ACTIVE;
+    UART1->MODEM = (UART1->MODEM & (~UART_MODEM_RTSACTLV_Msk)) | UART_RTS_IS_HIGH_LEV_ACTIVE;
 
     /* Set TX delay time */
     UART1->TOUT = 0x2000;
 
-    /* Prepare Data to transmit*/
+    /* Prepare data to transmit */
     for(i32 = 0; i32 < 10; i32++)
     {
         g_u8SendDataGroup1[i32] = i32;
@@ -130,8 +129,8 @@ void RS485_FunctionTest()
     printf("+-----------------------------------------------------------+\n");
     printf("|  ______                                            _____  |\n");
     printf("| |      |                                          |     | |\n");
-    printf("| |Master|--UART1_TXD(PB.3)  <==>  UART1_RXD(PB.2)--|Slave| |\n");
-    printf("| |      |--UART1_nRTS(PB.8) <==> UART1_nRTS(PB.8)--|     | |\n");
+    printf("| |Master|--UART1_TXD(PB.3)        UART1_RXD(PB.2)--|Slave| |\n");
+    printf("| |      |--UART1_nRTS(PB.8)      UART1_nRTS(PB.8)--|     | |\n");
     printf("| |______|                                          |_____| |\n");
     printf("|                                                           |\n");
     printf("+-----------------------------------------------------------+\n");
@@ -145,8 +144,7 @@ void RS485_FunctionTest()
             2.Master will send four different address with 10 bytes data to test Slave.
             3.Address bytes : the parity bit should be '1'. (Set UART_LINE = 0x2B)
             4.Data bytes : the parity bit should be '0'. (Set UART_LINE = 0x3B)
-            5.RTS pin is low in idle state. When master is sending,
-              RTS pin will be pull high.
+            5.RTS pin is low in idle state. When master is sending, RTS pin will be pull high.
 
         Slave:
             1.Set AAD and AUD mode firstly. RTSACTLV is set to '0'.
@@ -161,6 +159,17 @@ void RS485_FunctionTest()
               Check the ADDRESS is match or not by user in UART_IRQHandler.
               If the ADDRESS is match, clear RXOFF bit to receive data byte.
               If the ADDRESS is not match, set RXOFF bit to avoid data byte stored in FIFO.
+
+        Note: User can measure transmitted data waveform on TXD and RXD pin.
+              RTS pin is used for RS485 transceiver to control transmission direction.
+              RTS pin is low in idle state. When master is sending data, RTS pin will be pull high.
+              The connection to RS485 transceiver is as following figure for reference.
+               __________     ___________      ___________      __________
+              |          |   |           |    |           |    |          |
+              |Master    |   |RS485      |    |RS485      |    |Slave     |
+              | UART_TXD |---|Transceiver|<==>|Transceiver|----| UART_RXD |
+              | UART_nRTS|---|           |    |           |----| UART_nRTS|
+              |__________|   |___________|    |___________|    |__________|
     */
 
     RS485_9bitModeMaster();
@@ -180,7 +189,7 @@ void SYS_Init(void)
     /* Wait for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK source divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */
@@ -244,7 +253,7 @@ void UART1_Init()
 /*---------------------------------------------------------------------------------------------------------*/
 /* MAIN function                                                                                           */
 /*---------------------------------------------------------------------------------------------------------*/
-int main(void)
+int32_t main(void)
 {
     /* Unlock protected registers */
     SYS_UnlockReg();

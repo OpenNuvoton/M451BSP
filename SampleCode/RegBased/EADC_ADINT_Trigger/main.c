@@ -39,7 +39,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -88,7 +88,7 @@ void SYS_Init(void)
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
-    /* Configure the GPB0 - GPB3 ADC analog input pins.  */
+    /* Configure the GPB0 - GPB3 ADC analog input pins. */
     SYS->GPB_MFPL &= ~(SYS_GPB_MFPL_PB0MFP_Msk | SYS_GPB_MFPL_PB1MFP_Msk |
                        SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk);
     SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB0MFP_EADC_CH0 | SYS_GPB_MFPL_PB1MFP_EADC_CH1 |
@@ -114,12 +114,13 @@ void UART0_Init()
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* EADC function test                                                                                       */
+/* EADC function test                                                                                      */
 /*---------------------------------------------------------------------------------------------------------*/
 void EADC_FunctionTest()
 {
     uint8_t  u8Option, u32SAMPLECount = 0;
     int32_t  i32ConversionData[8] = {0};
+    uint32_t u32TimeOutCnt;
 
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
@@ -163,12 +164,30 @@ void EADC_FunctionTest()
             EADC->SWTRG |= (0x1 << 7);
 
             /* Wait EADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-            while(g_u32AdcIntFlag == 0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32AdcIntFlag == 0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC interrupt time-out!\n");
+                    return;
+                }
+            }
+
             /* Reset the EADC interrupt indicator */
             g_u32AdcIntFlag = 0;
 
             /* Wait EADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-            while(g_u32AdcIntFlag == 0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32AdcIntFlag == 0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC interrupt time-out!\n");
+                    return;
+                }
+            }
+
             /* Reset the EADC interrupt indicator */
             g_u32AdcIntFlag = 0;
 
@@ -180,7 +199,15 @@ void EADC_FunctionTest()
                 i32ConversionData[u32SAMPLECount] = (EADC->DAT[u32SAMPLECount + 4] & EADC_DAT_RESULT_Msk);
 
             /* Wait conversion done */
-            while(EADC->STATUS0 != 0xF0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(EADC->STATUS0 != 0xF0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC conversion done time-out!\n");
+                    return;
+                }
+            }
 
             /* Get the conversion result of the sample module */
             for(u32SAMPLECount = 4; u32SAMPLECount < 8; u32SAMPLECount++)
@@ -218,12 +245,29 @@ void EADC_FunctionTest()
             EADC->SWTRG |= (0x1 << 7);
 
             /* Wait EADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-            while(g_u32AdcIntFlag == 0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32AdcIntFlag == 0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC interrupt time-out!\n");
+                    return;
+                }
+            }
             /* Reset the EADC interrupt indicator */
             g_u32AdcIntFlag = 0;
 
             /* Wait EADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-            while(g_u32AdcIntFlag == 0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32AdcIntFlag == 0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC interrupt time-out!\n");
+                    return;
+                }
+            }
+
             /* Reset the EADC interrupt indicator */
             g_u32AdcIntFlag = 0;
 
@@ -235,7 +279,15 @@ void EADC_FunctionTest()
                 i32ConversionData[u32SAMPLECount] = (EADC->DAT[u32SAMPLECount + 4] & EADC_DAT_RESULT_Msk);
 
             /* Wait conversion done */
-            while(EADC->STATUS0 != 0xF0);
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(EADC->STATUS0 != 0xF0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for EADC conversion done time-out!\n");
+                    return;
+                }
+            }
 
             /* Get the conversion result of the sample module */
             for(u32SAMPLECount = 4; u32SAMPLECount < 8; u32SAMPLECount++)

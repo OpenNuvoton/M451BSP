@@ -24,8 +24,10 @@ uint32_t u32Pclk1;
 void ProcessHardFault(void) {}
 void SH_Return(void) {}
 
-void SYS_Init(void)
+int32_t SYS_Init(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
@@ -33,11 +35,16 @@ void SYS_Init(void)
     CLK->PWRCTL |= (CLK_PWRCTL_HIRCEN_Msk | CLK_PWRCTL_HXTEN_Msk);
 
     /* Wait for HIRC clock ready */
-    while (!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while (!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
 
     /* Set core clock as PLL_CLOCK from PLL and HCLK clock divider as 1 */
     CLK->PLLCTL = PLLCTL_SETTING;
-    while (!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while (!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
+
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
     CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(1);
 
@@ -62,6 +69,8 @@ void SYS_Init(void)
 
     /* I2C clock pin enable schmitt trigger */
     PE->SMTEN |= GPIO_SMTEN_SMTEN4_Msk;
+
+    return 0;
 }
 
 int main(void)
@@ -72,7 +81,7 @@ int main(void)
     SYS_UnlockReg();
 
     /* Init System, peripheral clock and multi-function I/O */
-    SYS_Init();
+    if( SYS_Init() < 0 ) goto _APROM;
 
     /* Enable ISP */
     CLK->AHBCLK |= CLK_AHBCLK_ISPCKEN_Msk;
@@ -80,6 +89,7 @@ int main(void)
 
     /* Get APROM size, data flash size and address */
     g_apromSize = GetApromSize();
+    if( g_apromSize == 0 ) goto _APROM;
     GetDataFlashInfo(&g_dataFlashAddr, &g_dataFlashSize);
 
     if (g_dataFlashAddr < g_apromSize) {

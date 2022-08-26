@@ -24,7 +24,7 @@ uint8_t volatile bufhead = 0;
 
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* INTSTS to handle UART Channel 0 interrupt event                                                            */
+/* INTSTS to handle UART Channel 0 interrupt event                                                         */
 /*---------------------------------------------------------------------------------------------------------*/
 void UART0_IRQHandler(void)
 {

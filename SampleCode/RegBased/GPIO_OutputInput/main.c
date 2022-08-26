@@ -88,7 +88,7 @@ void UART0_Init()
 int32_t main(void)
 {
 
-    int32_t i32Err, i32TimeOutCnt; ;
+    int32_t i32Err, i32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();

@@ -71,7 +71,7 @@ void SYS_Init(void)
     /* Waiting for clock ready */
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk | CLK_STATUS_LIRCSTB_Msk);
 
-    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2*/
+    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2 */
     CLK_SetCoreClock(PLL_CLOCK);
     CLK_SetSysTickClockSrc(CLK_CLKSEL0_STCLKSEL_HCLK_DIV2);
 
@@ -109,6 +109,7 @@ void UART0_Init(void)
 int main(void)
 {
     volatile uint32_t u32InitCount;
+    uint32_t u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -162,11 +163,21 @@ int main(void)
                 SYS_UnlockReg();
                 printf("\nSystem enter to power-down mode ...\n");
                 /* To check if all the debug messages are finished */
-                while(IsDebugFifoEmpty() == 0);
+                u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+                while(IsDebugFifoEmpty() == 0)
+                    if(--u32TimeOutCnt == 0) break;
                 CLK_PowerDown();
 
                 /* Check if Timer0 time-out interrupt and wake-up flag occurred */
-                while(g_u8IsTMR0WakeupFlag == 0);
+                u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+                while(g_u8IsTMR0WakeupFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for Timer wake-up interrupt time-out!\n");
+                        break;
+                    }
+                }
 
                 printf("System has been waken-up done. (Timer0 interrupt counts is %d)\n\n", g_au32TMRINTCount[0]);
             }

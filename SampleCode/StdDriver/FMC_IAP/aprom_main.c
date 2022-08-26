@@ -11,7 +11,6 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK       72000000
 
 typedef void (FUNC_PTR)(void);
@@ -48,7 +47,6 @@ void SYS_Init(void)
 
     /* Select UART module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
-
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
@@ -145,6 +143,7 @@ int main()
     uint32_t    u32Data;
     char *acBootMode[] = {"LDROM+IAP", "LDROM", "APROM+IAP", "APROM"};
     uint32_t u32CBS;
+    uint32_t u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -160,7 +159,6 @@ int main()
     printf("|      M451 FMC IAP Sample Code          |\n");
     printf("|           [APROM code]                 |\n");
     printf("+----------------------------------------+\n");
-
 
     /* Enable FMC ISP function */
     FMC_Open();
@@ -214,7 +212,9 @@ int main()
 
             case '1':
                 printf("\n\nChange VECMAP and branch to LDROM...\n");
-                UART_WAIT_TX_EMPTY(UART0); /* To make sure all message has been print out */
+                u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+                UART_WAIT_TX_EMPTY(UART0)  /* To make sure all message has been print out */
+                    if(--u32TimeOutCnt == 0) break;
 
                 /* Mask all interrupt before changing VECMAP to avoid wrong interrupt handler fetched */
                 __set_PRIMASK(1);

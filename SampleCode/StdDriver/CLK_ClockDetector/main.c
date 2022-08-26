@@ -11,7 +11,7 @@
 #include "stdio.h"
 #include "M451Series.h"
 
-#define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
+
 #define PLL_CLOCK       72000000
 
 
@@ -46,7 +46,7 @@ void CLKFAIL_IRQHandler(void)
         /* LXT clock fail interrupt is happened */
         printf("LXT Clock is stopped!\n");
 
-        /* Disable HXT clock fail interrupt */
+        /* Disable LXT clock fail interrupt */
         CLK->CLKDCTL &= ~(CLK_CLKDCTL_LXTFIEN_Msk | CLK_CLKDCTL_LXTFDEN_Msk);
 
         /* Write 1 to clear LXT Clock fail interrupt flag */
@@ -89,7 +89,7 @@ void SYS_Init(void)
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
     CLK_WaitClockReady(CLK_STATUS_LXTSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Set core clock as PLL_CLOCK from PLL */

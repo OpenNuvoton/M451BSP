@@ -51,6 +51,11 @@ extern "C"
 #define    CAN_DATA_FRAME    1
 
 /*---------------------------------------------------------------------------------------------------------*/
+/* CAN Time-out Handler Constant Definitions                                                               */
+/*---------------------------------------------------------------------------------------------------------*/
+#define    CAN_TIMEOUT        SystemCoreClock    /*!< CAN time-out counter (1 second time-out) */
+
+/*---------------------------------------------------------------------------------------------------------*/
 /*  CAN message structure                                                                                  */
 /*---------------------------------------------------------------------------------------------------------*/
 typedef struct
@@ -86,7 +91,7 @@ typedef struct
 /**
  * @brief Get interrupt status.
  *
- * @param[in] can The base address of can module.
+ * @param[in] can The pointer to CAN module base address.
  *
  * @return CAN module status register value.
  *
@@ -98,7 +103,7 @@ typedef struct
 /**
  * @brief Get specified interrupt pending status.
  *
- * @param[in] can The base address of can module.
+ * @param[in] can The pointer to CAN module base address.
  *
  * @return The source of the interrupt.
  *
@@ -110,7 +115,7 @@ typedef struct
 /**
  * @brief Disable wake-up function.
  *
- * @param[in] can The base address of can module.
+ * @param[in] can The pointer to CAN module base address.
  *
  * @return None
  *
@@ -121,7 +126,7 @@ typedef struct
 /**
  * @brief Enable wake-up function.
  *
- * @param[in] can The base address of can module.
+ * @param[in] can The pointer to CAN module base address.
  *
  * @return None
  *
@@ -132,7 +137,7 @@ typedef struct
 /**
  * @brief Get specified Message Object new data into bit value.
  *
- * @param[in] can The base address of can module.
+ * @param[in] can The pointer to CAN module base address.
  * @param[in] u32MsgNum Specified Message Object number, valid value are from 0 to 31.
  *
  * @return Specified Message Object new data into bit value.

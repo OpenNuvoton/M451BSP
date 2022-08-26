@@ -13,7 +13,6 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK       72000000
 
 uint32_t slave_buff_addr;
@@ -165,7 +164,6 @@ void SYS_Init(void)
     /* Select UART module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
 
-
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
@@ -235,7 +233,7 @@ void I2C0_Close(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    uint32_t i;
+    uint32_t i, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -247,7 +245,7 @@ int32_t main(void)
     UART0_Init();
 
     /* Lock protected registers */
-    SYS_LockReg();;
+    SYS_LockReg();
 
     /*
         This sample code is I2C SLAVE mode and it simulates EEPROM function
@@ -302,8 +300,11 @@ int32_t main(void)
     printf("Enter PD 0x%x 0x%x\n", I2C0->CTL, I2C0->STATUS);
     printf("\n");
     printf("CHIP enter power down status.\n");
-    /* Waiting for UART printf finish*/
-    while(((UART0->FIFOSTS) & UART_FIFOSTS_TXEMPTYF_Msk) == 0);
+
+    /* Waiting for UART printf finish */
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(((UART0->FIFOSTS) & UART_FIFOSTS_TXEMPTYF_Msk) == 0)
+        if(--u32TimeOutCnt == 0) break;
 
     if(((I2C0->CTL)&I2C_CTL_SI_Msk) != 0)
     {
@@ -317,10 +318,18 @@ int32_t main(void)
     __NOP();
     __NOP();
 
-    while((g_u8SlvPWRDNWK & g_u8SlvI2CWK) == 0);
+    u32TimeOutCnt = I2C_TIMEOUT;
+    while((g_u8SlvPWRDNWK & g_u8SlvI2CWK) == 0)
+    {
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for system or I2C interrupt time-out!\n");
+            break;
+        }
+    }
 
     /* Wake-up Interrupt Message */
-    printf("Power-down Wake-up INT 0x%x\n", ((CLK->PWRCTL) & CLK_PWRCTL_PDWKIF_Msk));
+    printf("Power-down Wake-up INT 0x%lx\n", ((CLK->PWRCTL) & CLK_PWRCTL_PDWKIF_Msk));
     printf("I2C0 WAKE INT 0x%x\n", I2C0->WKSTS);
 
     /* Disable power wake-up interrupt */
@@ -338,6 +347,3 @@ int32_t main(void)
 
     while(1);
 }
-
-
-
