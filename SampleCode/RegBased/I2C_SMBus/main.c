@@ -146,60 +146,6 @@ void I2C1_IRQHandler(void)
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  I2C Master Rx Callback Function                                                                        */
-/*---------------------------------------------------------------------------------------------------------*/
-void I2C_MasterRx(uint32_t u32Status)
-{
-    if(u32Status == 0x08)                       /* START has been transmitted and prepare SLA+W */
-    {
-        I2C0->DAT = g_u8DeviceAddr << 1;     /* Write SLA+W to Register I2CDAT */
-        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-    }
-    else if(u32Status == 0x18)                  /* SLA+W has been transmitted and ACK has been received */
-    {
-        I2C0->DAT = g_au8TxData[g_u8DataLen0++];
-        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-    }
-    else if(u32Status == 0x20)                  /* SLA+W has been transmitted and NACK has been received */
-    {
-        I2C_STOP(I2C0);
-        I2C_START(I2C0);
-    }
-    else if(u32Status == 0x28)                  /* DATA has been transmitted and ACK has been received */
-    {
-        if(g_u8DataLen0 != 2)
-        {
-            I2C0->DAT = g_au8TxData[g_u8DataLen0++];
-            I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-        }
-        else
-        {
-            I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA_SI);
-        }
-    }
-    else if(u32Status == 0x10)                  /* Repeat START has been transmitted and prepare SLA+R */
-    {
-        I2C0->DAT = ((g_u8DeviceAddr << 1) | 0x01);   /* Write SLA+R to Register I2CDAT */
-        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-    }
-    else if(u32Status == 0x40)                  /* SLA+R has been transmitted and ACK has been received */
-    {
-        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-    }
-    else if(u32Status == 0x58)                  /* DATA has been received and NACK has been returned */
-    {
-        g_u8RxData = I2C0->DAT;
-        I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STO_SI);
-        g_u8EndFlag = 1;
-    }
-    else
-    {
-        /* TO DO */
-        printf("Status 0x%x is NOT processed\n", u32Status);
-    }
-}
-
-/*---------------------------------------------------------------------------------------------------------*/
 /*  I2C Master Tx Callback Function                                                                        */
 /*---------------------------------------------------------------------------------------------------------*/
 void I2C_MasterTx(uint32_t u32Status)
@@ -562,7 +508,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -588,7 +534,7 @@ void SYS_Init(void)
     /* Enable UART module clock and I2C controller */
     CLK->APBCLK0 |= (CLK_APBCLK0_UART0CKEN_Msk | CLK_APBCLK0_I2C0CKEN_Msk | CLK_APBCLK0_I2C1CKEN_Msk);
 
-    /* Select UART module clock source as HXT and UART module clock divider as 1 */
+    /* Select UART module clock source as HXT */
     CLK->CLKSEL1 &= ~CLK_CLKSEL1_UARTSEL_Msk;
     CLK->CLKSEL1 |= CLK_CLKSEL1_UARTSEL_HXT;
 
@@ -596,7 +542,7 @@ void SYS_Init(void)
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Set PD multi-function pins for UART0 RXD, TXD and */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
@@ -742,7 +688,7 @@ void I2C1_Close(void)
 
 int32_t SMBusSendByteTest(uint8_t slvaddr)
 {
-    uint32_t i;
+    uint32_t i, u32TimeOutCnt;
 
     g_u8DeviceAddr = slvaddr;
 
@@ -764,13 +710,21 @@ int32_t SMBusSendByteTest(uint8_t slvaddr)
         I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
         /* Wait I2C0 transmit finish */
-        while(g_u8EndFlag == 0);
+        u32TimeOutCnt = I2C_TIMEOUT;
+        while(g_u8EndFlag == 0)
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for I2C transmit finish time-out!\n");
+                return -1;
+            }
+        }
         g_u8EndFlag = 0;
 
         if(g_u8PECErr)
         {
             printf("PEC Check Error !\n");
-            while(1);
+            return -1;
         }
     }
     return 0;
@@ -778,6 +732,8 @@ int32_t SMBusSendByteTest(uint8_t slvaddr)
 
 int32_t SMBusAlertTest(uint8_t slvaddr)
 {
+    uint32_t u32TimeOutCnt;
+
     g_u8DeviceAddr = slvaddr;
 
     /* I2C function to Send Alert Response Address to bus */
@@ -789,14 +745,22 @@ int32_t SMBusAlertTest(uint8_t slvaddr)
     /* Init receive data index */
     g_u8DataLen0 = 0;
 
-    /* Waiting for Get Alert Address*/
-    while(g_u8AlertAddrAck0 == 0);
+    /* Waiting for Get Alert Address */
+    u32TimeOutCnt = I2C_TIMEOUT;
+    while(g_u8AlertAddrAck0 == 0)
+    {
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for I2C get alert address time-out!\n");
+            return -1;
+        }
+    }
     g_u8AlertAddrAck0 = 0;
 
     if(g_u8PECErr)
     {
         printf("PEC Check Error !\n");
-        while(1);
+        return -1;
     }
 
     return 0;
@@ -804,6 +768,8 @@ int32_t SMBusAlertTest(uint8_t slvaddr)
 
 int32_t SMBusDefaultAddressTest(uint8_t slvaddr)
 {
+    uint32_t u32TimeOutCnt;
+
     g_u8DeviceAddr = slvaddr;
 
     /* Set Transmission ARP command */
@@ -821,14 +787,21 @@ int32_t SMBusDefaultAddressTest(uint8_t slvaddr)
     I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
     /* Wait I2C0 transmit finish */
-    while(g_u8EndFlag == 0);
+    u32TimeOutCnt = I2C_TIMEOUT;
+    while(g_u8EndFlag == 0)
+    {
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for I2C transmit finish time-out!\n");
+            return -1;
+        }
+    }
     g_u8EndFlag = 0;
-
 
     if(g_u8PECErr)
     {
         printf("PEC Check Error !\n");
-        while(1);
+        return -1;
     }
 
     printf("\n");
@@ -842,7 +815,7 @@ int32_t SMBusDefaultAddressTest(uint8_t slvaddr)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
-    uint32_t i, ch = NULL;
+    uint32_t i, ch = NULL, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -850,14 +823,11 @@ int32_t main(void)
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
 
-
     /* Lock protected registers */
     SYS_LockReg();
 
     /* Init UART0 for printf */
     UART0_Init();
-
-
 
     while(ch != 0x30)
     {
@@ -931,7 +901,7 @@ int32_t main(void)
             printf(" == SMBus Send Bytes Protocol test ==\n");
 
             /* SMBus send byte protocol test*/
-            SMBusSendByteTest(g_au8SlaveAddr[0]);
+            if( SMBusSendByteTest(g_au8SlaveAddr[0]) < 0 ) goto lexit;
 
             printf("\n");
             printf("SMBus transmit data done.\n");
@@ -985,14 +955,22 @@ int32_t main(void)
             printf("I2C1 has Alert Request and Alert Pin Pull Lo. \n");
 
             /* Wait I2C0 get Alert interrupt */
-            while(g_u8AlertInt0 == 0);
+            u32TimeOutCnt = I2C_TIMEOUT;
+            while(g_u8AlertInt0 == 0)
+            {
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for I2C alert interrupt time-out!\n");
+                    goto lexit;
+                }
+            }
 
             /* I2C0 Get Alert Request */
             g_u8AlertInt0 = 0;
             printf("I2C0 Get Alert Interrupt Request\n");
 
             /* I2C0 Send Alert Response Address(ARA) to I2C bus */
-            SMBusAlertTest(SMBUS_ALERT_RESPONSE_ADDRESS);
+            if( SMBusAlertTest(SMBUS_ALERT_RESPONSE_ADDRESS) < 0 ) goto lexit;
 
             /* Printf the Alert Slave address */
             printf("\n");
@@ -1045,7 +1023,7 @@ int32_t main(void)
             printf("== Simple ARP and Acknowledge by Manual Test ==\n");
 
             /* I2C0 sends Default Address and ARP Command (0x01) to Slave */
-            SMBusDefaultAddressTest(SMBUS_DEFAULT_ADDRESS);
+            if( SMBusDefaultAddressTest(SMBUS_DEFAULT_ADDRESS) < 0 ) goto lexit;
 
             /* Show I2C1 get ARP command from  I2C0 */
             printf("\n");
@@ -1063,6 +1041,8 @@ int32_t main(void)
             }
         }
     }
+
+lexit:
 
     s_I2C0HandlerFn = NULL;
     s_I2C1HandlerFn = NULL;

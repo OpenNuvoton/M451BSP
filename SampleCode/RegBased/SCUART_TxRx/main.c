@@ -43,7 +43,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -146,15 +146,22 @@ uint32_t SCUART_Open(SC_T* sc, uint32_t u32baudrate)
 /*---------------------------------------------------------------------------------------------------------*/
 /* Write data to Sc UART interface                                                                         */
 /*---------------------------------------------------------------------------------------------------------*/
-void SCUART_Write(SC_T* sc, uint8_t *pu8TxBuf, uint32_t u32WriteBytes)
+uint32_t SCUART_Write(SC_T* sc, uint8_t *pu8TxBuf, uint32_t u32WriteBytes)
 {
-    uint32_t u32Count;
+    uint32_t u32Count, u32TimeOutCnt;
 
     for(u32Count = 0; u32Count != u32WriteBytes; u32Count++)
     {
-        while(SCUART_GET_TX_FULL(sc));  // Wait 'til FIFO not full
-        sc->DAT = pu8TxBuf[u32Count];    // Write 1 byte to FIFO
+        // Wait 'til FIFO not full
+        u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+        while(SCUART_GET_TX_FULL(sc))
+            if(--u32TimeOutCnt == 0) return u32Count;
+
+        // Write 1 byte to FIFO
+        sc->DAT = pu8TxBuf[u32Count];
     }
+
+    return u32Count;
 }
 
 /*---------------------------------------------------------------------------------------------------------*/

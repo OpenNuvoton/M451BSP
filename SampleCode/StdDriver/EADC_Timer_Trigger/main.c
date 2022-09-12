@@ -11,7 +11,6 @@
 #include "stdio.h"
 #include "M451Series.h"
 
-#define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -39,7 +38,7 @@ void SYS_Init(void)
     /* Wait for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK source divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Set PLL to Power-down mode and PLLSTB bit in CLK_STATUS register will be cleared by hardware.*/
@@ -124,6 +123,7 @@ void EADC_FunctionTest()
 {
     uint8_t  u8Option;
     int32_t  i32ConversionData[6] = {0};
+    uint32_t u32TimeOutCnt;
 
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
@@ -166,7 +166,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the EADC interrupt indicator */
                 g_u32AdcIntFlag = 0;
@@ -215,7 +223,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the ADC interrupt indicator */
                 g_u32AdcIntFlag = 0;

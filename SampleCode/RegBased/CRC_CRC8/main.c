@@ -3,7 +3,7 @@
  * @version  V3.00
  * $Revision: 5 $
  * $Date: 15/09/02 10:03a $
- * @brief    PImplement CRC in CRC-8 mode and get the CRC checksum result.
+ * @brief    Implement CRC in CRC-8 mode and get the CRC checksum result.
  * @note
  * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/

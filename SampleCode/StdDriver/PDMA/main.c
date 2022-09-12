@@ -32,7 +32,7 @@ uint32_t volatile u32IsTestOver = 0;
  *
  * @return      None
  *
- * @details     The DMA default IRQ, declared in startup_M451series.s.
+ * @details     The DMA default IRQ, declared in startup_M451Series.s.
  */
 void PDMA_IRQHandler(void)
 {
@@ -66,7 +66,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */
@@ -116,6 +116,8 @@ void UART0_Init()
 /*---------------------------------------------------------------------------------------------------------*/
 int main(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /* Unlock protected registers */
     SYS_UnlockReg();
 
@@ -156,7 +158,16 @@ int main(void)
 
     PDMA_Trigger(2);
 
-    while(u32IsTestOver == 0);
+    /* Waiting for transfer done */
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(u32IsTestOver == 0)
+    {
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for PDMA transfer done time-out!\n");
+            break;
+        }
+    }
 
     if(u32IsTestOver == 1)
         printf("test done...\n");

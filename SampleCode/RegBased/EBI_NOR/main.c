@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCON_SETTING      CLK_PLLCTL_72MHz_HXT
+#define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
 
@@ -95,7 +95,7 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
     /* Enable PLL and Set PLL frequency */
-    CLK->PLLCTL = PLLCON_SETTING;
+    CLK->PLLCTL = PLLCTL_SETTING;
 
     /* Waiting for clock ready */
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
@@ -194,7 +194,7 @@ int main(void)
     if((u16IDTable[0] != 0xC2) || (u16IDTable[1] != 0x22A8))
     {
         printf("FAIL !!!\n\n");
-        while(1);
+        goto lexit;
     }
     else
     {
@@ -204,7 +204,7 @@ int main(void)
 
     /* Step 2, erase chip */
     if(NOR_MX29LV320T_EraseChip(EBI_BANK1, TRUE) < 0)
-        while(1);
+        goto lexit;
 
 
     /* Step 3, program flash and compare data */
@@ -216,7 +216,7 @@ int main(void)
         if(NOR_MX29LV320T_WRITE(EBI_BANK1, u32Addr, u16WData) < 0)
         {
             printf("Program [0x%08X]: [0x%08X] FAIL !!!\n\n", (uint32_t)EBI_BANK0_BASE_ADDR + (0x100000 * EBI_BANK1) + u32Addr, u16WData);
-            while(1);
+            goto lexit;
         }
         else
         {
@@ -233,7 +233,7 @@ int main(void)
         if(u16WData != u16RData)
         {
             printf("Compare [0x%08X] FAIL !!! (W:0x%08X, R:0x%08X)\n\n", (uint32_t)EBI_BANK0_BASE_ADDR + (0x100000 * EBI_BANK1) + u32Addr, u16WData, u16RData);
-            while(1);
+            goto lexit;
         }
         else
         {
@@ -243,6 +243,8 @@ int main(void)
         }
     }
     printf(">> Program flash OK !!!                             \n\n");
+
+lexit:
 
     /* Disable EBI function */
     EBI->CTL1 &= ~EBI_CTL1_EN_Msk;

@@ -39,7 +39,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -150,6 +150,7 @@ void EADC_FunctionTest()
 {
     uint8_t  u8Option;
     int32_t  i32ConversionData[6] = {0};
+    uint32_t u32TimeOutCnt = 0;
 
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
@@ -190,7 +191,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the EADC interrupt indicator */
                 g_u32AdcIntFlag = 0;
@@ -237,7 +246,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the ADC interrupt indicator */
                 g_u32AdcIntFlag = 0;

@@ -4,7 +4,7 @@
  * $Revision: 7 $
  * $Date: 15/09/02 10:03a $
  * @brief
- *           Show how to wake up system form Power-down mode by brown-out detector interrupt.
+ *           Show how to wake up system from Power-down mode by brown-out detector interrupt.
  *
  * @note
  * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
@@ -22,8 +22,12 @@
 /*---------------------------------------------------------------------------------------------------------*/
 void PowerDownFunction(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /* Check if all the debug messages are finished */
-    UART_WAIT_TX_EMPTY(UART0);
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    UART_WAIT_TX_EMPTY(UART0)
+        if(--u32TimeOutCnt == 0) break;
 
     /* Enable Power-down mode wake-up interrupt */
     CLK->PWRCTL |= CLK_PWRCTL_PDWKIEN_Msk;
@@ -51,7 +55,7 @@ void BOD_IRQHandler(void)
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  Power-down Mode Wake-up IRQ Handler                                                                              */
+/*  Power-down Mode Wake-up IRQ Handler                                                                    */
 /*---------------------------------------------------------------------------------------------------------*/
 void PWRWU_IRQHandler(void)
 {

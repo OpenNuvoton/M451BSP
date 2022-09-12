@@ -789,7 +789,7 @@ Example 1: If user want to set PA.0 as SC0_CLK in initial function,
   *             - \ref SYS_BODCTL_BODVL_2_2V
   * @return     None
   * @details    This macro set Brown-out detector voltage level.
-  *             The write-protection function should be disabled before using this macro.
+  *             The register write-protection function should be disabled before using this macro.
   */
 #define SYS_SET_BOD_LEVEL(u32Level)     (SYS->BODCTL = (SYS->BODCTL & ~SYS_BODCTL_BODVL_Msk) | (u32Level))
 
@@ -813,10 +813,10 @@ Example 1: If user want to set PA.0 as SC0_CLK in initial function,
 
 /**
   * @brief      Get reset source is from LVR Reset
-  * @param      None     
+  * @param      None
   * @retval     0   Previous reset source is not from Low-Voltage-Reset
   * @retval     >=1 Previous reset source is from Low-Voltage-Reset
-  * @details    This macro get previous reset source is from Low-Voltage-Reset.   
+  * @details    This macro get previous reset source is from Low-Voltage-Reset.
   */
 #define SYS_IS_LVR_RST()                (SYS->RSTSTS & SYS_RSTSTS_LVRF_Msk)
 
@@ -923,11 +923,15 @@ Example 1: If user want to set PA.0 as SC0_CLK in initial function,
   */
 __STATIC_INLINE void SYS_UnlockReg(void)
 {
+    uint32_t u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+
     do
     {
         SYS->REGLCTL = 0x59;
         SYS->REGLCTL = 0x16;
         SYS->REGLCTL = 0x88;
+
+        if(--u32TimeOutCnt == 0) break;
     }
     while(SYS->REGLCTL == 0);
 }

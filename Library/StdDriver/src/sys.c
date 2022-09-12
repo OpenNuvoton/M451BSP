@@ -45,14 +45,14 @@ extern "C"
   */
 void SYS_ClearResetSrc(uint32_t u32Src)
 {
-    SYS->RSTSTS |= u32Src;
+    SYS->RSTSTS = u32Src;
 }
 
 /**
   * @brief      Get Brown-out detector output status
   * @param      None
-  * @retval     0 System voltage is higher than BOD_VL setting or BOD_EN is 0.
-  * @retval     1 System voltage is lower than BOD_VL setting.
+  * @retval     0 System voltage is higher than BODVL setting or BODEN is 0.
+  * @retval     1 System voltage is lower than BODVL setting.
   * @details    This function get Brown-out detector output status.
   */
 uint32_t SYS_GetBODStatus(void)
@@ -75,7 +75,7 @@ uint32_t SYS_GetResetSrc(void)
   * @brief      Check if register is locked or not
   * @param      None
   * @retval     0 Write-protection function is disabled.
-  *             1 Write-protection function is enabled.
+  * @retval     1 Write-protection function is enabled.
   * @details    This function check register write-protection bit setting.
   */
 uint32_t SYS_IsRegLocked(void)
@@ -151,6 +151,7 @@ void SYS_ResetCPU(void)
   *             - \ref TK_RST
   * @return     None
   * @details    This function reset selected module.
+  *             The register write-protection function should be disabled before using this function.
   */
 void SYS_ResetModule(uint32_t u32ModuleIndex)
 {

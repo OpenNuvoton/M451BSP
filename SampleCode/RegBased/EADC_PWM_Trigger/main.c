@@ -39,7 +39,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -95,7 +95,7 @@ void SYS_Init(void)
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
-    /* Configure the GPB0 - GPB3 ADC analog input pins.  */
+    /* Configure the GPB0 - GPB3 ADC analog input pins. */
     SYS->GPB_MFPL &= ~(SYS_GPB_MFPL_PB0MFP_Msk | SYS_GPB_MFPL_PB1MFP_Msk |
                        SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk);
     SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB0MFP_EADC_CH0 | SYS_GPB_MFPL_PB1MFP_EADC_CH1 |
@@ -104,7 +104,7 @@ void SYS_Init(void)
     /* Disable the GPB0 - GPB3 digital input path to avoid the leakage current. */
     GPIO_DISABLE_DIGITAL_PATH(PB, 0xF);
 
-    /* Set PC multi-function pins for PWMA Channel0 */
+    /* Set PC multi-function pins for PWM0 Channel 0 */
     SYS->GPC_MFPL = (SYS->GPC_MFPL & (~SYS_GPC_MFPL_PC0MFP_Msk));
     SYS->GPC_MFPL |= SYS_GPC_MFPL_PC0MFP_PWM0_CH0;
 
@@ -160,6 +160,7 @@ void EADC_FunctionTest()
 {
     uint8_t  u8Option;
     int32_t  i32ConversionData[6] = {0};
+    uint32_t u32TimeOutCnt = 0;
 
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
@@ -200,7 +201,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the ADC interrupt indicator */
                 g_u32AdcIntFlag = 0;
@@ -248,7 +257,15 @@ void EADC_FunctionTest()
             while(1)
             {
                 /* Wait ADC interrupt (g_u32AdcIntFlag will be set at IRQ_Handler function) */
-                while(g_u32AdcIntFlag == 0);
+                u32TimeOutCnt = EADC_TIMEOUT;
+                while(g_u32AdcIntFlag == 0)
+                {
+                    if(--u32TimeOutCnt == 0)
+                    {
+                        printf("Wait for EADC interrupt time-out!\n");
+                        return;
+                    }
+                }
 
                 /* Reset the ADC interrupt indicator */
                 g_u32AdcIntFlag = 0;

@@ -41,7 +41,7 @@ extern "C"
 #define UART3_FIFO_SIZE 16 /*!< UART3 supports separated receive/transmit 16/16 bytes entry FIFO */    
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* UART_FIFO constants definitions                                                                            */
+/* UART_FIFO constants definitions                                                                         */
 /*---------------------------------------------------------------------------------------------------------*/
 
 #define UART_FIFO_RFITL_1BYTE      (0x0 << UART_FIFO_RFITL_Pos)   /*!< UART_FIFO setting to set RX FIFO Trigger Level to 1 byte */
@@ -55,7 +55,7 @@ extern "C"
 #define UART_FIFO_RTSTRGLV_14BYTES    (0x3 << UART_FIFO_RTSTRGLV_Pos)  /*!< UART_FIFO setting to set RTS Trigger Level to 14 bytes */
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* UART_LINE constants definitions                                                                            */
+/* UART_LINE constants definitions                                                                         */
 /*---------------------------------------------------------------------------------------------------------*/
 #define UART_WORD_LEN_5     (0) /*!< UART_LINE setting to set UART word length to 5 bits */
 #define UART_WORD_LEN_6     (1) /*!< UART_LINE setting to set UART word length to 6 bits */
@@ -81,14 +81,14 @@ extern "C"
 
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* UART_IRDA constants definitions                                                                           */
+/* UART_IRDA constants definitions                                                                         */
 /*---------------------------------------------------------------------------------------------------------*/
 #define UART_IRDA_TXEN      (0x1 << UART_IRDA_TXEN_Pos) /*!< Set IrDA function Tx mode */
 #define UART_IRDA_RXEN      (0x0 << UART_IRDA_TXEN_Pos) /*!< Set IrDA function Rx mode */
 
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* UART_FUNCSEL constants definitions                                                                       */
+/* UART_FUNCSEL constants definitions                                                                      */
 /*---------------------------------------------------------------------------------------------------------*/
 #define UART_FUNCSEL_UART  (0x0 << UART_FUNCSEL_FUNCSEL_Pos) /*!< UART_FUNCSEL setting to set UART Function  (Default) */
 #define UART_FUNCSEL_LIN   (0x1 << UART_FUNCSEL_FUNCSEL_Pos) /*!< UART_FUNCSEL setting to set LIN Function             */
@@ -108,7 +108,7 @@ extern "C"
 
 
 /*---------------------------------------------------------------------------------------------------------*/
-/* UART BAUDRATE MODE constants definitions                                                                       */
+/* UART BAUDRATE MODE constants definitions                                                                */
 /*---------------------------------------------------------------------------------------------------------*/
 #define UART_BAUD_MODE0     (0) /*!< Set UART Baudrate Mode is Mode0 */
 #define UART_BAUD_MODE2     (UART_BAUD_BAUDM1_Msk | UART_BAUD_BAUDM0_Msk) /*!< Set UART Baudrate Mode is Mode2 */
@@ -331,7 +331,7 @@ extern "C"
  *
  *    @return       None
  *
- *    @details      This macro enable specified UART interrupt.
+ *    @details      This macro disable specified UART interrupt.
  */
 #define UART_DISABLE_INT(uart, u32eIntSel)    ((uart)->INTEN &= ~ (u32eIntSel))
 
@@ -341,31 +341,31 @@ extern "C"
  *
  *    @param[in]    uart            The pointer of the specified UART module
  *    @param[in]    u32eIntTypeFlag Interrupt Type Flag, should be
- *                                  - \ref UART_INTSTS_HWBUFEINT_Msk : In DMA Mode, Buffer Error Interrupt Indicator
- *                                  - \ref UART_INTSTS_HWTOINT_Msk   : In DMA Mode, Time-out Interrupt Indicator
- *                                  - \ref UART_INTSTS_HWMODINT_Msk  : In DMA Mode, MODEM Status Interrupt Indicator
- *                                  - \ref UART_INTSTS_HWRLSINT_Msk  : In DMA Mode, Receive Line Status Interrupt Indicator
- *                                  - \ref UART_INTSTS_HWBUFEIF_Msk  : In DMA Mode, Buffer Error Interrupt Flag
- *                                  - \ref UART_INTSTS_HWTOIF_Msk    : In DMA Mode, Time-out Interrupt Flag
- *                                  - \ref UART_INTSTS_HWMODIF_Msk   : In DMA Mode, MODEM Interrupt Flag
- *                                  - \ref UART_INTSTS_HWRLSIF_Msk   : In DMA Mode, Receive Line Status Flag
+ *                                  - \ref UART_INTSTS_HWBUFEINT_Msk : PDMA Mode Buffer Error Interrupt Indicator
+ *                                  - \ref UART_INTSTS_HWTOINT_Msk   : PDMA Mode Rx Time-out Interrupt Indicator
+ *                                  - \ref UART_INTSTS_HWMODINT_Msk  : PDMA Mode MODEM Status Interrupt Indicator
+ *                                  - \ref UART_INTSTS_HWRLSINT_Msk  : PDMA Mode Receive Line Status Interrupt Indicator
+ *                                  - \ref UART_INTSTS_HWBUFEIF_Msk  : PDMA Mode Buffer Error Interrupt Flag
+ *                                  - \ref UART_INTSTS_HWTOIF_Msk    : PDMA Mode Time-out Interrupt Flag
+ *                                  - \ref UART_INTSTS_HWMODIF_Msk   : PDMA Mode MODEM Status Interrupt Flag
+ *                                  - \ref UART_INTSTS_HWRLSIF_Msk   : PDMA Mode Receive Line Status Flag
  *                                  - \ref UART_INTSTS_LININT_Msk    : LIN Bus Interrupt Indicator
  *                                  - \ref UART_INTSTS_BUFERRINT_Msk : Buffer Error Interrupt Indicator
- *                                  - \ref UART_INTSTS_RXTOINT_Msk   : Time-out Interrupt Indicator
+ *                                  - \ref UART_INTSTS_RXTOINT_Msk   : Rx Time-out Interrupt Indicator
  *                                  - \ref UART_INTSTS_MODEMINT_Msk  : Modem Status Interrupt Indicator
  *                                  - \ref UART_INTSTS_RLSINT_Msk    : Receive Line Status Interrupt Indicator
  *                                  - \ref UART_INTSTS_THREINT_Msk   : Transmit Holding Register Empty Interrupt Indicator
  *                                  - \ref UART_INTSTS_RDAINT_Msk    : Receive Data Available Interrupt Indicator
- *                                  - \ref UART_INTSTS_LINIF_Msk     : LIN Bus Flag
+ *                                  - \ref UART_INTSTS_LINIF_Msk     : LIN Bus Interrupt Flag
  *                                  - \ref UART_INTSTS_BUFERRIF_Msk  : Buffer Error Interrupt Flag
  *                                  - \ref UART_INTSTS_RXTOIF_Msk    : Rx Time-out Interrupt Flag
- *                                  - \ref UART_INTSTS_MODEMIF_Msk   : Modem Interrupt Flag
+ *                                  - \ref UART_INTSTS_MODEMIF_Msk   : Modem Status Interrupt Flag
  *                                  - \ref UART_INTSTS_RLSIF_Msk     : Receive Line Status Interrupt Flag
  *                                  - \ref UART_INTSTS_THREIF_Msk    : Tx Empty Interrupt Flag
  *                                  - \ref UART_INTSTS_RDAIF_Msk     : Rx Ready Interrupt Flag
  *
  *    @retval       0 The specified interrupt is not happened.
- *                  1 The specified interrupt is happened.
+ *    @retval       1 The specified interrupt is happened.
  *
  *    @details      This macro get specified interrupt flag or interrupt indicator status.
  */
@@ -428,7 +428,7 @@ __STATIC_INLINE void UART_SET_RTS(UART_T* uart)
 #define UART_RS485_GET_ADDR_FLAG(uart)    (((uart)->FIFOSTS  & UART_FIFOSTS_ADDRDETF_Msk) >> UART_FIFOSTS_ADDRDETF_Pos)
 
 
-void UART_ClearIntFlag(UART_T* uart , uint32_t u32InterruptFlag);
+void UART_ClearIntFlag(UART_T* uart, uint32_t u32InterruptFlag);
 void UART_Close(UART_T* uart);
 void UART_DisableFlowCtrl(UART_T* uart);
 void UART_DisableInt(UART_T*  uart, uint32_t u32InterruptFlag);

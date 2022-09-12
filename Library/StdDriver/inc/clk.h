@@ -176,8 +176,12 @@ extern "C"
 #define CLK_PLLCTL_NO_2         0x4000UL        /*!< For output divider is 2 */
 #define CLK_PLLCTL_NO_4         0xC000UL        /*!< For output divider is 4 */
 
+#if (__HXT == 12000000)
 #define CLK_PLLCTL_72MHz_HXT    (CLK_PLLCTL_PLLSRC_HXT  | CLK_PLLCTL_NR(2) | CLK_PLLCTL_NF( 48) | CLK_PLLCTL_NO_4) /*!< Predefined PLLCTL setting for 72MHz PLL output with HXT(12MHz X'tal) */
 #define CLK_PLLCTL_144MHz_HXT   (CLK_PLLCTL_PLLSRC_HXT  | CLK_PLLCTL_NR(2) | CLK_PLLCTL_NF( 48) | CLK_PLLCTL_NO_2) /*!< Predefined PLLCTL setting for 144MHz PLL output with HXT(12MHz X'tal) */
+#else
+# error "The PLL pre-definitions are only valid when external crystal is 12MHz"
+#endif
 #define CLK_PLLCTL_72MHz_HIRC   (CLK_PLLCTL_PLLSRC_HIRC | CLK_PLLCTL_NR(4) | CLK_PLLCTL_NF( 52) | CLK_PLLCTL_NO_4) /*!< Predefined PLLCTL setting for 71.8848MHz PLL output with HIRC(22.1184MHz IRC) */
 
 
@@ -195,8 +199,8 @@ extern "C"
 #define MODULE_CLKDIV_Msk(x)    (((x) >>10) & 0xff)   /*!< Calculate CLKDIV mask offset on MODULE index */
 #define MODULE_CLKDIV_Pos(x)    (((x) >>5 ) & 0x1f)   /*!< Calculate CLKDIV position offset on MODULE index */
 #define MODULE_IP_EN_Pos(x)     (((x) >>0 ) & 0x1f)   /*!< Calculate APBCLK offset on MODULE index */
-#define MODULE_NoMsk            0x0                 /*!< Not mask on MODULE index */
-#define NA                      MODULE_NoMsk        /*!< Not Available */
+#define MODULE_NoMsk            0x0                   /*!< Not mask on MODULE index */
+#define NA                      MODULE_NoMsk          /*!< Not Available */
 
 #define MODULE_APBCLK_ENC(x)        (((x) & 0x03) << 30)   /*!< MODULE index, 0x0:AHBCLK, 0x1:APBCLK0, 0x2:APBCLK1 */
 #define MODULE_CLKSEL_ENC(x)        (((x) & 0x03) << 28)   /*!< CLKSEL offset on MODULE index, 0x0:CLKSEL0, 0x1:CLKSEL1, 0x2:CLKSEL2, 0x3:CLKSEL3 */
@@ -391,12 +395,13 @@ __STATIC_INLINE uint32_t CLK_GetPLLClockFreq(void)
 
 /**
   * @brief      This function execute delay function.
-  * @param      us  Delay time. The Max value is 2^24 / CPU Clock(MHz). Ex:
+  * @param[in]  us  Delay time. The Max value is 2^24 / CPU Clock(MHz). Ex:
   *                             72MHz => 233016us, 50MHz => 335544us,
-                                48MHz => 349525us, 28MHz => 699050us ...
+  *                             48MHz => 349525us, 28MHz => 699050us ...
   * @return     None
   * @details    Use the SysTick to generate the delay time and the unit is in us.
   *             The SysTick clock source is from HCLK, i.e the same as system core clock.
+  *             User can use SystemCoreClockUpdate() to calculate CyclesPerUs automatically before using this function.
   */
 __STATIC_INLINE void CLK_SysTickDelay(uint32_t us)
 {
@@ -406,14 +411,14 @@ __STATIC_INLINE void CLK_SysTickDelay(uint32_t us)
 
     /* Waiting for down-count to zero */
     while((SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk) == 0);
-    
+
     /* Disable SysTick counter */
     SysTick->CTRL = 0;
 }
 
 /**
   * @brief      This function execute long delay function.
-  * @param[in]  us  Delay time. 
+  * @param[in]  us  Delay time.
   * @return     None
   * @details    Use the SysTick to generate the long delay time and the UNIT is in us.
   *             The SysTick clock source is from HCLK, i.e the same as system core clock.
@@ -423,7 +428,7 @@ __STATIC_INLINE void CLK_SysTickDelay(uint32_t us)
 __STATIC_INLINE void CLK_SysTickLongDelay(uint32_t us)
 {
     uint32_t delay;
-        
+
     /* It should <= 233016us for each delay loop */
     delay = 233016UL;
 
@@ -437,8 +442,8 @@ __STATIC_INLINE void CLK_SysTickLongDelay(uint32_t us)
         {
             delay = us;
             us = 0UL;
-        }        
-        
+        }
+
         SysTick->LOAD = delay * CyclesPerUs;
         SysTick->VAL  = (0x0UL);
         SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_ENABLE_Msk;
@@ -448,9 +453,9 @@ __STATIC_INLINE void CLK_SysTickLongDelay(uint32_t us)
 
         /* Disable SysTick counter */
         SysTick->CTRL = 0UL;
-    
+
     }while(us > 0UL);
-    
+
 }
 
 

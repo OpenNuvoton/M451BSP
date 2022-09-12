@@ -29,7 +29,7 @@
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int main(void);
+int32_t main(void);
 void RS485_SendAddressByte(uint8_t u8data);
 void RS485_SendDataByte(uint8_t *pu8TxBuf, uint32_t u32WriteBytes);
 void RS485_9bitModeMaster(void);
@@ -50,7 +50,7 @@ void RS485_SendAddressByte(uint8_t u8data)
 
 void RS485_SendDataByte(uint8_t *pu8TxBuf, uint32_t u32WriteBytes)
 {
-    uint32_t u32Count;
+    uint32_t u32Count, u32TimeOutCnt;
 
     /* Set UART parity as SPACE */
     UART1->LINE = (UART_WORD_LEN_8 | UART_PARITY_SPACE | UART_STOP_BIT_1);
@@ -58,7 +58,15 @@ void RS485_SendDataByte(uint8_t *pu8TxBuf, uint32_t u32WriteBytes)
     /* Send data */
     for(u32Count = 0; u32Count != u32WriteBytes; u32Count++)
     {
-        while(!(UART1->FIFOSTS & UART_FIFOSTS_TXEMPTYF_Msk));   /* Wait Tx empty */
+        u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+        while(!(UART1->FIFOSTS & UART_FIFOSTS_TXEMPTYF_Msk))    /* Wait Tx empty */
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for UART Tx empty time-out!\n");
+                return;
+            }
+        }
 
         UART1->DAT = pu8TxBuf[u32Count]; /* Send UART Data from buffer */
     }
@@ -100,7 +108,7 @@ void RS485_9bitModeMaster()
     /* Set TX delay time */
     UART1->TOUT = 0x2000;
 
-    /* Prepare data to transmit*/
+    /* Prepare data to transmit */
     for(i32 = 0; i32 < 10; i32++)
     {
         g_u8SendDataGroup1[i32] = i32;
@@ -140,8 +148,8 @@ void RS485_FunctionTest()
     printf("+-----------------------------------------------------------+\n");
     printf("|  ______                                            _____  |\n");
     printf("| |      |                                          |     | |\n");
-    printf("| |Master|--UART1_TXD(PB.3)  <==>  UART1_RXD(PB.2)--|Slave| |\n");
-    printf("| |      |--UART1_nRTS(PB.8) <==> UART1_nRTS(PB.8)--|     | |\n");
+    printf("| |Master|--UART1_TXD(PB.3)        UART1_RXD(PB.2)--|Slave| |\n");
+    printf("| |      |--UART1_nRTS(PB.8)      UART1_nRTS(PB.8)--|     | |\n");
     printf("| |______|                                          |_____| |\n");
     printf("|                                                           |\n");
     printf("+-----------------------------------------------------------+\n");
@@ -155,8 +163,7 @@ void RS485_FunctionTest()
             2.Master will send four different address with 10 bytes data to test Slave.
             3.Address bytes : the parity bit should be '1'. (Set UART_LINE = 0x2B)
             4.Data bytes : the parity bit should be '0'. (Set UART_LINE = 0x3B)
-            5.RTS pin is low in idle state. When master is sending,
-              RTS pin will be pull high.
+            5.RTS pin is low in idle state. When master is sending, RTS pin will be pull high.
 
         Slave:
             1.Set AAD and AUD mode firstly. RTSACTLV is set to '0'.
@@ -171,6 +178,17 @@ void RS485_FunctionTest()
               Check the ADDRESS is match or not by user in UART_IRQHandler.
               If the ADDRESS is match, clear RXOFF bit to receive data byte.
               If the ADDRESS is not match, set RXOFF bit to avoid data byte stored in FIFO.
+
+        Note: User can measure transmitted data waveform on TXD and RXD pin.
+              RTS pin is used for RS485 transceiver to control transmission direction.
+              RTS pin is low in idle state. When master is sending data, RTS pin will be pull high.
+              The connection to RS485 transceiver is as following figure for reference.
+               __________     ___________      ___________      __________
+              |          |   |           |    |           |    |          |
+              |Master    |   |RS485      |    |RS485      |    |Slave     |
+              | UART_TXD |---|Transceiver|<==>|Transceiver|----| UART_RXD |
+              | UART_nRTS|---|           |    |           |----| UART_nRTS|
+              |__________|   |___________|    |___________|    |__________|
     */
 
     RS485_9bitModeMaster();
@@ -269,7 +287,7 @@ void UART1_Init()
 /*---------------------------------------------------------------------------------------------------------*/
 /* MAIN function                                                                                           */
 /*---------------------------------------------------------------------------------------------------------*/
-int main(void)
+int32_t main(void)
 {
     /* Unlock protected registers */
     SYS_UnlockReg();

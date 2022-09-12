@@ -141,10 +141,14 @@ void UART_Init(void)
 
 void PowerDownFunction(void)
 {
+    uint32_t u32TimeOutCnt;
+
     printf("\nSystem enter power-down mode ... ");
 
     /* To check if all the debug messages are finished */
-    while(IsDebugFifoEmpty() == 0);
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(IsDebugFifoEmpty() == 0)
+        if(--u32TimeOutCnt == 0) break;
 
     /* Deep sleep mode is selected */
     SCB->SCR = SCB_SCR_SLEEPDEEP_Msk;

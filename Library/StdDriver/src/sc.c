@@ -45,7 +45,7 @@ uint32_t SC_IsCardInserted(SC_T *sc)
 
     if(sc == SC0 && u32CardStateIgnore[0] == 1)
         return TRUE;
-#if 0 /* M451 series has only one SC interface */    
+#if 0 /* M451 series has only one SC interface */
     else if(sc == SC1 && u32CardStateIgnore[1] == 1)
         return TRUE;
     else if(sc == SC2 && u32CardStateIgnore[2] == 1)
@@ -55,8 +55,8 @@ uint32_t SC_IsCardInserted(SC_T *sc)
     else if(sc == SC4 && u32CardStateIgnore[4] == 1)
         return TRUE;
     else if(sc == SC5 && u32CardStateIgnore[5] == 1)
-        return TRUE;    
-#endif    
+        return TRUE;
+#endif
     else if(cond1 != cond2)
         return FALSE;
     else
@@ -103,11 +103,11 @@ void SC_Close(SC_T *sc)
   */
 void SC_Open(SC_T *sc, uint32_t u32CD, uint32_t u32PWR)
 {
-    uint32_t u32Reg = 0, u32Intf;
+    uint32_t u32Reg = 0, u32Intf, u32TimeOutCnt;
 
     if(sc == SC0)
         u32Intf = 0;
-#if 0 /* M451 series has only one SC interface */    
+#if 0 /* M451 series has only one SC interface */
     else if(sc == SC1)
         u32Intf = 1;
     else if(sc == SC2)
@@ -118,7 +118,7 @@ void SC_Open(SC_T *sc, uint32_t u32CD, uint32_t u32PWR)
         u32Intf = 4;
     else if(sc == SC5)
         u32Intf = 5;
-#endif    
+#endif
     else
         return ;
 
@@ -128,9 +128,15 @@ void SC_Open(SC_T *sc, uint32_t u32CD, uint32_t u32PWR)
     } else {
         u32CardStateIgnore[u32Intf] = 1;
     }
-    while(sc->PINCTL & SC_PINCTL_SYNC_Msk);
+
+    u32TimeOutCnt = SC_TIMEOUT;
+    while(sc->PINCTL & SC_PINCTL_SYNC_Msk)
+        if(--u32TimeOutCnt == 0) break;
     sc->PINCTL = u32PWR ? 0 : SC_PINCTL_PWRINV_Msk;
-    while(sc->CTL & SC_CTL_SYNC_Msk);
+
+    u32TimeOutCnt = SC_TIMEOUT;
+    while(sc->CTL & SC_CTL_SYNC_Msk)
+        if(--u32TimeOutCnt == 0) break;
     sc->CTL = SC_CTL_SCEN_Msk | u32Reg;
 }
 
@@ -142,11 +148,11 @@ void SC_Open(SC_T *sc, uint32_t u32CD, uint32_t u32PWR)
   */
 void SC_ResetReader(SC_T *sc)
 {
-    uint32_t u32Intf;
+    uint32_t u32Intf, u32TimeOutCnt;
 
     if(sc == SC0)
         u32Intf = 0;
-#if 0 /* M451 series has only one SC interface */    
+#if 0 /* M451 series has only one SC interface */
     else if(sc == SC1)
         u32Intf = 1;
     else if(sc == SC2)
@@ -157,14 +163,16 @@ void SC_ResetReader(SC_T *sc)
         u32Intf = 4;
     else if(sc == SC5)
         u32Intf = 5;
-#endif    
+#endif
     else
         return ;
 
 	// Reset FIFO, enable auto de-activation while card removal
     sc->ALTCTL |= (SC_ALTCTL_TXRST_Msk | SC_ALTCTL_RXRST_Msk | SC_ALTCTL_ADACEN_Msk);
     // Set Rx trigger level to 1 character, longest card detect debounce period, disable error retry (EMV ATR does not use error retry)
-    while(sc->CTL & SC_CTL_SYNC_Msk);
+    u32TimeOutCnt = SC_TIMEOUT;
+    while(sc->CTL & SC_CTL_SYNC_Msk)
+        if(--u32TimeOutCnt == 0) break;
     sc->CTL &= ~(SC_CTL_RXTRGLV_Msk | SC_CTL_CDDBSEL_Msk | SC_CTL_TXRTY_Msk | SC_CTL_RXRTY_Msk);
     // Enable auto convention, and all three smartcard internal timers
     sc->CTL |= SC_CTL_AUTOCEN_Msk | SC_CTL_TMRSEL_Msk;

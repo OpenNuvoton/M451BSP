@@ -33,7 +33,7 @@ void SYS_Init(void)
     /* Waiting for clock ready */
     CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk | CLK_STATUS_LXTSTB_Msk);
 
-    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2*/
+    /* Set core clock as PLL_CLOCK from PLL and SysTick source to HCLK/2 */
     CLK_SetCoreClock(PLL_CLOCK);
     CLK_SetSysTickClockSrc(CLK_CLKSEL0_STCLKSEL_HCLK_DIV2);
 
@@ -47,7 +47,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
-    /* Set PD multi-function pins for UART0 RXD, TXD */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 }
@@ -69,7 +69,7 @@ void UART0_Init(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int main(void)
 {
-    uint32_t i, u32ReadData;
+    uint32_t i, u32ReadData, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -92,7 +92,15 @@ int main(void)
     if(RTC->INIT != RTC_INIT_ACTIVE_Msk)
     {
         RTC->INIT = RTC_INIT_KEY;
-        while(RTC->INIT != RTC_INIT_ACTIVE_Msk);
+        u32TimeOutCnt = RTC_TIMEOUT;
+        while(RTC->INIT != RTC_INIT_ACTIVE_Msk)
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("RTC initial fail!\n");
+                goto lexit;
+            }
+        }
     }
 
     /* Enable Spare registers access function */
@@ -103,7 +111,18 @@ int main(void)
         printf("Write Spare register-%02d to 0x%08X ... ", i, (0x5A5A0000 + i));
         RTC_WaitAccessEnable();
         RTC_WRITE_SPARE_REGISTER(i, 0x5A5A0000 + i);
-        while(!(RTC->SPRCTL & RTC_SPRCTL_SPRRWRDY_Msk));
+
+        /* Wait for spare register ready */
+        u32TimeOutCnt = RTC_TIMEOUT;
+        while(!(RTC->SPRCTL & RTC_SPRCTL_SPRRWRDY_Msk))
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for RTC spare register ready time-out!\n");
+                goto lexit;
+            }
+        }
+
         printf("DONE\n");
     }
 
@@ -120,10 +139,22 @@ int main(void)
         else
         {
             printf("0x%08X ... FAIL.\n", u32ReadData);
-            while(1);
+            goto lexit;
         }
-        while(!(RTC->SPRCTL & RTC_SPRCTL_SPRRWRDY_Msk));
+
+        /* Wait for spare register ready */
+        u32TimeOutCnt = RTC_TIMEOUT;
+        while(!(RTC->SPRCTL & RTC_SPRCTL_SPRRWRDY_Msk))
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for RTC spare register ready time-out!\n");
+                goto lexit;
+            }
+        }
     }
+
+lexit:
 
     while(1);
 }

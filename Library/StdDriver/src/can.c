@@ -186,7 +186,7 @@ static void ReleaseIF(CAN_T *tCAN, uint32_t u32IfNo)
 /**
   * @brief Enter initialization mode
   * @param[in] tCAN The pointer to CAN module base address.
-  * @param[in] Following values can be used.
+  * @param[in] u8Mask Following values can be used.
   *            \ref CAN_CON_DAR_Msk Disable automatic retransmission.
   *            \ref CAN_CON_EIE_Msk Enable error interrupt.
   *            \ref CAN_CON_SIE_Msk Enable status interrupt.
@@ -212,8 +212,11 @@ void CAN_EnterInitMode(CAN_T *tCAN, uint8_t u8Mask)
   */
 void CAN_LeaveInitMode(CAN_T *tCAN)
 {
+    uint32_t u32TimeOutCount = CAN_TIMEOUT;
+
     tCAN->CON &= (~(CAN_CON_INIT_Msk | CAN_CON_CCE_Msk));
-    while(tCAN->CON & CAN_CON_INIT_Msk); /* Check INIT bit is released */
+    while(tCAN->CON & CAN_CON_INIT_Msk)  /* Check INIT bit is released */
+        if(--u32TimeOutCount == 0) break;
 }
 
 /**
@@ -314,8 +317,9 @@ uint32_t CAN_IsNewDataReceived(CAN_T *tCAN, uint8_t u8MsgObj)
   * @brief Send CAN message in BASIC mode of test mode
   * @param[in] tCAN The pointer to CAN module base address.
   * @param[in] pCanMsg Pointer to the message structure containing data to transmit.
-  * @return TRUE:  Transmission OK
-  *         FALSE: Check busy flag of interface 0 is timeout
+  * @retval TRUE Transmission OK
+  * @retval FALSE Check busy flag of interface 0 is timeout
+  * @retval -1 Wait CAN_IF timeout
   * @details The function is used to send CAN message in BASIC mode of test mode. Before call the API,
   *          the user should be call CAN_EnterTestMode(CAN_TEST_BASIC) and let CAN controller enter
   *          basic mode of test mode. Please notice IF1 Registers used as Tx Buffer in basic mode.
@@ -323,7 +327,10 @@ uint32_t CAN_IsNewDataReceived(CAN_T *tCAN, uint8_t u8MsgObj)
 int32_t CAN_BasicSendMsg(CAN_T *tCAN, STR_CANMSG_T* pCanMsg)
 {
     uint32_t i = 0;
-    while(tCAN->IF[0].CREQ & CAN_IF_CREQ_BUSY_Msk);
+    while(tCAN->IF[0].CREQ & CAN_IF_CREQ_BUSY_Msk)
+    {
+        if(++i > CAN_TIMEOUT) return -1;
+    }
 
     tCAN->STATUS &= (~CAN_STATUS_TXOK_Msk);
 
@@ -434,13 +441,14 @@ int32_t CAN_BasicReceiveMsg(CAN_T *tCAN, STR_CANMSG_T* pCanMsg)
 
 /**
   * @brief Set Rx message object, include ID mask.
+  * @param[in] tCAN The pointer to CAN module base address.
   * @param[in] u8MsgObj Specifies the Message object number, from 0 to 31.
   * @param[in] u8idType Specifies the identifier type of the frames that will be transmitted
   *                     This parameter can be one of the following values:
   *                     \ref CAN_STD_ID (standard ID, 11-bit)
   *                     \ref CAN_EXT_ID (extended ID, 29-bit)
   * @param[in] u32id Specifies the identifier used for acceptance filtering.
-  * @param[in] u32idmask Specifies the identifier mask
+  * @param[in] u32idmask Specifies the identifier mask used for acceptance filtering.
   * @param[in] u8singleOrFifoLast Specifies the end-of-buffer indicator.
   *                               This parameter can be one of the following values:
   *                               TRUE: for a single receive object or a FIFO receive object that is the last one of the FIFO.
@@ -496,6 +504,7 @@ int32_t CAN_SetRxMsgObjAndMsk(CAN_T *tCAN, uint8_t u8MsgObj, uint8_t u8idType, u
 
 /**
   * @brief Set Rx message object
+  * @param[in] tCAN The pointer to CAN module base address.
   * @param[in] u8MsgObj Specifies the Message object number, from 0 to 31.
   * @param[in] u8idType Specifies the identifier type of the frames that will be transmitted
   *                     This parameter can be one of the following values:
@@ -553,6 +562,7 @@ int32_t CAN_SetRxMsgObj(CAN_T *tCAN, uint8_t u8MsgObj, uint8_t u8idType, uint32_
 
 /**
   * @brief Gets the message
+  * @param[in] tCAN The pointer to CAN module base address.
   * @param[in] u8MsgObj Specifies the Message object number, from 0 to 31.
   * @param[in] u8Release Specifies the message release indicator.
   *                      This parameter can be one of the following values:
@@ -561,11 +571,13 @@ int32_t CAN_SetRxMsgObj(CAN_T *tCAN, uint8_t u8MsgObj, uint8_t u8idType, uint32_
   * @param[in] pCanMsg Pointer to the message structure where received data is copied.
   * @retval TRUE Success
   * @retval FALSE No any message received
+  * @retval -1 Read Message Fail
   * @details Gets the message, if received.
   */
 int32_t CAN_ReadMsgObj(CAN_T *tCAN, uint8_t u8MsgObj, uint8_t u8Release, STR_CANMSG_T* pCanMsg)
 {
     uint8_t u8MsgIfNum;
+    uint32_t u32TimeOutCount = CAN_TIMEOUT<<1;
 
     if(!CAN_IsNewDataReceived(tCAN, u8MsgObj))
         return FALSE;
@@ -587,9 +599,13 @@ int32_t CAN_ReadMsgObj(CAN_T *tCAN, uint8_t u8MsgObj, uint8_t u8Release, STR_CAN
 
     tCAN->IF[u8MsgIfNum].CREQ = 1 + u8MsgObj;
 
-    while(tCAN->IF[u8MsgIfNum].CREQ & CAN_IF_CREQ_BUSY_Msk)
+    while(tCAN->IF[u8MsgIfNum].CREQ & CAN_IF_CREQ_BUSY_Msk) /*Wait*/
     {
-        /*Wait*/
+        if(--u32TimeOutCount == 0)
+        {
+            ReleaseIF(tCAN, u8MsgIfNum);
+            return -1;
+        }
     }
 
     if((tCAN->IF[u8MsgIfNum].ARB2 & CAN_IF_ARB2_XTD_Msk) == 0)
@@ -796,7 +812,7 @@ uint32_t CAN_Open(CAN_T *tCAN, uint32_t u32BaudRate, uint32_t u32Mode)
   * @details The two sets of interface registers (IF1 and IF2) control the software access to the Message RAM.
   *          They buffer the data to be transferred to and from the RAM, avoiding conflicts between software accesses and message reception/transmission.
   */
-int32_t CAN_SetTxMsg(CAN_T *tCAN, uint32_t u32MsgNum , STR_CANMSG_T* pCanMsg)
+int32_t CAN_SetTxMsg(CAN_T *tCAN, uint32_t u32MsgNum, STR_CANMSG_T* pCanMsg)
 {
     uint8_t u8MsgIfNum;
 
@@ -844,13 +860,16 @@ int32_t CAN_SetTxMsg(CAN_T *tCAN, uint32_t u32MsgNum , STR_CANMSG_T* pCanMsg)
   * @param[in] tCAN The pointer to CAN module base address.
   * @param[in] u32MsgNum Specifies the Message object number, from 0 to 31.
   *
-  * @return TRUE: Start transmit message.
+  * @retval TRUE: Start transmit message.
+  * @retval FALSE: No any message received
+  * @retval -1: CAN IF Busy.
   *
   * @details If a transmission is requested by programming bit TxRqst/NewDat (IFn_CMASK[2]), the TxRqst (IFn_MCON[8]) will be ignored.
   */
 int32_t CAN_TriggerTxMsg(CAN_T  *tCAN, uint32_t u32MsgNum)
 {
     uint8_t u8MsgIfNum;
+    uint32_t u32TimeOutCount = CAN_TIMEOUT;
 
     if((u8MsgIfNum = LockIF_TL(tCAN)) == 2)
         return FALSE;
@@ -863,9 +882,13 @@ int32_t CAN_TriggerTxMsg(CAN_T  *tCAN, uint32_t u32MsgNum)
 
     tCAN->IF[u8MsgIfNum].CREQ = 1 + u32MsgNum;
 
-    while(tCAN->IF[u8MsgIfNum].CREQ & CAN_IF_CREQ_BUSY_Msk)
+    while(tCAN->IF[u8MsgIfNum].CREQ & CAN_IF_CREQ_BUSY_Msk) /*Wait*/
     {
-        /*Wait*/
+        if(--u32TimeOutCount == 0)
+        {
+            ReleaseIF(tCAN, u8MsgIfNum);
+            return -1;
+        }
     }
     tCAN->IF[u8MsgIfNum].CMASK  = CAN_IF_CMASK_WRRD_Msk | CAN_IF_CMASK_TXRQSTNEWDAT_Msk;
     tCAN->IF[u8MsgIfNum].CREQ  = 1 + u32MsgNum;
@@ -929,7 +952,7 @@ void CAN_DisableInt(CAN_T *tCAN, uint32_t u32Mask)
   * @details If the RxIE bit (CAN_IFn_MCON[10]) is set, the IntPnd bit (CAN_IFn_MCON[13])
   *          will be set when a received Data Frame is accepted and stored in the Message Object.
   */
-int32_t CAN_SetRxMsg(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32IDType, uint32_t u32ID)
+int32_t CAN_SetRxMsg(CAN_T *tCAN, uint32_t u32MsgNum, uint32_t u32IDType, uint32_t u32ID)
 {
     uint32_t u32TimeOutCount = 0;
 
@@ -958,7 +981,7 @@ int32_t CAN_SetRxMsg(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32IDType, uint3
   * @details If the RxIE bit (CAN_IFn_MCON[10]) is set, the IntPnd bit (CAN_IFn_MCON[13])
   *          will be set when a received Data Frame is accepted and stored in the Message Object.
   */
-int32_t CAN_SetRxMsgAndMsk(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32IDType, uint32_t u32ID, uint32_t u32IDMask)
+int32_t CAN_SetRxMsgAndMsk(CAN_T *tCAN, uint32_t u32MsgNum, uint32_t u32IDType, uint32_t u32ID, uint32_t u32IDMask)
 {
     uint32_t u32TimeOutCount = 0;
 
@@ -987,7 +1010,7 @@ int32_t CAN_SetRxMsgAndMsk(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32IDType,
   * @details The Interface Registers avoid conflict between the CPU accesses to the Message RAM and CAN message reception
   *          and transmission by buffering the data to be transferred.
   */
-int32_t CAN_SetMultiRxMsg(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32MsgCount, uint32_t u32IDType, uint32_t u32ID)
+int32_t CAN_SetMultiRxMsg(CAN_T *tCAN, uint32_t u32MsgNum, uint32_t u32MsgCount, uint32_t u32IDType, uint32_t u32ID)
 {
     uint32_t i;
     uint32_t u32TimeOutCount;
@@ -1020,11 +1043,12 @@ int32_t CAN_SetMultiRxMsg(CAN_T *tCAN, uint32_t u32MsgNum , uint32_t u32MsgCount
   * @retval FALSE 1. When operation in basic mode: Transmit message time out. \n
   *               2. When operation in normal mode: No useful interface. \n
   * @retval TRUE Transmit Message success.
+  * @retval -1 Wait CAN_IF timeout.
   *
   * @details The receive/transmit priority for the Message Objects is attached to the message number.
   *          Message Object 1 has the highest priority, while Message Object 32 has the lowest priority.
   */
-int32_t CAN_Transmit(CAN_T *tCAN, uint32_t u32MsgNum , STR_CANMSG_T* pCanMsg)
+int32_t CAN_Transmit(CAN_T *tCAN, uint32_t u32MsgNum, STR_CANMSG_T* pCanMsg)
 {
     if((tCAN->CON & CAN_CON_TEST_Msk) && (tCAN->TEST & CAN_TEST_BASIC_Msk))
     {
@@ -1053,7 +1077,7 @@ int32_t CAN_Transmit(CAN_T *tCAN, uint32_t u32MsgNum , STR_CANMSG_T* pCanMsg)
   * @details The Interface Registers avoid conflict between the CPU accesses to the Message RAM and CAN message reception
   *          and transmission by buffering the data to be transferred.
   */
-int32_t CAN_Receive(CAN_T *tCAN, uint32_t u32MsgNum , STR_CANMSG_T* pCanMsg)
+int32_t CAN_Receive(CAN_T *tCAN, uint32_t u32MsgNum, STR_CANMSG_T* pCanMsg)
 {
     if((tCAN->CON & CAN_CON_TEST_Msk) && (tCAN->TEST & CAN_TEST_BASIC_Msk))
     {

@@ -11,7 +11,6 @@
 #include "stdio.h"
 #include "M451Series.h"
 
-#define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -65,7 +64,7 @@ void SYS_Init(void)
     /* Wait for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK source divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Set PLL to Power-down mode and PLLSTB bit in CLK_STATUS register will be cleared by hardware.*/
@@ -110,7 +109,7 @@ void SYS_Init(void)
     SYS->GPB_MFPL &= ~SYS_GPB_MFPL_PB0MFP_Msk;
     SYS->GPB_MFPL |= SYS_GPB_MFPL_PB0MFP_DAC;
 
-    /* Set PC multi-function pins for PWMA Channel0 */
+    /* Set PC multi-function pins for PWMA Channel 0 */
     SYS->GPC_MFPL = (SYS->GPC_MFPL & (~SYS_GPC_MFPL_PC0MFP_Msk));
     SYS->GPC_MFPL |= SYS_GPC_MFPL_PC0MFP_PWM0_CH0;
 

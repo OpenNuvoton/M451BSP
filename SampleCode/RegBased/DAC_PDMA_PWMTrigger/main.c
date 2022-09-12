@@ -47,7 +47,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -163,7 +163,7 @@ void DAC_FunctionTest(void)
 {
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
-    printf("|                  DAC PWM trigger with PDMA test                    |\n");
+    printf("|                  DAC PWM trigger with PDMA test                      |\n");
     printf("+----------------------------------------------------------------------+\n");
     printf("\n");    
     printf("This sample code use PDMA transfer sine wave table to DAC(PB.0) output.\n");

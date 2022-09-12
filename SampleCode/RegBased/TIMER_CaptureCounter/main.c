@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCON_SETTING      CLK_PLLCTL_72MHz_HXT
+#define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
 
 
@@ -61,7 +61,7 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk | CLK_PWRCTL_LIRCEN_Msk;
 
     /* Enable PLL and Set PLL frequency */
-    CLK->PLLCTL = PLLCON_SETTING;
+    CLK->PLLCTL = PLLCTL_SETTING;
 
     /* Waiting for clock ready */
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
@@ -89,7 +89,7 @@ void SYS_Init(void)
     /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-    
+
     /* Set PD multi-function pins for Timer0 toggle-output pin and Timer2 event counter pin */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD4MFP_Msk | SYS_GPD_MFPL_PD3MFP_Msk);
     SYS->GPD_MFPL |= SYS_GPD_MFPL_PD4MFP_T0 | SYS_GPD_MFPL_PD3MFP_T2;
@@ -166,7 +166,7 @@ int main(void)
     /* Enable Timer2 NVIC */
     NVIC_EnableIRQ(TMR2_IRQn);
 
-    /* Start Timer0 counting and output T0 frequency to 500 Hz*/
+    /* Start Timer0 counting and output T0 frequency to 500 Hz */
     TIMER0->CMP = (__HXT / 1000);
     TIMER0->CTL = TIMER_CTL_CNTEN_Msk | TIMER_TOGGLE_MODE;
 
@@ -195,19 +195,21 @@ int main(void)
                 if(u32CAPDiff != 500)
                 {
                     printf("*** FAIL ***\n");
-                    while(1);
+                    goto lexit;
                 }
             }
             u32InitCount = g_au32TMRINTCount[2];
         }
     }
 
+    printf("*** PASS ***\n");
+
+lexit:
+
     /* Stop Timer0, Timer2 and Timer3 counting */
     TIMER0->CTL = 0;
     TIMER2->CTL = 0;
     TIMER3->CTL = 0;
-
-    printf("*** PASS ***\n");
 
     while(1);
 }

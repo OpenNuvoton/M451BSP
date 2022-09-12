@@ -88,18 +88,24 @@ void CAN0_IRQHandler(void)
     }
 }
 
-void SYS_Init(void)
+int32_t SYS_Init(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /* Enable Internal and External RC clock */
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk | CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for Internal RC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK->PLLCTL = PLLCTL_SETTING;
 
-    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+        if(--u32TimeOutCnt == 0) return -1;
 
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
     CLK->CLKDIV0 = (CLK->CLKDIV0 &(~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(HCLK_DIV);
@@ -108,11 +114,13 @@ void SYS_Init(void)
     //SystemCoreClockUpdate();
     PllClock        = PLL_CLOCK;                        // PLL
     SystemCoreClock = PLL_CLOCK / HCLK_DIV;             // HCLK
-    CyclesPerUs     = SystemCoreClock / 1000000;  // For SYS_SysTickDelay()
+    CyclesPerUs     = SystemCoreClock / 1000000;        // For CLK_SysTickDelay()
+
+    return 0;
 }
 
 /*----------------------------------------------------------------------------*/
-/*  Tx Msg by Normal Mode Function (With Message RAM)                    */
+/*  Tx Msg by Normal Mode Function (With Message RAM)                         */
 /*----------------------------------------------------------------------------*/
 void CAN_Package_ACK(CAN_T *tCAN)
 {
@@ -164,7 +172,7 @@ int main(void)
     /* Unlock protected registers */
     SYS_UnlockReg();
     /* Init System, IP clock and multi-function I/O */
-    SYS_Init();
+    if( SYS_Init() < 0 ) goto lexit;
     /* Enable FMC ISP function */
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();

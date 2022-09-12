@@ -33,7 +33,7 @@
 void CLK_DisableCKO(void)
 {
     /* Disable CKO clock source */
-    CLK_DisableModuleClock(CLKO_MODULE);
+    CLK->APBCLK0 &= (~CLK_APBCLK0_CLKOCKEN_Msk);
 }
 
 /**
@@ -59,10 +59,10 @@ void CLK_EnableCKO(uint32_t u32ClkSrc, uint32_t u32ClkDiv, uint32_t u32ClkDivBy1
     CLK->CLKOCTL = CLK_CLKOCTL_CLKOEN_Msk | u32ClkDiv | (u32ClkDivBy1En << CLK_CLKOCTL_DIV1EN_Pos);
 
     /* Enable CKO clock source */
-    CLK_EnableModuleClock(CLKO_MODULE);
+    CLK->APBCLK0 |= CLK_APBCLK0_CLKOCKEN_Msk;
 
     /* Select CKO clock source */
-    CLK_SetModuleClock(CLKO_MODULE, u32ClkSrc, 0);
+    CLK->CLKSEL1 = (CLK->CLKSEL1 & (~CLK_CLKSEL1_CLKOSEL_Msk)) | (u32ClkSrc);
 }
 
 /**
@@ -70,7 +70,7 @@ void CLK_EnableCKO(uint32_t u32ClkSrc, uint32_t u32ClkDiv, uint32_t u32ClkDivBy1
   * @param      None
   * @return     None
   * @details    This function is used to let system enter to Power-down mode. \n
-  *             The register write-protection function should be disabled before using this function. 
+  *             The register write-protection function should be disabled before using this function.
   */
 void CLK_PowerDown(void)
 {
@@ -246,7 +246,7 @@ uint32_t CLK_SetCoreClock(uint32_t u32Hclk)
 }
 
 /**
-  * @brief      This function set HCLK clock source and HCLK clock divider
+  * @brief      Set HCLK clock source and HCLK clock divider
   * @param[in]  u32ClkSrc is HCLK clock source. Including :
   *             - \ref CLK_CLKSEL0_HCLKSEL_HXT
   *             - \ref CLK_CLKSEL0_HCLKSEL_LXT
@@ -537,7 +537,7 @@ void CLK_DisableModuleClock(uint32_t u32ModuleIdx)
   * @param[in]  u32PllClkSrc is PLL clock source. Including :
   *             - \ref CLK_PLLCTL_PLLSRC_HXT
   *             - \ref CLK_PLLCTL_PLLSRC_HIRC
-  * @param[in]  u32PllFreq is PLL frequency.
+  * @param[in]  u32PllFreq is PLL frequency. The range of u32PllFreq is 50 MHz ~ 500 MHz.
   * @return     PLL frequency
   * @details    This function is used to configure PLLCTL register to set specified PLL frequency. \n
   *             The register write-protection function should be disabled before using this function.
@@ -548,7 +548,7 @@ uint32_t CLK_EnablePLL(uint32_t u32PllClkSrc, uint32_t u32PllFreq)
     uint32_t u32Tmp, u32Tmp2, u32Tmp3, u32Min, u32MinNF, u32MinNR;
 
     /* Disable PLL first to avoid unstable when setting PLL */
-    CLK_DisablePLL();
+    CLK->PLLCTL |= CLK_PLLCTL_PD_Msk;
 
     /* PLL source clock is from HXT */
     if(u32PllClkSrc == CLK_PLLCTL_PLLSRC_HXT)
@@ -682,11 +682,11 @@ void CLK_DisablePLL(void)
   *             - \ref CLK_STATUS_PLLSTB_Msk
   * @retval     0  clock is not stable
   * @retval     1  clock is stable
-  * @details    To wait for clock ready by specified clock source stable flag or timeout (~300ms)
+  * @details    To wait for clock ready by specified clock source stable flag or timeout (>500ms)
   */
 uint32_t CLK_WaitClockReady(uint32_t u32ClkMask)
-{    
-    int32_t i32TimeOutCnt = 2160000;
+{
+    int32_t i32TimeOutCnt = SystemCoreClock>>1; /* 500ms time-out */
 
     while((CLK->STATUS & u32ClkMask) != u32ClkMask)
     {
@@ -709,39 +709,46 @@ uint32_t CLK_WaitClockReady(uint32_t u32ClkMask)
   * @param[in]  u32Count is System Tick reload value. It could be 0~0xFFFFFF.
   * @return     None
   * @details    This function set System Tick clock source, reload value, enable System Tick counter and interrupt. \n
-  *             The register write-protection function should be disabled before using this function. 
+  *             The register write-protection function should be disabled before using this function.
   */
-void CLK_EnableSysTick(uint32_t u32ClkSrc, uint32_t u32Count) 
+void CLK_EnableSysTick(uint32_t u32ClkSrc, uint32_t u32Count)
 {
     /* Set System Tick counter disabled */
-    SysTick->CTRL = 0;    
+    SysTick->CTRL = 0;
 
     /* Set System Tick clock source */
-    if( u32ClkSrc == CLK_CLKSEL0_STCLKSEL_HCLK )         
+    if( u32ClkSrc == CLK_CLKSEL0_STCLKSEL_HCLK )
+        /* Select System Tick clock source from core clock */
         SysTick->CTRL |= SysTick_CTRL_CLKSOURCE_Msk;
     else
-        CLK->CLKSEL0 = (CLK->CLKSEL0 & ~CLK_CLKSEL0_STCLKSEL_Msk) | u32ClkSrc; 
+    {
+        /* Select System Tick external reference clock source */
+        CLK->CLKSEL0 = (CLK->CLKSEL0 & ~CLK_CLKSEL0_STCLKSEL_Msk) | u32ClkSrc;
+
+        /* Select System Tick clock source from external reference clock */
+        SysTick->CTRL &= ~SysTick_CTRL_CLKSOURCE_Msk;
+    }
 
     /* Set System Tick reload value */
-    SysTick->LOAD = u32Count;   
-    
+    SysTick->LOAD = u32Count;
+
     /* Clear System Tick current value and counter flag */
-    SysTick->VAL = 0;           
-    
-    /* Set System Tick interrupt enabled and counter enabled */    
-    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;       
+    SysTick->VAL = 0;
+
+    /* Set System Tick interrupt enabled and counter enabled */
+    SysTick->CTRL |= SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
 }
 
 /**
   * @brief      Disable System Tick counter
-  * @param      None 
+  * @param      None
   * @return     None
   * @details    This function disable System Tick counter.
   */
-void CLK_DisableSysTick(void) 
-{    
+void CLK_DisableSysTick(void)
+{
     /* Set System Tick counter disabled */
-	SysTick->CTRL = 0;    
+	SysTick->CTRL = 0;
 }
 
 

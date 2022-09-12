@@ -42,7 +42,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 &= ~CLK_CLKDIV0_HCLKDIV_Msk;
@@ -110,7 +110,7 @@ void SYS_Init(void)
     /* Disable the GPB0 - GPB3 digital input path to avoid the leakage current. */
     GPIO_DISABLE_DIGITAL_PATH(PB, 0xF);
 
-    /* Set PC multi-function pins for PWM0 Channel0 */
+    /* Set PC multi-function pins for PWM0 Channel 0 */
     SYS->GPC_MFPL = (SYS->GPC_MFPL & (~SYS_GPC_MFPL_PC0MFP_Msk));
     SYS->GPC_MFPL |= SYS_GPC_MFPL_PC0MFP_PWM0_CH0;
 
@@ -213,6 +213,7 @@ void ReloadPDMA()
 void EADC_FunctionTest()
 {
     uint8_t  u8Option;
+    uint32_t u32TimeOutCnt;
 
     printf("\n");
     printf("+----------------------------------------------------------------------+\n");
@@ -246,12 +247,17 @@ void EADC_FunctionTest()
             /* Enable PWM0 channel 0 counter */
             PWM0->CNTEN |= 0x1 << PWM_CNTEN_CNTENn_Pos;
 
-            while(1)
+            /* Wait PDMA interrupt (g_u32IsTestOver will be set at IRQ_Handler function) */
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32IsTestOver == 0)
             {
-                /* Wait PDMA interrupt (g_u32IsTestOver will be set at IRQ_Handler function) */
-                while(g_u32IsTestOver == 0);
-                break;
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for PDMA interrupt time-out!\n");
+                    return;
+                }
             }
+
             g_u32IsTestOver = 0;
 
             /* Disable PWM0 channel 0 counter */
@@ -277,12 +283,17 @@ void EADC_FunctionTest()
             /* Enable PWM0 channel 0 counter */
             PWM0->CNTEN |= 0x1 << PWM_CNTEN_CNTENn_Pos;
 
-            while(1)
+            /* Wait PDMA interrupt (g_u32IsTestOver will be set at IRQ_Handler function) */
+            u32TimeOutCnt = EADC_TIMEOUT;
+            while(g_u32IsTestOver == 0)
             {
-                /* Wait PDMA interrupt (g_u32IsTestOver will be set at IRQ_Handler function) */
-                while(g_u32IsTestOver == 0);
-                break;
+                if(--u32TimeOutCnt == 0)
+                {
+                    printf("Wait for PDMA interrupt time-out!\n");
+                    return;
+                }
             }
+
             g_u32IsTestOver = 0;
 
             /* Disable PWM0 channel 0 counter */

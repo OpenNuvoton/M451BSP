@@ -28,12 +28,15 @@
  * @brief       Set GPIO operation mode
  *
  * @param[in]   port        GPIO port. It could be PA, PB, PC, PD, PE or PF.
- * @param[in]   u32PinMask  The single or multiple pins of specified GPIO port.
- *                          It could be BIT0 ~ BIT15 for PA, PB, PC and PD GPIO port.
- *                          It could be BIT0 ~ BIT14 for PE GPIO port.
+ * @param[in]   u32PinMask  The single or multiple pins of specified GPIO port. \n
+ *                          It could be BIT0 ~ BIT15 for PA, PB, PC and PD GPIO port. \n
+ *                          It could be BIT0 ~ BIT14 for PE GPIO port. \n
  *                          It could be BIT0 ~ BIT7 for PF GPIO port.
- * @param[in]   u32Mode     Operation mode.  It could be \n
- *                          GPIO_MODE_INPUT, GPIO_MODE_OUTPUT, GPIO_MODE_OPEN_DRAIN, GPIO_MODE_QUASI.
+ * @param[in]   u32Mode     Operation mode.  It could be
+ *                          - \ref GPIO_MODE_INPUT
+ *                          - \ref GPIO_MODE_OUTPUT
+ *                          - \ref GPIO_MODE_OPEN_DRAIN
+ *                          - \ref GPIO_MODE_QUASI
  *
  * @return      None
  *
@@ -56,12 +59,16 @@ void GPIO_SetMode(GPIO_T *port, uint32_t u32PinMask, uint32_t u32Mode)
  * @brief       Enable GPIO interrupt
  *
  * @param[in]   port            GPIO port. It could be PA, PB, PC, PD, PE or PF.
- * @param[in]   u32Pin          The pin of specified GPIO port.
- *                              It could be 0 ~ 15 for PA, PB, PC and PD GPIO port.
- *                              It could be 0 ~ 14 for PE GPIO port.
+ * @param[in]   u32Pin          The pin of specified GPIO port. \n
+ *                              It could be 0 ~ 15 for PA, PB, PC and PD GPIO port. \n
+ *                              It could be 0 ~ 14 for PE GPIO port. \n
  *                              It could be 0 ~ 7 for PF GPIO port.
- * @param[in]   u32IntAttribs   The interrupt attribute of specified GPIO pin. It could be \n
- *                              GPIO_INT_RISING, GPIO_INT_FALLING, GPIO_INT_BOTH_EDGE, GPIO_INT_HIGH, GPIO_INT_LOW.
+ * @param[in]   u32IntAttribs   The interrupt attribute of specified GPIO pin. It could be
+ *                              - \ref GPIO_INT_RISING
+ *                              - \ref GPIO_INT_FALLING
+ *                              - \ref GPIO_INT_BOTH_EDGE
+ *                              - \ref GPIO_INT_HIGH
+ *                              - \ref GPIO_INT_LOW
  *
  * @return      None
  *
@@ -69,8 +76,11 @@ void GPIO_SetMode(GPIO_T *port, uint32_t u32PinMask, uint32_t u32Mode)
  */
 void GPIO_EnableInt(GPIO_T *port, uint32_t u32Pin, uint32_t u32IntAttribs)
 {
-    port->INTTYPE |= (((u32IntAttribs >> 24) & 0xFFUL) << u32Pin);
-    port->INTEN |= ((u32IntAttribs & 0xFFFFFFUL) << u32Pin);
+    /* Configure interrupt mode of specified pin */
+    port->INTTYPE = (port->INTTYPE & ~(1ul << u32Pin)) | (((u32IntAttribs >> 24) & 0xFFUL) << u32Pin);
+
+    /* Enable interrupt function of specified pin */
+    port->INTEN = (port->INTEN & ~(0x00010001ul << u32Pin)) | ((u32IntAttribs & 0xFFFFFFUL) << u32Pin);
 }
 
 
@@ -78,18 +88,21 @@ void GPIO_EnableInt(GPIO_T *port, uint32_t u32Pin, uint32_t u32IntAttribs)
  * @brief       Disable GPIO interrupt
  *
  * @param[in]   port        GPIO port. It could be PA, PB, PC, PD, PE or PF.
- * @param[in]   u32Pin      The pin of specified GPIO port.
- *                          It could be 0 ~ 15 for PA, PB, PC and PD GPIO port.
- *                          It could be 0 ~ 14 for PE GPIO port.
+ * @param[in]   u32Pin      The pin of specified GPIO port. \n
+ *                          It could be 0 ~ 15 for PA, PB, PC and PD GPIO port. \n
+ *                          It could be 0 ~ 14 for PE GPIO port. \n
  *                          It could be 0 ~ 7 for PF GPIO port.
  *
  * @return      None
  *
- * @details     This function is used to enable specified GPIO pin interrupt.
+ * @details     This function is used to disable specified GPIO pin interrupt.
  */
 void GPIO_DisableInt(GPIO_T *port, uint32_t u32Pin)
 {
+    /* Configure interrupt mode of specified pin */
     port->INTTYPE &= ~(1UL << u32Pin);
+
+    /* Disable interrupt function of specified pin */
     port->INTEN &= ~((0x00010001UL) << u32Pin);
 }
 

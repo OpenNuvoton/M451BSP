@@ -111,9 +111,10 @@ uint32_t g_au32PllSetting[] =
 void SYS_PLL_Test(void)
 {
     int32_t  i;
+    uint32_t u32TimeOutCnt;
 
     /*---------------------------------------------------------------------------------------------------------*/
-    /* PLL clock configuration test                                                                             */
+    /* PLL clock configuration test                                                                            */
     /*---------------------------------------------------------------------------------------------------------*/
 
     printf("\n-------------------------[ Test PLL ]-----------------------------\n");
@@ -124,21 +125,29 @@ void SYS_PLL_Test(void)
         CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HXT;
         CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(1);
 
-        /* Set PLL to power down mode and PLL_STB bit in CLKSTATUS register will be cleared by hardware. */
+        /* Set PLL to power down mode and PLLSTB bit in CLK_STATUS register will be cleared by hardware. */
         CLK->PLLCTL |= CLK_PLLCTL_PD_Msk;
 
         /* Set PLL frequency */
         CLK->PLLCTL = g_au32PllSetting[i];
 
         /* Wait for PLL clock ready */
-        while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));        
-        
+        u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+        while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+        {
+            if(--u32TimeOutCnt == 0)
+            {
+                printf("Wait for PLL stable time-out!\n");
+                return;
+            }
+        }
+
         /* Select HCLK clock source to PLL and HCLK source divider as 2 */
         CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(2);
         CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
-        
+
         /* Update System Core Clock */
-        SystemCoreClockUpdate();        
+        SystemCoreClockUpdate();
 
         printf("  Change system clock to %d Hz ...................... ", SystemCoreClock);
 
@@ -225,7 +234,7 @@ void SYS_Init(void)
 
 }
 
-void UART0_Init()
+void UART0_Init(void)
 {
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init UART                                                                                               */
@@ -245,7 +254,7 @@ void UART0_Init()
 int32_t main(void)
 {
 
-    uint32_t u32data;
+    uint32_t u32data, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -309,13 +318,15 @@ int32_t main(void)
     printf("\n\n  >>> Reset CPU <<<\n");
 
     /* Wait for message send out */
-    while(!(UART0->FIFOSTS & UART_FIFOSTS_TXEMPTYF_Msk));
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(!(UART0->FIFOSTS & UART_FIFOSTS_TXEMPTYF_Msk))
+        if(--u32TimeOutCnt == 0) break;
 
     /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HIRC;
     CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(1);
 
-    /* Set PLL to Power down mode and HW will also clear PLLSTB bit in CLKSTATUS register */
+    /* Set PLL to Power down mode and HW will also clear PLLSTB bit in CLK_STATUS register */
     CLK->PLLCTL |= CLK_PLLCTL_PD_Msk;
 
     /* Reset CPU */

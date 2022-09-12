@@ -54,7 +54,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */
@@ -65,12 +65,6 @@ void SYS_Init(void)
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK_SetCoreClock(PLL_CLOCK);
-
-    /* Waiting for PLL clock ready */
-    CLK_WaitClockReady(CLK_STATUS_PLLSTB_Msk);
-
-    /* Switch HCLK clock source to PLL */
-//     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_PLL,CLK_CLKDIV0_HCLK(1));
 
     /* Enable IP clock */
     CLK_EnableModuleClock(UART0_MODULE);
@@ -108,7 +102,7 @@ void UART0_Init(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int main(void)
 {
-    uint32_t u32Src, u32Dst0, u32Dst1;
+    uint32_t u32Src, u32Dst0, u32Dst1, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -146,7 +140,17 @@ int main(void)
     PDMA_Open(1 << 5);
     PDMA_SetTransferMode(5, PDMA_MEM, 1, (uint32_t)&DMA_DESC[0]);
     PDMA_Trigger(5);
-    while(PDMA_IS_CH_BUSY(5));
+
+    /* Waiting for transfer done */
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(PDMA_IS_CH_BUSY(5))
+    {
+        if(--u32TimeOutCnt == 0)
+        {
+            printf("Wait for PDMA transfer done time-out!\n");
+            break;
+        }
+    }
 
     printf("test done...\n");
 
@@ -154,5 +158,3 @@ int main(void)
 
     while(1);
 }
-
-

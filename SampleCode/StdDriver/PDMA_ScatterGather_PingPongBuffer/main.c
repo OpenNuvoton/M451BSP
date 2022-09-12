@@ -76,7 +76,7 @@ void SYS_Init(void)
     /* Waiting for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK clock divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */
@@ -87,12 +87,6 @@ void SYS_Init(void)
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK_SetCoreClock(PLL_CLOCK);
-
-    /* Waiting for PLL clock ready */
-    CLK_WaitClockReady(CLK_STATUS_PLLSTB_Msk);
-
-    /* Switch HCLK clock source to PLL */
-//    CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_PLL,CLK_CLKDIV0_HCLK(1));
 
     /* Enable IP clock */
     CLK_EnableModuleClock(UART0_MODULE);
@@ -130,6 +124,8 @@ void UART0_Init(void)
 /*---------------------------------------------------------------------------------------------------------*/
 int main(void)
 {
+    uint32_t u32TimeOutCnt;
+
     /* Unlock protected registers */
     SYS_UnlockReg();
 
@@ -187,15 +183,24 @@ int main(void)
     /* Start PDMA operatin */
     PDMA_Trigger(5);
 
-    while(1)
+    u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    while(g_u32IsTestOver == 0)
     {
-        if(g_u32IsTestOver == 1)
+        if(--u32TimeOutCnt == 0)
         {
-            g_u32IsTestOver = 0;
-            printf("test done...\n");
-
-            PDMA_Close();
+            printf("Wait for PDMA time-out!\n");
+            break;
         }
     }
-}
 
+    if(g_u32IsTestOver == 1)
+    {
+        g_u32IsTestOver = 0;
+        printf("test done...\n");
+    }
+
+    /* Close PDMA channel */
+    PDMA_Close();
+
+    while(1);
+}

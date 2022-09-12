@@ -22,7 +22,7 @@ extern char GetChar(void);
 /*---------------------------------------------------------------------------------------------------------*/
 void CLKFAIL_IRQHandler(void)
 {
-    uint32_t u32Reg;
+    uint32_t u32Reg, u32TimeOutCnt;
 
     /* Unlock protected registers */
     SYS_UnlockReg();
@@ -46,7 +46,7 @@ void CLKFAIL_IRQHandler(void)
         /* LXT clock fail interrupt is happened */
         printf("LXT Clock is stopped!\n");
 
-        /* Disable HXT clock fail interrupt */
+        /* Disable LXT clock fail interrupt */
         CLK->CLKDCTL &= ~(CLK_CLKDCTL_LXTFIEN_Msk | CLK_CLKDCTL_LXTFDEN_Msk);
 
         /* Write 1 to clear LXT Clock fail interrupt flag */
@@ -57,8 +57,10 @@ void CLKFAIL_IRQHandler(void)
     {
         /* HCLK should be switched to HIRC if HXT clock frequency monitor interrupt is happened */
         CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
-        while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
-        CLK->CLKSEL0 &= (~CLK_CLKSEL0_HCLKSEL_Msk) ;
+        u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+        while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+            if(--u32TimeOutCnt == 0) break;
+        CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HIRC;
         printf("HXT Frequency is abnormal! HCLK is switched to HIRC.\n");
 
         /* Disable HXT clock frequency monitor interrupt */

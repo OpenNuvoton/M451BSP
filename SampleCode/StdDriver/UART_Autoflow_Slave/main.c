@@ -30,7 +30,7 @@ volatile int32_t g_i32pointer = 0;
 /* Define functions prototype                                                                              */
 /*---------------------------------------------------------------------------------------------------------*/
 extern char GetChar(void);
-int main(void);
+int32_t main(void);
 void AutoFlow_FunctionRxTest(void);
 
 
@@ -47,7 +47,7 @@ void SYS_Init(void)
     /* Wait for HIRC clock ready */
     CLK_WaitClockReady(CLK_STATUS_HIRCSTB_Msk);
 
-    /* Select HCLK clock source as HIRC and and HCLK source divider as 1 */
+    /* Select HCLK clock source as HIRC and HCLK source divider as 1 */
     CLK_SetHCLK(CLK_CLKSEL0_HCLKSEL_HIRC, CLK_CLKDIV0_HCLK(1));
 
     /* Enable HXT clock (external XTAL 12MHz) */
@@ -111,7 +111,7 @@ void UART1_Init()
 /*---------------------------------------------------------------------------------------------------------*/
 /* MAIN function                                                                                           */
 /*---------------------------------------------------------------------------------------------------------*/
-int main(void)
+int32_t main(void)
 {
 
     /* Unlock protected registers */
@@ -152,7 +152,7 @@ void UART1_IRQHandler(void)
     volatile uint32_t u32IntSts = UART1->INTSTS;;
 
     /* Rx Ready or Time-out INT */
-    if(UART_GET_INT_FLAG(UART1, UART_INTSTS_RDAINT_Msk) ||  UART_GET_INT_FLAG(UART1, UART_INTSTS_RXTOINT_Msk))
+    if(UART_GET_INT_FLAG(UART1, UART_INTSTS_RDAINT_Msk) || UART_GET_INT_FLAG(UART1, UART_INTSTS_RXTOINT_Msk))
     {
         /* Handle received data */
         g_u8RecData[g_i32pointer] = UART_READ(UART1);
@@ -164,7 +164,7 @@ void UART1_IRQHandler(void)
 /*---------------------------------------------------------------------------------------------------------*/
 void AutoFlow_FunctionRxTest()
 {
-    uint32_t u32i;
+    uint32_t u32i, u32Err = 0;
 
     printf("\n");
     printf("+-----------------------------------------------------------+\n");
@@ -195,12 +195,10 @@ void AutoFlow_FunctionRxTest()
     UART_EnableFlowCtrl(UART1);
 
     /* Set RTS Trigger Level as 8 bytes */
-    UART1->FIFO &= ~UART_FIFO_RTSTRGLV_Msk;
-    UART1->FIFO |= UART_FIFO_RTSTRGLV_8BYTES;
+    UART1->FIFO = (UART1->FIFO & (~UART_FIFO_RTSTRGLV_Msk)) | UART_FIFO_RTSTRGLV_8BYTES;
 
     /* Set RX Trigger Level as 8 bytes */
-    UART1->FIFO &= ~UART_FIFO_RFITL_Msk;
-    UART1->FIFO |= UART_FIFO_RFITL_8BYTES;
+    UART1->FIFO = (UART1->FIFO & (~UART_FIFO_RFITL_Msk)) | UART_FIFO_RFITL_8BYTES;
 
     /* Set Timeout time 0x3E bit-time and time-out counter enable */
     UART_SetTimeoutCnt(UART1, 0x3E);
@@ -219,11 +217,15 @@ void AutoFlow_FunctionRxTest()
     {
         if(g_u8RecData[u32i] != (u32i & 0xFF))
         {
-            printf("Compare Data Failed\n");
-            while(1);
+            u32Err = 1;
+            break;
         }
     }
-    printf("\n Receive OK & Check OK\n");
+
+    if( u32Err )
+        printf("Compare Data Failed\n");
+    else
+        printf("\n Receive OK & Check OK\n");
 
     /* Disable RDA\RLS\RTO Interrupt */
     UART_DisableInt(UART1, (UART_INTEN_RDAIEN_Msk | UART_INTEN_RLSIEN_Msk | UART_INTEN_RXTOIEN_Msk));

@@ -13,7 +13,7 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-#define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
+
 #define PLL_CLOCK       72000000
 
 
@@ -61,6 +61,8 @@ void I2C0_IRQHandler(void)
 /*---------------------------------------------------------------------------------------------------------*/
 void I2C_MasterRx(uint32_t u32Status)
 {
+    uint32_t u32TimeOutCnt;
+
     if(u32Status == 0x08)                       /* START has been transmitted and prepare SLA+W */
     {
         I2C_SET_DATA(I2C0, (g_u8DeviceAddr << 1));    /* Write SLA+W to Register I2CDAT */
@@ -135,7 +137,9 @@ void I2C_MasterRx(uint32_t u32Status)
         g_u8MstRxAbortFlag = 1;
         getchar();
         I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-        while(I2C0->CTL & I2C_CTL_SI_Msk);
+        u32TimeOutCnt = I2C_TIMEOUT;
+        while(I2C0->CTL & I2C_CTL_SI_Msk)
+            if(--u32TimeOutCnt == 0) break;
     }
 }
 /*---------------------------------------------------------------------------------------------------------*/
@@ -143,6 +147,8 @@ void I2C_MasterRx(uint32_t u32Status)
 /*---------------------------------------------------------------------------------------------------------*/
 void I2C_MasterTx(uint32_t u32Status)
 {
+    uint32_t u32TimeOutCnt;
+
     if(u32Status == 0x08)                       /* START has been transmitted */
     {
         I2C_SET_DATA(I2C0, g_u8DeviceAddr << 1);    /* Write SLA+W to Register I2CDAT */
@@ -210,7 +216,9 @@ void I2C_MasterTx(uint32_t u32Status)
         g_u8MstTxAbortFlag = 1;
         getchar();
         I2C_SET_CONTROL_REG(I2C0, I2C_CTL_SI);
-        while(I2C0->CTL & I2C_CTL_SI_Msk);
+        u32TimeOutCnt = I2C_TIMEOUT;
+        while(I2C0->CTL & I2C_CTL_SI_Msk)
+            if(--u32TimeOutCnt == 0) break;
     }
 }
 
@@ -247,12 +255,11 @@ void SYS_Init(void)
     /* Select UART module clock source */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
 
-
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
 
-    /* Set PD multi-function pins for UART0 RXD, TXD and */
+    /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
@@ -328,7 +335,7 @@ int32_t I2C0_Read_Write_SLAVE(uint8_t slvaddr)
             /* I2C as master sends START signal */
             I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
-            /* Wait I2C Tx Finish or Unexpected Abort*/
+            /* Wait I2C Tx Finish or Unexpected Abort */
             do
             {
                 if(g_u8TimeoutFlag)
@@ -338,7 +345,7 @@ int32_t I2C0_Read_Write_SLAVE(uint8_t slvaddr)
                     SYS->IPRST1 |= SYS_IPRST1_I2C0RST_Msk;
                     SYS->IPRST1 = 0;
                     I2C0_Init();
-                    /* Set MasterTx abort flag*/
+                    /* Set MasterTx abort flag */
                     g_u8MstTxAbortFlag = 1;
                 }
             } while(g_u8MstEndFlag == 0 && g_u8MstTxAbortFlag == 0);
@@ -347,9 +354,9 @@ int32_t I2C0_Read_Write_SLAVE(uint8_t slvaddr)
 
             if(g_u8MstTxAbortFlag)
             {
-                /* Clear MasterTx abort flag*/
+                /* Clear MasterTx abort flag */
                 g_u8MstTxAbortFlag = 0;
-                /* Set Master re-start flag*/
+                /* Set Master re-start flag */
                 g_u8MstReStartFlag = 1;
                 break;
             }
@@ -362,17 +369,17 @@ int32_t I2C0_Read_Write_SLAVE(uint8_t slvaddr)
 
             I2C_SET_CONTROL_REG(I2C0, I2C_CTL_STA);
 
-            /* Wait I2C Rx Finish or Unexpected Abort*/
+            /* Wait I2C Rx Finish or Unexpected Abort */
             do {
                 if(g_u8TimeoutFlag)
                 {
-                    /* When I2C timeout, reset IP*/
+                    /* When I2C timeout, reset IP */
                     printf(" MasterRx time out, any to reset IP\n");
                     getchar();
                     SYS->IPRST1 |= SYS_IPRST1_I2C0RST_Msk;
                     SYS->IPRST1 = 0;
                     I2C0_Init();
-                    /* Set MasterRx abort flag*/
+                    /* Set MasterRx abort flag */
                     g_u8MstRxAbortFlag = 1;
                 }
             } while(g_u8MstEndFlag == 0 && g_u8MstRxAbortFlag == 0);
@@ -381,9 +388,9 @@ int32_t I2C0_Read_Write_SLAVE(uint8_t slvaddr)
 
             if(g_u8MstRxAbortFlag )
             {
-                /* Clear MasterRx abort flag*/
+                /* Clear MasterRx abort flag */
                 g_u8MstRxAbortFlag = 0;
-                /* Set Master re-start flag*/
+                /* Set Master re-start flag */
                 g_u8MstReStartFlag = 1;
                 break;
             }
@@ -465,6 +472,3 @@ int32_t main(void)
 
     while(1);
 }
-
-
-

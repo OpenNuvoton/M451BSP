@@ -100,6 +100,11 @@ extern "C"
 #define EADC_CMP_ADCMPIE_ENABLE             (EADC_CMP_ADCMPIE_Msk)   /*!< A/D result compare interrupt enable */
 #define EADC_CMP_ADCMPIE_DISABLE            (~EADC_CMP_ADCMPIE_Msk)  /*!< A/D result compare interrupt disable */
 
+/*---------------------------------------------------------------------------------------------------------*/
+/* EADC Time-out Handler Constant Definitions                                                              */
+/*---------------------------------------------------------------------------------------------------------*/
+#define EADC_TIMEOUT        SystemCoreClock     /*!< EADC time-out counter (1 second time-out) */
+
 /*@}*/ /* end of group EADC_EXPORTED_CONSTANTS */
 
 /** @addtogroup EADC_EXPORTED_FUNCTIONS EADC Exported Functions
