@@ -132,7 +132,7 @@ int32_t main(void)
     int32_t i;
 
     /*
-        This sample code is used to demo USB Audio Class + NAU8822 (WAU8822) with HID key.
+        This sample code is used to demo USB Audio Class + NAU8822 (NAU8822) with HID key.
         User can define PLAY_RATE in usbd_audio.h to support 48000Hz, 32000Hz, 16000Hz and 8000Hz.
 
         The audio is input from NAU8822 AUXIN.
@@ -188,7 +188,7 @@ int32_t main(void)
     I2C0_Init();
 
     /* Initialize NAU8822 codec */
-    WAU8822_Setup();
+    NAU8822_Setup();
 
     /* Headphone MUTE off */
     PD->MODE |= (GPIO_MODE_QUASI << GPIO_MODE_MODE7_Pos);
@@ -258,7 +258,7 @@ int32_t main(void)
             ch = getchar();
             u32Data = u32Data * 16 + ((ch >= '0' && ch <= '9') ? ch - '0' : ch - 'a' + 10);
             printf("%03x\n", u32Data);
-            I2C_WriteWAU8822(u32Reg,  u32Data);
+            I2C_WriteNAU8822(u32Reg,  u32Data);
         }
 
         /* HID Keyboard */

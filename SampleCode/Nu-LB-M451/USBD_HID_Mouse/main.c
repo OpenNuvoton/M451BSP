@@ -15,8 +15,6 @@
 #define CLK_PLLCON_72MHz_XTAL     0xC02E // 72MHz
 #define CLK_PLLCON_144MHz_XTAL    0x402E // 144MHz
 
-int IsDebugFifoEmpty(void);
-
 void EnableCLKO(uint32_t u32ClkSrc, uint32_t u32ClkDiv)
 {
     /* CLKO = clock source / 2^(u32ClkDiv + 1) */
@@ -98,9 +96,6 @@ void PowerDown()
     /* Unlock protected registers */
     SYS_UnlockReg();
 
-    printf("Enter power down ...\n");
-    while(!IsDebugFifoEmpty());
-
     /* Wakeup Enable */
     USBD_ENABLE_INT(USBD_INTEN_WKEN_Msk);
 
@@ -109,8 +104,6 @@ void PowerDown()
     /* Clear PWR_DOWN_EN if it is not clear by itself */
     if(CLK->PWRCTL & CLK_PWRCTL_PDEN_Msk)
         CLK->PWRCTL ^= CLK_PWRCTL_PDEN_Msk;
-
-    printf("device wakeup!\n");
 
     /* Lock protected registers */
     SYS_LockReg();

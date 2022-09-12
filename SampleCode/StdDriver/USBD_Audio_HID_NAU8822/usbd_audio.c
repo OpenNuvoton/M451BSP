@@ -786,9 +786,9 @@ void UAC_SetInterface(void)
 
 
 /*---------------------------------------------------------------------------------------------------------*/
-/*  Write 9-bit data to 7-bit address register of WAU8822 with I2C0                                        */
+/*  Write 9-bit data to 7-bit address register of NAU8822 with I2C0                                        */
 /*---------------------------------------------------------------------------------------------------------*/
-void I2C_WriteWAU8822(uint8_t u8addr, uint16_t u16data)
+void I2C_WriteNAU8822(uint8_t u8addr, uint16_t u16data)
 {
     /* Send START */
     I2C_START(I2C0);
@@ -815,49 +815,49 @@ void I2C_WriteWAU8822(uint8_t u8addr, uint16_t u16data)
 }
 
 
-void WAU8822_Setup(void)
+void NAU8822_Setup(void)
 {
-    I2C_WriteWAU8822(0,  0x000);   /* Reset all registers */
+    I2C_WriteNAU8822(0,  0x000);   /* Reset all registers */
     CLK_SysTickDelay(10000);
 
-    I2C_WriteWAU8822(1,  0x1FF);   /* All on */
-    I2C_WriteWAU8822(2,  0x1BF);   /* Enable L/R Headphone, ADC Mix/Boost, ADC */
-    I2C_WriteWAU8822(3,  0x1FF);   /* Enable L/R main mixer, DAC*/
-    I2C_WriteWAU8822(4,  0x010);   /* 16-bit word length, I2S format, Stereo */
-    I2C_WriteWAU8822(5,  0x000);   /* Companding control and loop back mode (all disable) */
+    I2C_WriteNAU8822(1,  0x1FF);   /* All on */
+    I2C_WriteNAU8822(2,  0x1BF);   /* Enable L/R Headphone, ADC Mix/Boost, ADC */
+    I2C_WriteNAU8822(3,  0x1FF);   /* Enable L/R main mixer, DAC*/
+    I2C_WriteNAU8822(4,  0x010);   /* 16-bit word length, I2S format, Stereo */
+    I2C_WriteNAU8822(5,  0x000);   /* Companding control and loop back mode (all disable) */
 
 #if(PLAY_RATE == 48000)
-    I2C_WriteWAU8822(6,  0x14D);   /* Divide by 2, 48K */
-    I2C_WriteWAU8822(7,  0x000);   /* 48K for internal filter coefficients */
+    I2C_WriteNAU8822(6,  0x14D);   /* Divide by 2, 48K */
+    I2C_WriteNAU8822(7,  0x000);   /* 48K for internal filter coefficients */
 #elif(PLAY_RATE == 32000)
-    I2C_WriteWAU8822(6,  0x16D);   /* Divide by 3, 32K */
-    I2C_WriteWAU8822(7,  0x002);   /* 32K for internal filter coefficients */
+    I2C_WriteNAU8822(6,  0x16D);   /* Divide by 3, 32K */
+    I2C_WriteNAU8822(7,  0x002);   /* 32K for internal filter coefficients */
 #elif(PLAY_RATE == 16000)
-    I2C_WriteWAU8822(6,  0x1AD);   /* Divide by 6, 16K */
-    I2C_WriteWAU8822(7,  0x006);   /* 16K for internal filter coefficients */
+    I2C_WriteNAU8822(6,  0x1AD);   /* Divide by 6, 16K */
+    I2C_WriteNAU8822(7,  0x006);   /* 16K for internal filter coefficients */
 #else
-    I2C_WriteWAU8822(6,  0x1ED);   /* Divide by 12, 8K */
-    I2C_WriteWAU8822(7,  0x00A);   /* 8K for internal filter coefficients */
+    I2C_WriteNAU8822(6,  0x1ED);   /* Divide by 12, 8K */
+    I2C_WriteNAU8822(7,  0x00A);   /* 8K for internal filter coefficients */
 #endif
 
-    I2C_WriteWAU8822(10, 0x008);   /* DAC soft mute is disabled, DAC oversampling rate is 128x */
-    I2C_WriteWAU8822(14, 0x108);   /* ADC HP filter is disabled, ADC oversampling rate is 128x */
-    I2C_WriteWAU8822(15, 0x0FF);   /* ADC left digital volume control */
-    I2C_WriteWAU8822(16, 0x1FF);   /* ADC right digital volume control */
+    I2C_WriteNAU8822(10, 0x008);   /* DAC soft mute is disabled, DAC oversampling rate is 128x */
+    I2C_WriteNAU8822(14, 0x108);   /* ADC HP filter is disabled, ADC oversampling rate is 128x */
+    I2C_WriteNAU8822(15, 0x0FF);   /* ADC left digital volume control */
+    I2C_WriteNAU8822(16, 0x1FF);   /* ADC right digital volume control */
 
-    I2C_WriteWAU8822(45, 0x0bf);   /* LAUXIN connected, and its Gain value is 0dB */
-    I2C_WriteWAU8822(46, 0x1bf);   /* RAUXIN connected, and its Gain value is 0dB */
-    I2C_WriteWAU8822(47, 0x175);   /* LAUXIN connected, and its Gain value is 0dB, MIC is +6dB */
-    I2C_WriteWAU8822(48, 0x175);   /* RAUXIN connected, and its Gain value is 0dB, MIC is +6dB */
+    I2C_WriteNAU8822(45, 0x0bf);   /* LAUXIN connected, and its Gain value is 0dB */
+    I2C_WriteNAU8822(46, 0x1bf);   /* RAUXIN connected, and its Gain value is 0dB */
+    I2C_WriteNAU8822(47, 0x175);   /* LAUXIN connected, and its Gain value is 0dB, MIC is +6dB */
+    I2C_WriteNAU8822(48, 0x175);   /* RAUXIN connected, and its Gain value is 0dB, MIC is +6dB */
 
-    I2C_WriteWAU8822(50, 0x001);   /* Left DAC connected to LMIX */
-    I2C_WriteWAU8822(51, 0x001);   /* Right DAC connected to RMIX */
+    I2C_WriteNAU8822(50, 0x001);   /* Left DAC connected to LMIX */
+    I2C_WriteNAU8822(51, 0x001);   /* Right DAC connected to RMIX */
 
-    I2C_WriteWAU8822(52, 0x039);   /* HP Volume */
-    I2C_WriteWAU8822(53, 0x139);   /* HP Volume */
+    I2C_WriteNAU8822(52, 0x039);   /* HP Volume */
+    I2C_WriteNAU8822(53, 0x139);   /* HP Volume */
 
-    I2C_WriteWAU8822(54, 0x140);   /* LSPKOUT Volume */
-    I2C_WriteWAU8822(55, 0x140);   /* RSPKOUT Volume */
+    I2C_WriteNAU8822(54, 0x140);   /* LSPKOUT Volume */
+    I2C_WriteNAU8822(55, 0x140);   /* RSPKOUT Volume */
 
 }
 
@@ -1061,7 +1061,7 @@ void AdjustCodecPll(RESAMPLE_STATE_T r)
     }
 
     for(i = 0; i < 3; i++)
-        I2C_WriteWAU8822(37 + i, tb[s][i]);
+        I2C_WriteNAU8822(37 + i, tb[s][i]);
 }
 
 
@@ -1266,20 +1266,20 @@ void VolumnControl(void)
     if((IsChange & 3) == 3)
     {
         /* Both channels need to be changed */
-        I2C_WriteWAU8822(52, u32R52);
-        I2C_WriteWAU8822(53, u32R53 | 0x100);
+        I2C_WriteNAU8822(52, u32R52);
+        I2C_WriteNAU8822(53, u32R53 | 0x100);
         IsChange ^= 3;
     }
     else if(IsChange & 1)
     {
         /* Only change left channel */
-        I2C_WriteWAU8822(52, u32R52 | 0x100);
+        I2C_WriteNAU8822(52, u32R52 | 0x100);
         IsChange ^= 1;
     }
     else if(IsChange & 2)
     {
         /* Only change right channel */
-        I2C_WriteWAU8822(53, u32R53 | 0x100);
+        I2C_WriteNAU8822(53, u32R53 | 0x100);
         IsChange ^= 2;
     }
 
@@ -1287,20 +1287,20 @@ void VolumnControl(void)
     if((IsChange & 0xc) == 0xc)
     {
         /* Both channels need to be changed */
-        I2C_WriteWAU8822(15, u32R15);
-        I2C_WriteWAU8822(16, u32R16 | 0x100);
+        I2C_WriteNAU8822(15, u32R15);
+        I2C_WriteNAU8822(16, u32R16 | 0x100);
         IsChange ^= 0xc;
     }
     else if(IsChange & 4)
     {
         /* Only change left channel */
-        I2C_WriteWAU8822(15, u32R15 | 0x100);
+        I2C_WriteNAU8822(15, u32R15 | 0x100);
         IsChange ^= 4;
     }
     else if(IsChange & 8)
     {
         /* Only change right channel */
-        I2C_WriteWAU8822(16, u32R16 | 0x100);
+        I2C_WriteNAU8822(16, u32R16 | 0x100);
         IsChange ^= 8;
     }
 
