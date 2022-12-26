@@ -923,7 +923,7 @@ Example 1: If user want to set PA.0 as SC0_CLK in initial function,
   */
 __STATIC_INLINE void SYS_UnlockReg(void)
 {
-    uint32_t u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
+    uint32_t u32TimeOutCnt = __HIRC;
 
     do
     {
