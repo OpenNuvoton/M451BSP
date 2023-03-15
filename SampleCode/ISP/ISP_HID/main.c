@@ -42,7 +42,7 @@ int32_t SYS_Init(void)
     /* Set core clock from PLL */
     u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
     CLK->PLLCTL = PLLCTL_SETTING;
-    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
         if(--u32TimeOutCnt == 0) return -1;
 
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
