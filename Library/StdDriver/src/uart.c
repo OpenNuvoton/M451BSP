@@ -254,7 +254,7 @@ uint32_t UART_Read(UART_T* uart, uint8_t *pu8RxBuf, uint32_t u32ReadBytes)
         {
             u32delayno++;
             if(u32delayno >= 0x40000000)
-                return FALSE;
+                return u32Count;
         }
         pu8RxBuf[u32Count] = uart->DAT;    /* Get Data from UART RX  */
     }
@@ -467,7 +467,7 @@ uint32_t UART_Write(UART_T* uart, uint8_t *pu8TxBuf, uint32_t u32WriteBytes)
     {
         u32delayno = 0ul;
 
-        while (uart->FIFOSTS & UART_FIFOSTS_TXFULL_Msk)   /* Check Tx Full */
+        while (uart->FIFOSTS & UART_FIFOSTS_TXFULL_Msk)   /* Wait Tx not full or Time-out manner */
         {
             u32delayno++;
 
