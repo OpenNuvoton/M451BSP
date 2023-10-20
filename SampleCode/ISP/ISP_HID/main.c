@@ -45,8 +45,8 @@ int32_t SYS_Init(void)
     while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
         if(--u32TimeOutCnt == 0) return -1;
 
-    CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
     CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(2);
+    CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
 
     /* Update System Core Clock */
     PllClock        = PLL_CLOCK;                // PLL
