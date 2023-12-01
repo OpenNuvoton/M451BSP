@@ -6,7 +6,8 @@
  * @brief    Show how to reboot to LDROM functions from APROM.
  *           This sample code set VECMAP to LDROM and reset to re-boot to LDROM.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

@@ -6,8 +6,9 @@
  * @brief    Display an image on TFT LCD panel via SPI interface and control LED.
  *
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
@@ -161,7 +162,7 @@ void ILI9341_LCD_PutChar8x16(uint16_t x, uint16_t y, uint8_t c, uint32_t fColor,
     }
 }
 
-void ILI9341_LCD_PutString(uint16_t x, uint16_t y, uint8_t *s, uint32_t fColor, uint32_t bColor)
+void ILI9341_LCD_PutString(uint16_t x, uint16_t y, char *s, uint32_t fColor, uint32_t bColor)
 {
     uint8_t l = 0;
     while(*s)

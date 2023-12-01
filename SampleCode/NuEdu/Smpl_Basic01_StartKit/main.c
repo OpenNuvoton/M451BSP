@@ -5,8 +5,9 @@
  * $Date: 15/09/02 10:03a $
  * @brief    Demonstrate how to set GPIO pin mode and use pin data input/output control.
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include "stdio.h"
 #include "M451Series.h"
@@ -115,13 +116,13 @@ int32_t main(void)
 	MidDid = SpiFlash_ReadMidDid();
 	printf("MID and DID = 0x%x\n", MidDid);
 	k=1;
-	while(MidDid!=0xef14);
+	while(MidDid!=0xef14)
 
     /* Read/Write EEPROM */
     I2C_EEPROM_Write(0x0010,0x55);
     temp=I2C_EEPROM_Read(0x0010);
     printf("EEPROM = 0x%x\n", temp);
-	while(temp!=0x55);
+	while(temp!=0x55)
     
     
     while(1)

@@ -7,8 +7,9 @@
  *           Demonstrate how to communicate with an off-chip SPI slave device.
  *           This sample code needs to work with SPI_SlaveMode.
  * @note
- * Copyright (C) 2014 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
@@ -158,7 +159,7 @@ void SPI_Init(void)
     /* Configure SPI0 as a master, clock idle low, 32-bit transaction, drive output on falling clock edge and latch input on rising edge. */
     SPI0->CTL = SPI_MASTER | SPI_CTL_TXNEG_Msk | SPI_CTL_SPIEN_Msk;
     /* Set IP clock divider. SPI clock rate = f_PCLK0 / (5+1) */
-    SPI0->CLKDIV = SPI0->CLKDIV & (~SPI_CLKDIV_DIVIDER_Msk) | 5;
+    SPI0->CLKDIV = (SPI0->CLKDIV & (~SPI_CLKDIV_DIVIDER_Msk)) | 5;
 }
 
 void SPI0_IRQHandler(void)

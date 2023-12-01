@@ -7,8 +7,9 @@
  *           Transmit and receive UART data with PDMA.
  *
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include "stdio.h"
 #include "M451Series.h"

@@ -6,7 +6,8 @@
  * @brief    NuEdu-Basic01 SPI Flash driver header file for NuEdu-SDK-M451 
  *
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #ifndef __NuEdu_Basic01_SPI_FLASH_H__
 #define __NuEdu_Basic01_SPI_FLASH_H__

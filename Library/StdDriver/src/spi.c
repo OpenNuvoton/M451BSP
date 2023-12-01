@@ -6,8 +6,8 @@
  * @brief    M451 series SPI driver source file
  *
  * @note
- * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include "M451Series.h"
 /** @addtogroup Standard_Driver Standard Driver
@@ -423,9 +423,9 @@ uint32_t SPI_SetBusClock(SPI_T *spi, uint32_t u32BusClock)
   */
 void SPI_SetFIFO(SPI_T *spi, uint32_t u32TxThreshold, uint32_t u32RxThreshold)
 {
-    spi->FIFOCTL = (spi->FIFOCTL & ~(SPI_FIFOCTL_TXTH_Msk | SPI_FIFOCTL_RXTH_Msk) |
+    spi->FIFOCTL = (spi->FIFOCTL & ~(SPI_FIFOCTL_TXTH_Msk | SPI_FIFOCTL_RXTH_Msk)) |
                     (u32TxThreshold << SPI_FIFOCTL_TXTH_Pos) |
-                    (u32RxThreshold << SPI_FIFOCTL_RXTH_Pos));
+                    (u32RxThreshold << SPI_FIFOCTL_RXTH_Pos);
 }
 
 /**
@@ -1141,9 +1141,9 @@ void I2S_DisableMCLK(SPI_T *i2s)
   */
 void I2S_SetFIFO(SPI_T *i2s, uint32_t u32TxThreshold, uint32_t u32RxThreshold)
 {
-    i2s->FIFOCTL = (i2s->FIFOCTL & ~(SPI_FIFOCTL_TXTH_Msk | SPI_FIFOCTL_RXTH_Msk) |
+    i2s->FIFOCTL = (i2s->FIFOCTL & ~(SPI_FIFOCTL_TXTH_Msk | SPI_FIFOCTL_RXTH_Msk)) |
                     (u32TxThreshold << SPI_FIFOCTL_TXTH_Pos) |
-                    (u32RxThreshold << SPI_FIFOCTL_RXTH_Pos));
+                    (u32RxThreshold << SPI_FIFOCTL_RXTH_Pos);
 }
 
 /*@}*/ /* end of group SPI_EXPORTED_FUNCTIONS */

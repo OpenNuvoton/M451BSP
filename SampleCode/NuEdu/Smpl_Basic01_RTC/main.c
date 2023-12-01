@@ -7,7 +7,8 @@
  * $Date: 15/09/02 10:03a $
  * @brief    Demonstrate how to get the current RTC data/time per tick.
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

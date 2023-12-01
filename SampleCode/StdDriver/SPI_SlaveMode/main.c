@@ -7,8 +7,9 @@
  *           Configure SPI0 as Slave mode and demonstrate how to communicate with an off-chip SPI Master device.
  *           This sample code needs to work with SPI_MasterMode sample code.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

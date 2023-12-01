@@ -6,8 +6,9 @@
  * @brief    Show how to call LDROM functions from APROM.
  *           The code in APROM will look up the table at 0x100E00 to get the address of function of LDROM and call the function.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
@@ -33,8 +34,13 @@ __root const uint32_t g_funcTable[4] =
 {
     (uint32_t)IAP_Func0, (uint32_t)IAP_Func1, (uint32_t)IAP_Func2, (uint32_t)IAP_Func3
 } ;
+#elif defined(__ARMCC_VERSION)
+const uint32_t * __attribute__((section(".ARM.__at_0x00100E00"))) g_funcTable[4] =
+{
+    (uint32_t *)IAP_Func0, (uint32_t *)IAP_Func1, (uint32_t *)IAP_Func2, (uint32_t *)IAP_Func3
+};
 #else
-__attribute__((at(FUN_TBL_BASE))) const uint32_t g_funcTable[4] =
+const uint32_t __attribute__((section (".IAPFunTable"))) g_funcTable[4] =
 {
     (uint32_t)IAP_Func0, (uint32_t)IAP_Func1, (uint32_t)IAP_Func2, (uint32_t)IAP_Func3
 };
@@ -82,7 +88,7 @@ void SYS_Init(void)
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_PLL;
 
     /* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CycylesPerUs automatically. */
+    /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CyclesPerUs automatically. */
     //SystemCoreClockUpdate();
     PllClock        = PLL_CLOCK;            // PLL
     SystemCoreClock = PLL_CLOCK / 1;        // HCLK
@@ -123,6 +129,9 @@ void UART0_Init(void)
 
 int32_t IAP_Func0(int32_t n)
 {
+#if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
+    return (n * 1);
+#else
     int32_t i;
 
     for(i = 0; i < n; i++)
@@ -131,10 +140,14 @@ int32_t IAP_Func0(int32_t n)
     }
 
     return n;
+#endif
 }
 
 int32_t IAP_Func1(int32_t n)
 {
+#if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
+    return (n * 1);
+#else
     int32_t i;
 
     for(i = 0; i < n; i++)
@@ -143,9 +156,13 @@ int32_t IAP_Func1(int32_t n)
     }
 
     return n;
+#endif
 }
 int32_t IAP_Func2(int32_t n)
 {
+#if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
+    return (n * 1);
+#else
     int32_t i;
 
     for(i = 0; i < n; i++)
@@ -154,9 +171,13 @@ int32_t IAP_Func2(int32_t n)
     }
 
     return n;
+#endif
 }
 int32_t IAP_Func3(int32_t n)
 {
+#if (defined(__GNUC__) && !defined(__ARMCC_VERSION))
+    return (n * 1);
+#else
     int32_t i;
 
     for(i = 0; i < n; i++)
@@ -165,6 +186,7 @@ int32_t IAP_Func3(int32_t n)
     }
 
     return n;
+#endif
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -172,9 +194,23 @@ int32_t IAP_Func3(int32_t n)
 /*---------------------------------------------------------------------------------------------------------*/
 int32_t main(void)
 {
+#if defined(__GNUC_LD_IAP__)||defined ( __ICCARM__ )
+    int32_t i;
+#endif
 
     /* Init System, IP clock and multi-function I/O */
     SYS_Init();
+
+#if defined(__GNUC_LD_IAP__)
+
+    // Delay 3 seconds
+    for(i = 0; i < 30; i++)
+    {
+        SysTickDelay(10000);
+    }
+
+    while(SYS->PDID)__WFI();
+#else
 
     /* Init UART0 for printf */
     UART0_Init();
@@ -199,10 +235,11 @@ int32_t main(void)
     }
     printf("\n");
 
-    printf("Function table @ 0x%08x\n", g_funcTable);
+    printf("Function table @ 0x%08x\n", (uint32_t)g_funcTable);
 #endif
 
     while(SYS->PDID)__WFI();
+#endif
 }
 
 

@@ -6,8 +6,9 @@
  * @brief    M451 series NuEdu Basic01 7-Segment driver Header File
  *
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #ifndef __NuEdu_Basic01_7_Segment_H__
 #define __NuEdu_Basic01_7_Segment_H__

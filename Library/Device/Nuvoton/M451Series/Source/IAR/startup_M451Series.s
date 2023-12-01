@@ -6,8 +6,8 @@
 ; * @brief    CMSIS Cortex-M4 Core Device Startup File for NUC451 Series MCU
 ; *
 ; * @note
-; * SPDX-License-Identifier: Apache-2.0
-; * Copyright (C) 2014 Nuvoton Technology Corp. All rights reserved.
+; * @copyright SPDX-License-Identifier: Apache-2.0
+; * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 ;*****************************************************************************/
 
         MODULE  ?cstartup
@@ -18,6 +18,7 @@
         SECTION .intvec:CODE:NOROOT(2)
 
         EXTERN  __iar_program_start
+        EXTERN  ProcessHardFault
         EXTERN  SystemInit
         PUBLIC  __vector_table
         PUBLIC  __vector_table_0x1c
@@ -127,75 +128,30 @@ __Vectors_Size  EQU   __Vectors_End - __Vectors
         PUBWEAK Reset_Handler
         SECTION .text:CODE:REORDER:NOROOT(2)
 Reset_Handler
-        LDR     R0, =0x40000100
-        ; Unlock Register                
-        LDR     R1, =0x59
-        STR     R1, [R0]
-        LDR     R1, =0x16
-        STR     R1, [R0]
-        LDR     R1, =0x88
-        STR     R1, [R0]
-        
-        ; Init POR
-        LDR     R2, =0x40000024
-        LDR     R1, =0x00005AA5
-        STR     R1, [R2]
-        
-        ; Select INV Type
-        LDR     R2, =0x40000200
-        LDR     R1, [R2]
-        BIC     R1, R1, #0x1000
-        STR     R1, [R2]
-        
-        ; Lock register
-        MOVS    R1, #0
-        STR     R1, [R0]                
 
-        LDR     R0, =SystemInit
-        BLX     R0
-        LDR     R0, =__iar_program_start
+        LDR      R0, =SystemInit
+        BLX      R0
+        LDR      R0, =__iar_program_start
+        BX       R0
+
+        PUBWEAK HardFault_Handler
+HardFault_Handler\
+
+        MOV     R0, LR
+        MRS     R1, MSP
+        MRS     R2, PSP
+        LDR     R3, =ProcessHardFault
+        BLX     R3
         BX      R0
+
+          PUBWEAK ProcessHardFaultx
+ProcessHardFaultx\
+        B       .
 
         PUBWEAK NMI_Handler
         SECTION .text:CODE:REORDER:NOROOT(1)
 NMI_Handler
         B NMI_Handler
-
-        PUBWEAK HardFault_Handler
-        
-#ifdef DEBUG_ENABLE_SEMIHOST
-        SECTION .text:CODE:REORDER(2)
-HardFault_Handler
-
-
-                MOV     R0, LR
-                LSLS    R0,R0, #29            ; Check bit 2
-                BMI     SP_is_PSP             ; previous stack is PSP
-                MRS     R0, MSP               ; previous stack is MSP, read MSP
-                B       SP_Read_Ready
-SP_is_PSP
-                MRS     R0, PSP               ; Read PSP
-SP_Read_Ready
-                LDR     R1, [R13, #24]         ; Get previous PC
-                LDRH    R3, [R1]              ; Get instruction
-        LDR    R2, =0xBEAB           ; The sepcial BKPT instruction
-                CMP     R3, R2                ; Test if the instruction at previous PC is BKPT
-        BNE    HardFault_Handler_Ret ; Not BKPT
-
-                ADDS    R1, #4                ; Skip BKPT and next line
-                STR     R1, [R13, #24]         ; Save previous PC
-
-        BX     LR
-HardFault_Handler_Ret
-
-#else
-
-        SECTION .text:CODE:REORDER:NOROOT(1)
-HardFault_Handler
-
-#endif
-
-        B HardFault_Handler
 
         PUBWEAK MemManage_Handler
         SECTION .text:CODE:REORDER:NOROOT(1)

@@ -6,8 +6,9 @@
  * @brief    Access MPS6050 and display relative information at TFT-LCD.
  *
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
@@ -119,7 +120,7 @@ void ILI9341_LCD_PutChar8x16(uint16_t x, uint16_t y, uint8_t c, uint32_t fColor,
     }
 }
 
-void ILI9341_LCD_PutString(uint16_t x, uint16_t y, uint8_t *s, uint32_t fColor, uint32_t bColor)
+void ILI9341_LCD_PutString(uint16_t x, uint16_t y, char *s, uint32_t fColor, uint32_t bColor)
 {
     uint8_t l = 0;
     while(*s)
@@ -361,22 +362,22 @@ int main(void)
     while(1)
     {
         sprintf(Message_Print, "AccX  = %6d", (int16_t)Read_MPU6050_AccX());
-        ILI9341_LCD_PutString(16, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(16, 0, "Message", Red, Yellow);
 
         sprintf(Message_Print, "AccY  = %6d", (int16_t)Read_MPU6050_AccY());
-        ILI9341_LCD_PutString(32, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(32, 0, "Message", Red, Yellow);
 
         sprintf(Message_Print, "AccZ  = %6d", (int16_t)Read_MPU6050_AccZ());
-        ILI9341_LCD_PutString(48, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(48, 0, "Message", Red, Yellow);
 
         sprintf(Message_Print, "GyroX = %6d", (int16_t)Read_MPU6050_GyroX());
-        ILI9341_LCD_PutString(64, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(64, 0, "Message", Red, Yellow);
 
         sprintf(Message_Print, "GyroY = %6d", (int16_t)Read_MPU6050_GyroY());
-        ILI9341_LCD_PutString(80, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(80, 0, "Message", Red, Yellow);
 
         sprintf(Message_Print, "GyroZ = %6d", (int16_t)Read_MPU6050_GyroZ());
-        ILI9341_LCD_PutString(96, 0, Message, Red, Yellow);
+        ILI9341_LCD_PutString(96, 0, "Message", Red, Yellow);
 
     }
 }

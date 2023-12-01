@@ -7,8 +7,9 @@
  *           Transmit and receive data in UART RS485 mode.
  *           This sample code needs to work with UART_RS485_Master.
  * @note
- * Copyright (C) 2011~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

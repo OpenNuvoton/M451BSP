@@ -7,8 +7,9 @@
  *           Implement a multi-boot system to boot from different applications in APROM.
  *           A LDROM code and 4 APROM code are implemented in this sample code.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

@@ -9,7 +9,8 @@
 						 ACMP compare the value of variable resistance and (VCC)/2 .
 						 If ACMP result is 1, the LED bar will turn on; otherwise, the LED bar will turn off.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

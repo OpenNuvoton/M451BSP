@@ -5,8 +5,8 @@
  * $Date: 15/09/02 10:03a $
  * @brief    Demonstrate how to access EEPROM through I2C interface and print the test results.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
- *
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include "stdio.h"
 #include "M451Series.h"
@@ -135,7 +135,7 @@ void ILI9341_LCD_PutChar8x16(uint16_t x, uint16_t y, uint8_t c, uint32_t fColor,
     }
 }
 
-void ILI9341_LCD_PutString(uint16_t x, uint16_t y, uint8_t *s, uint32_t fColor, uint32_t bColor)
+void ILI9341_LCD_PutString(uint16_t x, uint16_t y, char *s, uint32_t fColor, uint32_t bColor)
 {
     uint8_t l = 0;
     while(*s)
@@ -406,7 +406,7 @@ void I2C_MasterTx(uint32_t u32Status)
 /*---------------------------------------------------------------------------------------------------------*/
 /*  I2C Initial Function                                                                                       */
 /*---------------------------------------------------------------------------------------------------------*/
-__INLINE void I2C_PIN_Init(void)
+__STATIC_INLINE void I2C_PIN_Init(void)
 {
     /* Set GPA multi-function pins for I2C1 SDA and SCL */
     SYS->GPC_MFPL &= ~SYS_GPC_MFPL_PC4MFP_Msk;
@@ -427,7 +427,7 @@ void I2C_EEPROM_Init(void)
 
     /* Get I2C0 Bus Clock */
     sprintf(buffer, "I2C clock %d Hz ", I2C_GetBusClockFreq(I2C_EEPROM));
-    ILI9341_LCD_PutString(3 * 16, 0, (uint8_t *)buffer, Red, Yellow);
+    ILI9341_LCD_PutString(3 * 16, 0, (char *)buffer, Red, Yellow);
     printf("I2C clock %d Hz\n", I2C_GetBusClockFreq(I2C_EEPROM));
 
     /* Enable I2C interrupt */
@@ -592,7 +592,7 @@ int32_t main(void)
     for(i = 0; i < 2; i++)
     {
         sprintf(buffer, "  Address = 0x0010, Write Data = %xh", (i * 2 + 3));
-        ILI9341_LCD_PutString(line * 16, 0, (uint8_t *)buffer, Red, Yellow);
+        ILI9341_LCD_PutString(line * 16, 0, (char *)buffer, Red, Yellow);
         printf("\n\nAddress = 0x0010, Write Data = %xh", (i * 2 + 3));
 
         I2C_EEPROM_Write(0x0010, (i * 2 + 3));
@@ -600,13 +600,13 @@ int32_t main(void)
         u32Data = I2C_EEPROM_Read(0x0010);
 
         sprintf(buffer, "  Address = 0x0010, Read Data = %xh", u32Data);
-        ILI9341_LCD_PutString(line * 16, 0, (uint8_t *)buffer, Red, Yellow);
+        ILI9341_LCD_PutString(line * 16, 0, (char *)buffer, Red, Yellow);
         printf("\nAddress = 0x0010, Read Data = %xh", u32Data);
 
         if(u32Data != (i * 2 + 3))
         {
             sprintf(buffer, "    Address = 0x0010, Read Data = %xh", u32Data);
-            ILI9341_LCD_PutString(line * 16, 0, (uint8_t *)buffer, Red, Yellow);
+            ILI9341_LCD_PutString(line * 16, 0, (char *)buffer, Red, Yellow);
             printf("I2C Byte Write/Read Failed, Data 0x%x\n", u32Data);
         }
         line++;

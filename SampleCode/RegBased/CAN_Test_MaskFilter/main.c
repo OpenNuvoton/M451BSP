@@ -7,8 +7,9 @@
  *           Use message object No.1 to send message objects (ID=0x700~0x70F).
  *           This sample code needs to work with CAN_Set_MaskFilter.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

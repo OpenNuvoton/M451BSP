@@ -5,7 +5,8 @@
  * $Date: 15/09/02 10:03a $
  * @brief    NuEdu Basic01 UART printf Sample Code
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include <stdarg.h>
@@ -160,9 +161,9 @@ int main()
         if(u32Key == 0x1)
         {
             LED_On(i);
-            printf_UART("+------------------------------+\n");
-            printf_UART("|  Simple printf function:%d   |\n", i--);
-            printf_UART("+------------------------------+\n");
+            printf("+------------------------------+\n");
+            printf("|  Simple printf function:%d   |\n", i--);
+            printf("+------------------------------+\n");
         }
     }
 }

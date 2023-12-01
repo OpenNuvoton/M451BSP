@@ -6,8 +6,9 @@
  * @brief    Demonstrate how to use EADC to measure voltage which is controled by cariable resistor.
                          And turn on the LED based on conversion.
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include "stdio.h"
 #include "M451Series.h"

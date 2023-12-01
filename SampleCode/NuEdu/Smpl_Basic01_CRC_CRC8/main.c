@@ -5,7 +5,8 @@
  * $Date: 15/09/07 11:55a $
  * @brief    Perform CRC-8 operation and get the CRC checksum result.
  * @note
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"

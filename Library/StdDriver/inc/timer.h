@@ -6,8 +6,8 @@
  * @brief    M451 series Timer driver header file
  *
  * @note
- * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  *****************************************************************************/
 #ifndef __TIMER_H__
 #define __TIMER_H__

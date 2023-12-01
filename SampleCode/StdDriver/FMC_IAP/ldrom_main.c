@@ -6,13 +6,16 @@
  * @brief    Show how to reboot to LDROM functions from APROM.
  *           This sample code set VECMAP to LDROM and reset to re-boot to LDROM.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
 
 #define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK       72000000
+
+void ProcessHardFault(){}
 
 void SYS_Init(void)
 {
@@ -64,10 +67,6 @@ void SYS_Init(void)
     /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-
-    /* Lock protected registers */
-    SYS_LockReg();
-
 }
 
 void UART0_Init()
@@ -86,6 +85,46 @@ void UART0_Init()
 
 
 
+/**
+ * @brief    Routine to get a char
+ * @param    None
+ * @returns  Get value from UART debug port or semihost
+ * @details  Wait UART debug port or semihost to input a char.
+ */
+static char GetChar(void)
+{
+    while(1)
+    {
+        if ((UART0->FIFOSTS & UART_FIFOSTS_RXEMPTY_Msk) == 0)
+        {
+            return (UART0->DAT);
+        }
+    }
+}
+
+/*
+ * @returns     Send value from UART debug port
+ * @details     Send a target char to UART debug port .
+ */
+static void SendChar_ToUART(int ch)
+{
+    while (UART0->FIFOSTS & UART_FIFOSTS_TXFULL_Msk);
+
+    UART0->DAT = ch;
+    if(ch == '\n')
+    {
+        while (UART0->FIFOSTS & UART_FIFOSTS_TXFULL_Msk);
+        UART0->DAT = '\r';
+    }
+}
+
+static void PutString(char *str)
+{
+    while (*str != '\0')
+    {
+        SendChar_ToUART(*str++);
+    }
+}
 
 int main()
 {
@@ -97,15 +136,16 @@ int main()
     SYS_Init();
     UART0_Init();
 
-    printf("\n\n");
-    printf("M451 FMC IAP Sample Code [LDROM code]\n");
+    PutString("\n\n");
+    PutString("M451 FMC IAP Sample Code [LDROM code]\n");
 
     /* Enable FMC ISP function */
     FMC_Open();
 
-    printf("\n\nTo branch to APROM...\n");
+    PutString("\n\nPress any key to branch to APROM...\n");
+    GetChar();
 
-    printf("\n\nChange VECMAP and branch to LDROM...\n");
+    PutString("\n\nChange VECMAP and branch to APROM...\n");
     u32TimeOutCnt = SystemCoreClock; /* 1 second time-out */
     UART_WAIT_TX_EMPTY(UART0)
         if(--u32TimeOutCnt == 0) break;

@@ -1,6 +1,6 @@
 /*
- * FreeRTOS V202112.00
- * Copyright (C) 2020 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
+ * FreeRTOS Kernel V10.0.0
+ * Copyright (C) 2017 Amazon.com, Inc. or its affiliates.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the "Software"), to deal in
@@ -10,7 +10,8 @@
  * subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * copies or substantial portions of the Software. If you wish to use our Amazon
+ * FreeRTOS name, please do so in a fair use way that does not cause confusion.
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
@@ -28,11 +29,11 @@
 #ifndef PARTEST_H
 #define PARTEST_H
 
-#define partstDEFAULT_PORT_ADDRESS    ( ( uint16_t ) 0x378 )
+#define partstDEFAULT_PORT_ADDRESS		( ( uint16_t ) 0x378 )
 
 void vParTestInitialise( void );
-void vParTestSetLED( UBaseType_t uxLED,
-                     BaseType_t xValue );
+void vParTestSetLED( UBaseType_t uxLED, BaseType_t xValue );
 void vParTestToggleLED( UBaseType_t uxLED );
 
 #endif
+

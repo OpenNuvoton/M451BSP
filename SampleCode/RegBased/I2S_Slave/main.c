@@ -7,8 +7,9 @@
  *           Configure SPI1 as I2S Slave mode and demonstrate how I2S works in Slave mode.
  *           This sample code needs to work with I2S_Master sample code.
  * @note
- * Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include <string.h>

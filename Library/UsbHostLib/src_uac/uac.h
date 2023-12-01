@@ -3,8 +3,8 @@
  * @version  V1.00
  * @brief    USB Host Audio Class header file
  *
- * SPDX-License-Identifier: Apache-2.0
- * @copyright (C) 2017 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  *****************************************************************************/
 #ifndef __INCLUDED_UAC_H__
 #define __INCLUDED_UAC_H__

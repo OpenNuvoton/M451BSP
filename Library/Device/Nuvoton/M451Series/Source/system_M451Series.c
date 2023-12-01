@@ -6,8 +6,8 @@
  * @brief    CMSIS Cortex-M4 Core Peripheral Access Layer Source File for M451 Series MCU
  *
  * @note
- * SPDX-License-Identifier: Apache-2.0
- * Copyright (C) 2013~2015 Nuvoton Technology Corp. All rights reserved.
+ * @copyright SPDX-License-Identifier: Apache-2.0
+ * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
 *****************************************************************************/
 
 #include "M451Series.h"
