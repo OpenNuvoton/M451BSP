@@ -16,15 +16,12 @@
 #include "NuEdu-Basic01.h"
 #define PLL_CLOCK           72000000
 
-#ifdef __ARMCC_VERSION
-__asm __INLINE __set_SP(uint32_t _sp)
-{
-    MSR MSP, r0
-    BX lr
-}
-#endif
 
 void SendChar_ToUART(int ch);
+void ProcessHardFault(void)
+{
+    while(1); /* Halt here if hard fault occurs. */
+}
 /*---------------------------------------------------------------------------------------------------------*/
 /*  Simple printf() function                                                                               */
 /*---------------------------------------------------------------------------------------------------------*/
@@ -59,7 +56,7 @@ void printInteger(uint32_t u32Temp)
 {
 	uint8_t print_buf[16];
 	uint32_t i=15;
-	
+
 	*(print_buf+i) = '\0';
 		do
     {
@@ -75,7 +72,7 @@ void printHex(uint32_t u32Temp)
 	uint8_t print_buf[16];
 	uint32_t i=15;
 	uint8_t hextemp;
-	
+
 	*(print_buf+i) = '\0';
 		do
     {
@@ -90,25 +87,37 @@ void printHex(uint32_t u32Temp)
 		printf_UART(print_buf+i);
 }
 
-__INLINE void BranchTo(uint32_t u32Address)
+void SendChar_ToUART(int ch)
 {
-    FUNC_PTR        *func;    
+    if((char)ch == '\n')
+    {
+        while(DEBUG_PORT->FIFOSTS & UART_FIFOSTS_TXFULL_Msk) {}
+        DEBUG_PORT->DAT = '\r';
+    }
+
+    while(DEBUG_PORT->FIFOSTS & UART_FIFOSTS_TXFULL_Msk) {}
+    DEBUG_PORT->DAT = (uint32_t)ch;
+}
+
+void BranchTo(uint32_t u32Address)
+{
+    FUNC_PTR        *func;
+    __set_PRIMASK(1);
     FMC_SetVectorPageAddr(u32Address);
     func =  (FUNC_PTR *)(*(uint32_t *)(u32Address+4));
-    printf_UART("branch to address 0x%x\n", (int)func);
-    printf_UART("\nChange VECMAP and branch to user application...\n");
+    printf_UART((uint8_t *)"branch to address 0x%x\n", (int)func);
+    printf_UART((uint8_t *)"\nChange VECMAP and branch to user application...\n");
     while (!(UART0->FIFOSTS & UART_FIFOSTS_TXEMPTY_Msk));
-    __set_SP(*(uint32_t *)u32Address);
-    func();		    
+    NVIC_SystemReset();
 }
 void SYS_Init(void)
 {
-   /*---------------------------------------------------------------------------------------------------------*/
+    /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
     /* Unlock protected registers */
     SYS_UnlockReg();
-	
+
     /* Enable Internal RC 22.1184MHz clock */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
 
@@ -126,24 +135,24 @@ void SYS_Init(void)
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK_SetCoreClock(PLL_CLOCK);
-		  
+
     /* Enable module clock */
     CLK_EnableModuleClock(UART0_MODULE);
 
     /* Select module clock source as HXT and UART module clock divider as 1 */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
 
-		/* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock and CycylesPerUs automatically. */
+    /* Update System Core Clock */
+    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock and CyclesPerUs automatically. */
     SystemCoreClockUpdate();
-		
+
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
     /* Set PD multi-function pins for UART0 RXD(PD.6) and TXD(PD.1) */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD6MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD6MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-		
+
     /* Lock protected registers */
     SYS_LockReg();
 }
@@ -182,33 +191,33 @@ int32_t main (void)
 
     FMC_ReadConfig(au32Config, 2);
     cbs = (au32Config[0] >> 6) & 0x3;
-    printf_UART("Config0=0x%x, Config1=0x%x, CBS=%d\n", au32Config[0], au32Config[1], cbs);
-    printf_UART("Boot loader code on LDROM\n");
+    printf_UART((uint8_t *)"Config0=0x%x, Config1=0x%x, CBS=%d\n", au32Config[0], au32Config[1], cbs);
+    printf_UART((uint8_t *)"Boot loader code on LDROM\n");
 
     au32Version[0] = FMC_Read(USER_AP0_ENTRY+0x1000);
     au32Version[1] = FMC_Read(USER_AP1_ENTRY+0x1000);
 
-    printf_UART("Version for AP0:0x%x, AP1:0x%x\n",au32Version[0],au32Version[1]);
-//     printf_UART("Version for AP1:0x%x\n",au32Version[1]);	
+    printf_UART((uint8_t *)"Version for AP0:0x%x, AP1:0x%x\n",au32Version[0],au32Version[1]);
+//     printf_UART("Version for AP1:0x%x\n",au32Version[1]);
 //     printf_UART("Boot Selection\n");
     if((au32Version[0]>=au32Version[1])&(au32Version[0]!=0xFFFFFFFF))
     {
-        printf_UART("Jump to AP0\n");	
+        printf_UART((uint8_t *)"Jump to AP0\n");
         BranchTo(USER_AP0_ENTRY);
     }else if(au32Version[1]!=0xFFFFFFFF)
     {
-        printf_UART("Jump to AP1\n");	
+        printf_UART((uint8_t *)"Jump to AP1\n");
         BranchTo(USER_AP1_ENTRY);
-    }    
+    }
     if((au32Version[0]<=au32Version[1])&(au32Version[1]!=0xFFFFFFFF))
     {
-        printf_UART("Jump to AP1\n");	
+        printf_UART((uint8_t *)"Jump to AP1\n");
         BranchTo(USER_AP1_ENTRY);
     }else if(au32Version[0]!=0xFFFFFFFF)
     {
-        printf_UART("Jump to AP0\n");	
+        printf_UART((uint8_t *)"Jump to AP0\n");
         BranchTo(USER_AP0_ENTRY);
-    } 
-    printf_UART("No program on APROM\n");    
+    }
+    printf_UART((uint8_t *)"No program on APROM\n");
     while(1);
 }

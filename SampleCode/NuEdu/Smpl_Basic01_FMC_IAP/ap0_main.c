@@ -1,9 +1,9 @@
 /**************************************************************************//**
- * @file     ap_main.c
+ * @file     ap0_main.c
  * @version  V1.00
  * $Revision: 2 $
  * $Date: 15/09/02 10:03a $
- * @brief    FMC VECMAP sample program (loader) for Nano100 series MCU
+ * @brief    FMC VECMAP sample program (ap0)
  *
  * @note
  * @copyright SPDX-License-Identifier: Apache-2.0
@@ -17,7 +17,7 @@
 
 static int  load_image_to_flash(uint32_t image_base, uint32_t image_limit, uint32_t flash_addr, uint32_t max_size);
 int IsDebugFifoEmpty(void);
-volatile uint32_t const VersionNumber __attribute__ ((at(0x1000+USER_AP0_ENTRY)))=0x00001;
+volatile uint32_t const __attribute__((section(".ARM.__at_0x1000"))) VersionNumbe = 0x00001;
 
 void TMR0_IRQHandler(void)
 {
@@ -29,23 +29,17 @@ void TMR0_IRQHandler(void)
     TIMER_ClearIntFlag(TIMER0);
 
 }
-#ifdef __ARMCC_VERSION
-__asm __INLINE __set_SP(uint32_t _sp)
+
+void BranchTo(uint32_t u32Address)
 {
-    MSR MSP, r0
-    BX lr
-}
-#endif
-__INLINE void BranchTo(uint32_t u32Address)
-{
-    FUNC_PTR        *func;    
+    FUNC_PTR        *func;
+    __set_PRIMASK(1);
     FMC_SetVectorPageAddr(u32Address);
     func =  (FUNC_PTR *)(*(uint32_t *)(u32Address+4));
     printf("branch to address 0x%x\n", (int)func);
     printf("\n\nChange VECMAP and branch to user application...\n");
     while (!IsDebugFifoEmpty());
-    __set_SP(*(uint32_t *)u32Address);
-    func();		    
+    NVIC_SystemReset();
 }
 
 #define PLL_CLOCK           72000000
@@ -56,7 +50,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Unlock protected registers */
     SYS_UnlockReg();
-	
+
     /* Enable Internal RC 22.1184MHz clock */
     CLK_EnableXtalRC(CLK_PWRCTL_HIRCEN_Msk);
 
@@ -74,26 +68,26 @@ void SYS_Init(void)
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK_SetCoreClock(PLL_CLOCK);
-		  
-		/* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock and CycylesPerUs automatically. */
+
+    /* Update System Core Clock */
+    /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock and CyclesPerUs automatically. */
     SystemCoreClockUpdate();
-		
+
     /* Enable module clock */
     CLK_EnableModuleClock(UART0_MODULE);
-		CLK_EnableModuleClock(TMR0_MODULE);
+    CLK_EnableModuleClock(TMR0_MODULE);
 
     /* Select module clock source as HXT and UART module clock divider as 1 */
     CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UARTSEL_HXT, CLK_CLKDIV0_UART(1));
-		CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HXT, 0);
-		
+    CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_HXT, 0);
+
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
     /* Set PD multi-function pins for UART0 RXD(PD.6) and TXD(PD.1) */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD6MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD6MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
-		
+
     /* Lock protected registers */
     SYS_LockReg();
 }
@@ -108,7 +102,7 @@ void Timer0_Init(void)
     NVIC_EnableIRQ(TMR0_IRQn);
 
     // Start Timer 0
-    TIMER_Start(TIMER0);    
+    TIMER_Start(TIMER0);
 }
 
 void UART0_Init()
@@ -137,14 +131,14 @@ int32_t main (void)
     UART0_Init();
     Initial_LED();
     Timer0_Init();
-	
+
     SYS_UnlockReg();
     /* Enable FMC ISP function */
     FMC_Open();
 
     printf("\n\n");
     printf("+--------------------------------------------------+\n");
-    printf("|         User program running on APROM:0x%x       |\n",*(uint32_t*)0x4);
+    printf("|       User program running on APROM:0x%04x       |\n",*(uint32_t*)0x4);
     printf("+--------------------------------------------------+\n");
 
     /*-------------------------------------------------------------
@@ -164,7 +158,7 @@ int32_t main (void)
         while (!IsDebugFifoEmpty());
         NVIC_SystemReset();
 	}
-    
+
     /*-------------------------------------------------------------
      *  Modify CBS to 00b (boot from APROM)
      *------------------------------------------------------------*/
@@ -173,12 +167,14 @@ int32_t main (void)
     printf("Config0 = 0x%x, Config1 = 0x%x, CBS=%d\n\n", au32Config[0], au32Config[1], cbs);
 
     if (cbs) {
-        printf("\n\nChange boot setting to [Boot from APROM].\n");
+        printf("\n\nChange boot setting to [Boot from LDROM].\n");
         FMC_EnableConfigUpdate();
         au32Config[0] &= ~0xc0;          /* set CBS to 00b */
-        au32Config[0] |= 0x1;           /* disable Data Flash */        
+        au32Config[0] |= 0x1;           /* disable Data Flash */
         FMC_WriteConfig(au32Config, 2);
-    }  
+        while (!IsDebugFifoEmpty());
+        SYS_ResetChip();    /* Reset chip to active config CBS setting, enable IAP mode to use VECMAP function */
+    }
     while(1)
     {
         printf("\n\nDo you want to update AP1?(Yes/No)\n");
@@ -186,14 +182,14 @@ int32_t main (void)
             ch = getchar();
             if ((ch == 'Y') || (ch == 'y'))
             {
-                printf("Writing fmc_isp.bin image to APROM address 0x%x...\n", USER_AP1_ENTRY);
+                printf("Writing fmc_ap1_main.bin image to APROM address 0x%x...\n", USER_AP1_ENTRY);
                 FMC_EnableAPUpdate();
                 if (load_image_to_flash((uint32_t)&loaderImage2Base, (uint32_t)&loaderImage2Limit,
                                         USER_AP1_ENTRY, USER_AP1_MAX_SIZE) != 0) {
                     printf("Load image to APROM failed!\n");
                     return -1;
                 }
-                FMC_DisableAPUpdate();                
+                FMC_DisableAPUpdate();
                 break;
             }
             if ((ch == 'N') || (ch == 'n')) break;
@@ -204,7 +200,7 @@ int32_t main (void)
             ch = getchar();
             if ((ch == 'Y') || (ch == 'y')) BranchTo(USER_AP1_ENTRY);
             if ((ch == 'N') || (ch == 'n')) break;
-        }        
+        }
     }
 }
 
@@ -256,5 +252,3 @@ static int  load_image_to_flash(uint32_t image_base, uint32_t image_limit, uint3
     printf("OK.\n");
     return 0;
 }
-
-

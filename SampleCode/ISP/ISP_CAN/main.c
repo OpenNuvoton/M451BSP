@@ -242,8 +242,10 @@ lexit:
     }
 }
 
-void ProcessHardFault()
-{}
+void ProcessHardFault(void)
+{
+    while(1); /* Halt here if hard fault occurs. */
+}
 
 void SH_Return()
 {}

@@ -189,8 +189,15 @@ NMI_Handler     PROC
                 ENDP
 HardFault_Handler\
                 PROC
+                IMPORT  ProcessHardFault
                 EXPORT  HardFault_Handler         [WEAK]
-                B       .
+                ;B       .
+                MOV     R0, LR
+                MRS     R1, MSP
+                MRS     R2, PSP
+                LDR     R3, =ProcessHardFault
+                BLX     R3
+                BX      R0
                 ENDP
 MemManage_Handler\
                 PROC

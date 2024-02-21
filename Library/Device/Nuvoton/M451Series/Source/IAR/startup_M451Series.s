@@ -1,9 +1,9 @@
 ;/******************************************************************************
-; * @file     startup_NUC400Series.s
+; * @file     startup_M451Series.s
 ; * @version  V0.10
 ; * $Revision: 4 $
 ; * $Date: 17/05/05 3:49p $ 
-; * @brief    CMSIS Cortex-M4 Core Device Startup File for NUC451 Series MCU
+; * @brief    CMSIS Cortex-M4 Core Device Startup File for M451 Series MCU
 ; *
 ; * @note
 ; * @copyright SPDX-License-Identifier: Apache-2.0

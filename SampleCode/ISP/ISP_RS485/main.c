@@ -22,10 +22,15 @@
 #define REVEIVE_MODE            (0)
 #define TRANSMIT_MODE           (1)
 
+
 /*---------------------------------------------------------------------------------------------------------*/
 /* Global variables                                                                                        */
 /*---------------------------------------------------------------------------------------------------------*/
 
+void ProcessHardFault(void)
+{
+    while(1); /* Halt here if hard fault occurs. */
+}
 
 int32_t SYS_Init(void)
 {

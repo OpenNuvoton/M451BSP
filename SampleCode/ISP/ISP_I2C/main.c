@@ -22,7 +22,10 @@
 uint32_t u32Pclk0;
 uint32_t u32Pclk1;
 
-void ProcessHardFault(void) {}
+void ProcessHardFault(void)
+{
+    while(1); /* Halt here if hard fault occurs. */
+}
 void SH_Return(void) {}
 
 int32_t SYS_Init(void)

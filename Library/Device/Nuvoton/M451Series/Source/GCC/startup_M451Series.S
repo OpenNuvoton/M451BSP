@@ -1,7 +1,7 @@
 /****************************************************************************//**
  * @file     startup_M451Series.S
  * @version  V1.00
- * @brief    CMSIS Cortex-M4 Core Device Startup File for M480
+ * @brief    CMSIS Cortex-M4 Core Device Startup File for M451
  *
  * @copyright SPDX-License-Identifier: Apache-2.0
  * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
@@ -297,6 +297,33 @@ Reset_Handler:
 
 	.align	1
 	.thumb_func
+    .weak   HardFault_Handler
+    .type   HardFault_Handler, % function
+
+ HardFault_Handler:
+
+    MOV     R0, LR
+    MRS     R1, MSP
+    MRS     R2, PSP
+    LDR     R3, =ProcessHardFault
+    BLX     R3
+    BX      R0
+
+    .size   HardFault_Handler, . - HardFault_Handler
+
+    .align  1
+    .thumb_func
+    .weak   ProcessHardFaultx
+    .type   ProcessHardFaultx, % function
+
+ ProcessHardFaultx:
+    B       .
+
+    .size   ProcessHardFaultx, . - ProcessHardFaultx
+
+
+	.align	1
+	.thumb_func
 	.weak	Default_Handler
 	.type	Default_Handler, %function
 Default_Handler:
@@ -312,7 +339,7 @@ Default_Handler:
 	.endm
 
 	def_irq_handler	NMI_Handler
-	def_irq_handler	HardFault_Handler
+	//def_irq_handler	HardFault_Handler
 	def_irq_handler	MemManage_Handler
 	def_irq_handler	BusFault_Handler
 	def_irq_handler	UsageFault_Handler
