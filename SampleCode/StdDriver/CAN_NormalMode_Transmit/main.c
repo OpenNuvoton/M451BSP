@@ -464,6 +464,7 @@ int main(void)
 
     printf("Transmit a message by normal mode\n\n");
     printf("Please confirm receiver is ready.\n");
+    printf("If the receiver enters power-down mode, CAN bus error will occur until ACK is received from the receiver.\n");
     printf("Press any key to continue ...\n\n");
     GetChar();
 
