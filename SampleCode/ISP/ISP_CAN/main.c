@@ -12,13 +12,14 @@
 #include <string.h>
 #include "M451Series.h"
 
+#define V6M_AIRCR_VECTKEY_DATA            0x05FA0000UL
+#define V6M_AIRCR_SYSRESETREQ             0x00000004UL
 
-#define PLLCTL_SETTING          (CLK_PLLCTL_72MHz_HXT)
-#define PLL_CLOCK               (72000000)
-#define HCLK_DIV                (1)
+#define PLLCTL_SETTING                    (CLK_PLLCTL_72MHz_HXT)
+#define PLL_CLOCK                         (72000000)
+#define HCLK_DIV                          (1)
 
-#define GPIO_SETMODE(port, pin, u32Mode) port->MODE = (port->MODE & ~(0x3ul << (pin << 1))) | (u32Mode << (pin << 1));
-
+#define GPIO_SETMODE(port, pin, u32Mode)  port->MODE = (port->MODE & ~(0x3ul << (pin << 1))) | (u32Mode << (pin << 1));
 
 #define CAN_BAUD_RATE                     500000
 #define Master_ISP_ID                     0x487
@@ -109,9 +110,9 @@ int32_t SYS_Init(void)
         if(--u32TimeOutCnt == 0) return -1;
 
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
-    CLK->CLKDIV0 = (CLK->CLKDIV0 &(~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(HCLK_DIV);
+    CLK->CLKDIV0 = (CLK->CLKDIV0 & (~CLK_CLKDIV0_HCLKDIV_Msk)) | CLK_CLKDIV0_HCLK(HCLK_DIV);
     /* Update System Core Clock */
-    /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CycylesPerUs automatically. */
+    /* User can use SystemCoreClockUpdate() to calculate PllClock, SystemCoreClock and CyclesPerUs automatically. */
     //SystemCoreClockUpdate();
     PllClock        = PLL_CLOCK;                        // PLL
     SystemCoreClock = PLL_CLOCK / HCLK_DIV;             // HCLK
@@ -146,7 +147,7 @@ void CAN_Init(void)
 {
     /* Enable CAN module clock */
     CLK->APBCLK0 |= CLK_APBCLK0_CAN0CKEN_Msk;
-    
+
     /* Set PA multi-function pins for CANTX0, CANRX0 */
     //SYS->GPA_MFPL = (SYS->GPA_MFPL & (~(SYS_GPA_MFPL_PA0MFP_Msk | SYS_GPA_MFPL_PA1MFP_Msk))) | SYS_GPA_MFPL_PA1MFP_CAN0_TXD | SYS_GPA_MFPL_PA0MFP_CAN0_RXD;
     SYS->GPA_MFPH = (SYS->GPA_MFPH & (~(SYS_GPA_MFPH_PA12MFP_Msk | SYS_GPA_MFPH_PA13MFP_Msk))) | SYS_GPA_MFPH_PA12MFP_CAN0_TXD | SYS_GPA_MFPH_PA13MFP_CAN0_RXD;
@@ -173,7 +174,7 @@ int main(void)
     /* Unlock protected registers */
     SYS_UnlockReg();
     /* Init System, IP clock and multi-function I/O */
-    if( SYS_Init() < 0 ) goto lexit;
+    if(SYS_Init() < 0) goto _APROM;
     /* Enable FMC ISP function */
     FMC_Open();
     FMC_ENABLE_AP_UPDATE();
@@ -193,7 +194,7 @@ int main(void)
 
         if(SysTick->CTRL & SysTick_CTRL_COUNTFLAG_Msk)
         {
-            goto lexit;
+            goto _APROM;
         }
     }
 
@@ -234,12 +235,13 @@ int main(void)
         }
     }
 
-lexit:
+_APROM:
+    SYS->RSTSTS = (SYS_RSTSTS_PORF_Msk | SYS_RSTSTS_PINRF_Msk);
+    FMC->ISPCTL &= ~(FMC_ISPCTL_ISPEN_Msk | FMC_ISPCTL_BS_Msk);
+    SCB->AIRCR = (V6M_AIRCR_VECTKEY_DATA | V6M_AIRCR_SYSRESETREQ);
+
     /* Trap the CPU */
-    for(;;)
-    {
-        __WFI();
-    }
+    while(1);
 }
 
 void ProcessHardFault(void)
