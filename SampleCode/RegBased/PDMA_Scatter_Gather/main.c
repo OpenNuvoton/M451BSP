@@ -151,6 +151,13 @@ int main(void)
     u32Dst0 = (uint32_t)DestArray0;
     u32Dst1 = (uint32_t)DestArray1;
 
+    /* Check if 32 bits alignment */
+    if((u32Src & 0x3) || (u32Dst0 & 0x3) || (u32Dst1 & 0x3))
+    {
+        printf("Not 32 bits alignment\n");
+        return -1;
+    }
+
     /* This sample will transfer data by finished two descriptor table in sequence.(descriptor table 1 -> descriptor table 2) */
 
     /* Descriptor table 1 */

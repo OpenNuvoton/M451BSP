@@ -128,6 +128,14 @@ int main(void)
     u32Dst0 = (uint32_t)DestArray0;
     u32Dst1 = (uint32_t)DestArray1;
 
+    /* Check 32 bits alignment */
+    if((u32Src & 0x3) || (u32Dst0 & 0x3) || (u32Dst1 & 0x3))
+    {
+        printf("Not 32 bits alignment\n");
+        return -1;
+    }
+
+
     DMA_DESC[0].ctl = ((PDMA_TEST_LENGTH - 1) << PDMA_DSCT_CTL_TXCNT_Pos) | PDMA_WIDTH_32 | PDMA_SAR_INC | PDMA_DAR_INC | PDMA_REQ_BURST | PDMA_OP_SCATTER;
     DMA_DESC[0].src = u32Src;
     DMA_DESC[0].dest = u32Dst0;
