@@ -1,26 +1,29 @@
 /**************************************************************************//**
  * @file     main.c
- * @version  V0.10
- * $Revision: 7 $
- * $Date: 15/09/02 10:04a $
+ * @version  V3.00
  * @brief
  *           Demonstrate SPI data transfer with PDMA.
  *           SPI0 will be configured as Master mode and SPI1 will be configured as Slave mode.
  *           Both TX PDMA function and RX PDMA function will be enabled.
- * @note
- * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright SPDX-License-Identifier: Apache-2.0
  * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
+
+// *** <<< Use Configuration Wizard in Context Menu >>> ***
+// <o> GPIO Slew Rate Control
+// <0=> Basic <1=> Higher
+#define SlewRateMode    0
+// *** <<< end of configuration section >>> ***
 
 #define SPI_MASTER_TX_DMA_CH 0
 #define SPI_MASTER_RX_DMA_CH 1
 #define SPI_SLAVE_TX_DMA_CH  2
 #define SPI_SLAVE_RX_DMA_CH  3
 
-#define TEST_COUNT 64
+#define TEST_COUNT      64
 
 /* Function prototype declaration */
 void SYS_Init(void);
@@ -78,7 +81,6 @@ int main(void)
 
 void SYS_Init(void)
 {
-
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
     /*---------------------------------------------------------------------------------------------------------*/
@@ -124,13 +126,26 @@ void SYS_Init(void)
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
 
     /* Configure SPI0 related multi-function pins. GPB[5:2] : SPI0_MOSI0, SPI0_SS, SPI0_MISO0, SPI0_CLK. */
-    SYS->GPB_MFPL &= (~(SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk | SYS_GPB_MFPL_PB4MFP_Msk | SYS_GPB_MFPL_PB5MFP_Msk));
+    SYS->GPB_MFPL &= ~(SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk | SYS_GPB_MFPL_PB4MFP_Msk | SYS_GPB_MFPL_PB5MFP_Msk);
     SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB2MFP_SPI0_CLK | SYS_GPB_MFPL_PB3MFP_SPI0_MISO0 | SYS_GPB_MFPL_PB4MFP_SPI0_SS | SYS_GPB_MFPL_PB5MFP_SPI0_MOSI0);
 
     /* Configure SPI1 related multi-function pins. GPA[7:4] : SPI1_CLK, SPI1_MISO, SPI1_MOSI, SPI1_SS. */
     SYS->GPA_MFPL &= ~(SYS_GPA_MFPL_PA4MFP_Msk | SYS_GPA_MFPL_PA5MFP_Msk | SYS_GPA_MFPL_PA6MFP_Msk | SYS_GPA_MFPL_PA7MFP_Msk);
     SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA4MFP_SPI1_SS | SYS_GPA_MFPL_PA5MFP_SPI1_MOSI | SYS_GPA_MFPL_PA6MFP_SPI1_MISO | SYS_GPA_MFPL_PA7MFP_SPI1_CLK);
 
+#if (SlewRateMode == 0)
+    /* Enable SPI0 I/O basic slew rate */
+    PB->SLEWCTL &= ~(GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+
+    /* Enable SPI1 I/O basic slew rate */
+    PA->SLEWCTL &= ~(GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk | GPIO_SLEWCTL_HSREN6_Msk | GPIO_SLEWCTL_HSREN7_Msk);
+#elif (SlewRateMode == 1)
+    /* Enable SPI0 I/O higher slew rate */
+    PB->SLEWCTL |= (GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+
+    /* Enable SPI1 I/O higher slew rate */
+    PA->SLEWCTL |= (GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk | GPIO_SLEWCTL_HSREN6_Msk | GPIO_SLEWCTL_HSREN7_Msk);
+#endif
 }
 
 
@@ -343,5 +358,3 @@ void SpiLoopTest_WithPDMA(void)
 
     return;
 }
-
-

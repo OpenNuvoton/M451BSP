@@ -1,21 +1,23 @@
 /**************************************************************************//**
  * @file     main.c
- * @version  V1.0
- * $Revision: 7 $
- * $Date: 15/09/02 10:04a $
+ * @version  V3.00
  * @brief
  *           Configure SPI0 as Slave mode and demonstrate how to communicate with an off-chip SPI Master device.
  *           This sample code needs to work with SPI_MasterMode sample code.
- * @note
- * @copyright SPDX-License-Identifier: Apache-2.0
  *
+ * @copyright SPDX-License-Identifier: Apache-2.0
  * @copyright Copyright (C) 2014~2015 Nuvoton Technology Corp. All rights reserved.
  ******************************************************************************/
 #include <stdio.h>
 #include "M451Series.h"
 
+// *** <<< Use Configuration Wizard in Context Menu >>> ***
+// <o> GPIO Slew Rate Control
+// <0=> Basic <1=> Higher
+#define SlewRateMode    0
+// *** <<< end of configuration section >>> ***
 
-#define TEST_COUNT 16
+#define TEST_COUNT      16
 
 uint32_t g_au32SourceData[TEST_COUNT];
 uint32_t g_au32DestinationData[TEST_COUNT];
@@ -133,6 +135,7 @@ void SYS_Init(void)
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
+
     /* Set PD multi-function pins for UART0 RXD and TXD */
     SYS->GPD_MFPL &= ~(SYS_GPD_MFPL_PD0MFP_Msk | SYS_GPD_MFPL_PD1MFP_Msk);
     SYS->GPD_MFPL |= (SYS_GPD_MFPL_PD0MFP_UART0_RXD | SYS_GPD_MFPL_PD1MFP_UART0_TXD);
@@ -140,6 +143,14 @@ void SYS_Init(void)
     /* Set SPI0 multi-function pins */
     SYS->GPB_MFPL &= ~(SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk | SYS_GPB_MFPL_PB4MFP_Msk | SYS_GPB_MFPL_PB5MFP_Msk);
     SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB2MFP_SPI0_CLK | SYS_GPB_MFPL_PB3MFP_SPI0_MISO0 | SYS_GPB_MFPL_PB4MFP_SPI0_SS | SYS_GPB_MFPL_PB5MFP_SPI0_MOSI0);
+
+#if (SlewRateMode == 0)
+    /* Enable SPI0 I/O basic slew rate */
+    PB->SLEWCTL &= ~(GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+#elif (SlewRateMode == 1)
+    /* Enable SPI0 I/O higher slew rate */
+    PB->SLEWCTL |= (GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN4_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+#endif
 }
 
 void SPI_Init(void)
@@ -151,7 +162,3 @@ void SPI_Init(void)
     /* Configure SPI0 as a low level active device. SPI peripheral clock rate = f_PCLK0 */
     SPI_Open(SPI0, SPI_SLAVE, SPI_MODE_0, 32, (uint32_t)NULL);
 }
-
-/*** (C) COPYRIGHT 2014~2015 Nuvoton Technology Corp. ***/
-
-

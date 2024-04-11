@@ -10,14 +10,17 @@
 #include <stdio.h>
 #include "M451Series.h"
 
-//*** <<< Use Configuration Wizard in Context Menu >>> ***
+// *** <<< Use Configuration Wizard in Context Menu >>> ***
 // <e> Two SPI port loopback transfer
 #define TwoPortLoopback     0
 //  <o> Bi-direction Interface
 //  <0=> 4-wire <1=> 3-wire
 #define Slave3WireMode      0
 // </e>
-//*** <<< end of configuration section >>> ***
+// <o> GPIO Slew Rate Control
+// <0=> Basic <1=> Higher
+#define SlewRateMode        0
+// *** <<< end of configuration section >>> ***
 
 #define PLLCTL_SETTING      CLK_PLLCTL_72MHz_HXT
 #define PLL_CLOCK           72000000
@@ -271,6 +274,20 @@ void SYS_Init(void)
 #if (!Slave3WireMode)
     SYS->GPB_MFPL |= SYS_GPB_MFPL_PB4MFP_SPI0_SS;
 #endif
+
+#if (SlewRateMode == 0)
+    /* Enable SPI0 I/O basic slew rate */
+    PB->SLEWCTL &= ~(GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+#if (!Slave3WireMode)
+    PB->SLEWCTL &= ~GPIO_SLEWCTL_HSREN4_Msk;
+#endif
+#elif (SlewRateMode == 1)
+    /* Enable SPI0 I/O higher slew rate */
+    PB->SLEWCTL |= (GPIO_SLEWCTL_HSREN2_Msk | GPIO_SLEWCTL_HSREN3_Msk | GPIO_SLEWCTL_HSREN5_Msk);
+#if (!Slave3WireMode)
+    PB->SLEWCTL |= GPIO_SLEWCTL_HSREN4_Msk;
+#endif
+#endif
 #endif
 
     /* Set SPI1 multi-function pins */
@@ -278,6 +295,20 @@ void SYS_Init(void)
     SYS->GPA_MFPL |= (SYS_GPA_MFPL_PA5MFP_SPI1_MOSI | SYS_GPA_MFPL_PA6MFP_SPI1_MISO | SYS_GPA_MFPL_PA7MFP_SPI1_CLK);
 #if (!Slave3WireMode)
     SYS->GPA_MFPL |= SYS_GPA_MFPL_PA4MFP_SPI1_SS;
+#endif
+
+#if (SlewRateMode == 0)
+    /* Enable SPI1 I/O basic slew rate */
+    PA->SLEWCTL &= ~(GPIO_SLEWCTL_HSREN5_Msk | GPIO_SLEWCTL_HSREN6_Msk | GPIO_SLEWCTL_HSREN7_Msk);
+#if (!Slave3WireMode)
+    PA->SLEWCTL &= ~GPIO_SLEWCTL_HSREN4_Msk;
+#endif
+#elif (SlewRateMode == 1)
+    /* Enable SPI1 I/O higher slew rate */
+    PA->SLEWCTL |= (GPIO_SLEWCTL_HSREN5_Msk | GPIO_SLEWCTL_HSREN6_Msk | GPIO_SLEWCTL_HSREN7_Msk);
+#if (!Slave3WireMode)
+    PA->SLEWCTL |= GPIO_SLEWCTL_HSREN4_Msk;
+#endif
 #endif
 
     /* Update System Core Clock */
