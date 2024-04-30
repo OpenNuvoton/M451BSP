@@ -30,7 +30,7 @@ volatile uint8_t g_u8SlvDataLen;
 
 typedef void (*I2C_FUNC)(uint32_t u32Status);
 
-static I2C_FUNC s_I2C0HandlerFn = NULL;
+static volatile I2C_FUNC s_I2C0HandlerFn = NULL;
 
 /*---------------------------------------------------------------------------------------------------------*/
 /*  I2C0 IRQ Handler                                                                                       */
@@ -224,6 +224,8 @@ void I2C0_Init(uint32_t u32BusClock)
     printf("I2C0 clock %d Hz\n", (u32Pclk / ((u32Div + 1) << 2)));
 
     /* Set I2C0 4 Slave Addresses */
+    /* Note: I2C does not support General Call (GC) mode for device address calling. */
+    /* Therefore, ensure that the GC mode is not enabled when setting the slave address. */
     /* Slave Address : 0x15 */
     I2C0->ADDR0 = (I2C0->ADDR0 & ~I2C_ADDR0_ADDR_Msk) | (0x15 << I2C_ADDR0_ADDR_Pos);
     /* Slave Address : 0x35 */
