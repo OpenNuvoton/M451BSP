@@ -37,6 +37,8 @@ void DAC_FunctionTest(void);
 
 void SYS_Init(void)
 {
+	uint32_t u32TimeOutCnt;
+
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
@@ -46,7 +48,9 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
 
     /* Waiting for HIRC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
@@ -61,11 +65,15 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for HXT clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK->PLLCTL = PLLCTL_SETTING;
-    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
     CLK->CLKSEL0 &= (~CLK_CLKSEL0_HCLKSEL_Msk);
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_PLL;
 
@@ -98,7 +106,7 @@ void SYS_Init(void)
 
     /* Enable PDMA module clock */
     CLK->AHBCLK |= CLK_AHBCLK_PDMACKEN_Msk;
-    
+
     /* Enable Timer 0 module clock */
     CLK->APBCLK0 |= (CLK_APBCLK0_TMR0CKEN_Msk);
 //                     CLK_APBCLK0_TMR1CKEN_Msk |
@@ -156,16 +164,16 @@ void DAC_FunctionTest(void)
     printf("+----------------------------------------------------------------------+\n");
     printf("|                  DAC Timer trigger with PDMA test                    |\n");
     printf("+----------------------------------------------------------------------+\n");
-    printf("\n");    
+    printf("\n");
     printf("This sample code use PDMA transfer sine wave table to DAC(PB.0) output.\n");
-        
+
     /* Reset DAC module */
     SYS->IPRST2 |= SYS_IPRST2_DACRST_Msk ;
     SYS->IPRST2 &= ~SYS_IPRST2_DACRST_Msk ;
 
     /* CH0 source request from DAC */
     PDMA->REQSEL0_3 = 0x08; //CH0_SEl=DAC
-    
+
     PDMA->DSCT[0].CTL=((array_size)<<16)//Transfer Count
                        |(0x1<<12)//Transfer Width Selection(01=>16bit)
                        |(0x3<<10)//Destination Address Increment(11=>No increment (fixed address))
@@ -174,16 +182,16 @@ void DAC_FunctionTest(void)
                        |(0x0<<4)//Burst Size(128 Transfers)
                        |(0x1<<2)//Transfer Type(1 = Single transfer type)
                        |(0x1<<0);//PDMA Operation Mode Selection(01=>Basic Mode)
-    
-    /* Set source address */    
+
+    /* Set source address */
     PDMA->DSCT[0].SA=(uint32_t)&sine[index];
-    
-    /* Set destination address */      
+
+    /* Set destination address */
     PDMA->DSCT[0].DA=(uint32_t)&DAC->DAT;
 
     /* Enable PDMA channel 0 */
-    PDMA->CHCTL=0x1;     
-    
+    PDMA->CHCTL=0x1;
+
     /* Set the timer 0 trigger,enable DAC even trigger mode and enable D/A converter */
     DAC->CTL = DAC_TIMER0_TRIGGER | DAC_CTL_TRGEN_Msk | DAC_CTL_DMAEN_Msk | DAC_CTL_DACEN_Msk;
 
@@ -212,18 +220,18 @@ void DAC_FunctionTest(void)
         {
             /* Re-Set transfer count and basic operation mode */
             PDMA->DSCT[0].CTL &= ~(PDMA_DSCT_CTL_TXCNT_Msk | PDMA_DSCT_CTL_OPMODE_Msk);
-            PDMA->DSCT[0].CTL |= (PDMA_OP_BASIC | ((array_size - 1) << PDMA_DSCT_CTL_TXCNT_Pos));        
+            PDMA->DSCT[0].CTL |= (PDMA_OP_BASIC | ((array_size - 1) << PDMA_DSCT_CTL_TXCNT_Pos));
 
             /* Clear CH0 transfer done flag */
-            PDMA->TDSTS = 0x01;               
-        }    
-        
+            PDMA->TDSTS = 0x01;
+        }
+
         if((DEBUG_PORT->FIFOSTS & UART_FIFOSTS_RXEMPTY_Msk) != 0)
             continue;
         else
         {
             /* Stop Timer0 Counting */
-            TIMER0->CTL &= ~TIMER_CTL_CNTEN_Msk; 
+            TIMER0->CTL &= ~TIMER_CTL_CNTEN_Msk;
             break;
         }
     }
@@ -270,7 +278,7 @@ int32_t main(void)
     /*---------------------------------------------------------------------------------------------------------*/
 
     printf("\nSystem clock rate: %d Hz", SystemCoreClock);
-    
+
     /* DAC function test */
     DAC_FunctionTest();
 
@@ -280,7 +288,7 @@ int32_t main(void)
     /* Reset PDMA module */
     SYS->IPRST0 |= SYS_IPRST0_PDMARST_Msk ;
     SYS->IPRST0 &= ~SYS_IPRST0_PDMARST_Msk ;
-    
+
     /* Reset DAC module */
     SYS->IPRST2 |= SYS_IPRST2_DACRST_Msk ;
     SYS->IPRST2 &= ~SYS_IPRST2_DACRST_Msk ;
@@ -288,16 +296,16 @@ int32_t main(void)
     /* Reset Timer0 module */
     SYS->IPRST1 |= SYS_IPRST1_TMR0RST_Msk ;
     SYS->IPRST1 &= ~SYS_IPRST1_TMR0RST_Msk ;
-    
+
     /* Disable PDMA module clock */
     CLK->AHBCLK &= ~CLK_AHBCLK_PDMACKEN_Msk;
-    
+
     /* Disable Timer0 IP clock */
     CLK->APBCLK0 &= ~CLK_APBCLK0_TMR0CKEN_Msk;
 
     /* Disable DAC IP clock */
     CLK->APBCLK1 &= ~CLK_APBCLK1_DACCKEN_Msk;
-    
+
     printf("Stop DAC output and exit DAC sample code\n");
 
     while(1);

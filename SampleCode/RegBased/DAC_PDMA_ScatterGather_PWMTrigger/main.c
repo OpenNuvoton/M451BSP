@@ -55,6 +55,8 @@ void DAC_FunctionTest(void);
 
 void SYS_Init(void)
 {
+	uint32_t u32TimeOutCnt;
+
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
@@ -64,7 +66,9 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
 
     /* Waiting for HIRC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 &= ~CLK_CLKSEL0_HCLKSEL_Msk;
@@ -79,11 +83,15 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
     /* Waiting for HXT clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK->PLLCTL = PLLCTL_SETTING;
-    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
     CLK->CLKSEL0 &= (~CLK_CLKSEL0_HCLKSEL_Msk);
     CLK->CLKSEL0 |= CLK_CLKSEL0_HCLKSEL_PLL;
 
@@ -113,7 +121,7 @@ void SYS_Init(void)
 
     /* Enable PDMA module clock */
     CLK->AHBCLK |= CLK_AHBCLK_PDMACKEN_Msk;
-    
+
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
     /*---------------------------------------------------------------------------------------------------------*/
@@ -186,19 +194,19 @@ void DAC_FunctionTest(void)
     printf("+----------------------------------------------------------------------+\n");
     printf("|        DAC PWM trigger with PDMA scatter gather mode test            |\n");
     printf("+----------------------------------------------------------------------+\n");
-    printf("\n");    
+    printf("\n");
     printf("This sample code use PDMA scatter gather mode transfer sine wave table to DAC(PB.0) output.\n");
-        
+
     /* Reset DAC module */
     SYS->IPRST2 |= SYS_IPRST2_DACRST_Msk ;
     SYS->IPRST2 &= ~SYS_IPRST2_DACRST_Msk ;
 
     /* CH0 source request from DAC */
     PDMA->REQSEL0_3 = 0x08; //CH0_SEl=DAC
-    
+
     gu32DMAConfigPos = ((array_Pos_size - 1) << PDMA_DSCT_CTL_TXCNT_Pos) | PDMA_WIDTH_16 | PDMA_SAR_INC | PDMA_DAR_FIX | PDMA_REQ_SINGLE | PDMA_OP_SCATTER;
     gu32DMAConfigNeg = ((array_Neg_size - 1) << PDMA_DSCT_CTL_TXCNT_Pos) | PDMA_WIDTH_16 | PDMA_SAR_INC | PDMA_DAR_FIX | PDMA_REQ_SINGLE | PDMA_OP_SCATTER;
-    
+
     DMA_DESC[0].ctl = gu32DMAConfigPos;
     DMA_DESC[0].src = (uint32_t)&sinePos[index];
     DMA_DESC[0].dest = (uint32_t)&DAC->DAT;
@@ -210,7 +218,7 @@ void DAC_FunctionTest(void)
     DMA_DESC[1].offset = (uint32_t)&DMA_DESC[0] - (PDMA->SCATBA);
 
     /* Enable PDMA channel 0 */
-    PDMA->CHCTL=0x1;     
+    PDMA->CHCTL=0x1;
     PDMA->DSCT[0].CTL = PDMA_OP_SCATTER;
     PDMA->DSCT[0].NEXT = (uint32_t)&DMA_DESC[0] - (PDMA->SCATBA);
 
@@ -256,9 +264,9 @@ void DAC_FunctionTest(void)
                 gu32DMAConfig = gu32DMAConfigNeg;
             }
             /* Clear CH0 transfer done flag */
-            PDMA->TDSTS = 0x01;               
-        }    
-        
+            PDMA->TDSTS = 0x01;
+        }
+
         if((DEBUG_PORT->FIFOSTS & UART_FIFOSTS_RXEMPTY_Msk) != 0)
             continue;
         else
@@ -311,7 +319,7 @@ int32_t main(void)
     /*---------------------------------------------------------------------------------------------------------*/
 
     printf("\nSystem clock rate: %d Hz", SystemCoreClock);
-    
+
     /* DAC function test */
     DAC_FunctionTest();
 
@@ -321,7 +329,7 @@ int32_t main(void)
     /* Reset PDMA module */
     SYS->IPRST0 |= SYS_IPRST0_PDMARST_Msk ;
     SYS->IPRST0 &= ~SYS_IPRST0_PDMARST_Msk ;
-    
+
     /* Reset DAC module */
     SYS->IPRST2 |= SYS_IPRST2_DACRST_Msk ;
     SYS->IPRST2 &= ~SYS_IPRST2_DACRST_Msk ;
@@ -329,16 +337,16 @@ int32_t main(void)
     /* Reset PWM0 module */
     SYS->IPRST2 |= SYS_IPRST2_PWM0RST_Msk ;
     SYS->IPRST2 &= ~SYS_IPRST2_PWM0RST_Msk ;
-    
+
     /* Disable PDMA module clock */
     CLK->AHBCLK &= ~CLK_AHBCLK_PDMACKEN_Msk;
-    
+
     /* Disable PWM0 IP clock */
     CLK->APBCLK1 &= ~CLK_APBCLK1_PWM0CKEN_Msk;
 
     /* Disable DAC IP clock */
     CLK->APBCLK1 &= ~CLK_APBCLK1_DACCKEN_Msk;
-    
+
     printf("Stop DAC output and exit DAC sample code\n");
 
     while(1);

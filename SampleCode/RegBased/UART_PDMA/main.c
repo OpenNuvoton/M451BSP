@@ -118,7 +118,7 @@ void PDMA_UART_RxTest(void)
     PDMA->DSCT[UART_RX_DMA_CH].DA = (uint32_t)DestArray;    /* Destination address */
 
     /* Request source selection */
-    PDMA->REQSEL0_3 = (PDMA->REQSEL0_3 & (~PDMA_REQSEL0_3_REQSRC0_Msk)) | (PDMA_UART1_RX<<PDMA_REQSEL0_3_REQSRC0_Pos);   
+    PDMA->REQSEL0_3 = (PDMA->REQSEL0_3 & (~PDMA_REQSEL0_3_REQSRC0_Msk)) | (PDMA_UART1_RX<<PDMA_REQSEL0_3_REQSRC0_Pos);
 }
 
 /*---------------------------------------------------------------------------------------------------------*/
@@ -180,7 +180,7 @@ void PDMA_IRQHandler(void)
     if (status & PDMA_INTSTS_ABTIF_Msk) /* Target Abort */
     {
         IsTestOver = 2;
-        PDMA_CLR_ABORT_FLAG(PDMA_ABTSTS_ABTIFn_Msk);    
+        PDMA_CLR_ABORT_FLAG(PDMA_ABTSTS_ABTIFn_Msk);
     }
     else if(status & PDMA_INTSTS_TDIF_Msk) /* Transfer Done */
     {
@@ -252,7 +252,7 @@ void PDMA_UART(int32_t i32option)
         printf("  [Using TWO PDMA channel].\n");
         printf("  This sample code will use PDMA to do UART1 loopback test 10 times.\n");
         printf("  Please connect UART1_RXD(PB.2) <--> UART1_TXD(PB.3) before testing.\n");
-        printf("  After connecting PB.2 <--> PB.3, press any key to start transfer.\n");  
+        printf("  After connecting PB.2 <--> PB.3, press any key to start transfer.\n");
         g_u32TwoChannelPdmaTest = 1;
         getchar();
     }
@@ -344,6 +344,8 @@ void PDMA_UART(int32_t i32option)
 
 void SYS_Init(void)
 {
+	uint32_t u32TimeOutCnt;
+
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init System Clock                                                                                       */
@@ -353,7 +355,9 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HIRCEN_Msk;
 
     /* Wait for HIRC clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HIRCSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Select HCLK clock source as HIRC and HCLK clock divider as 1 */
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_HIRC;
@@ -366,11 +370,15 @@ void SYS_Init(void)
     CLK->PWRCTL |= CLK_PWRCTL_HXTEN_Msk;
 
     /* Wait for HXT clock ready */
-    while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_HXTSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
 
     /* Set core clock as PLL_CLOCK from PLL */
     CLK->PLLCTL = PLLCTL_SETTING;
-    while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk));
+    u32TimeOutCnt = __HIRC;
+	while(!(CLK->STATUS & CLK_STATUS_PLLSTB_Msk))
+		if(--u32TimeOutCnt == 0) break;
     CLK->CLKSEL0 = (CLK->CLKSEL0 & (~CLK_CLKSEL0_HCLKSEL_Msk)) | CLK_CLKSEL0_HCLKSEL_PLL;
 
     /* Update System Core Clock */
@@ -398,7 +406,7 @@ void SYS_Init(void)
 
     /* Set PB multi-function pins for UART1 RXD(PB.2) and TXD(PB.3) */
     SYS->GPB_MFPL &= ~(SYS_GPB_MFPL_PB2MFP_Msk | SYS_GPB_MFPL_PB3MFP_Msk);
-    SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB2MFP_UART1_RXD | SYS_GPB_MFPL_PB3MFP_UART1_TXD);    
+    SYS->GPB_MFPL |= (SYS_GPB_MFPL_PB2MFP_UART1_RXD | SYS_GPB_MFPL_PB3MFP_UART1_TXD);
 
 }
 
