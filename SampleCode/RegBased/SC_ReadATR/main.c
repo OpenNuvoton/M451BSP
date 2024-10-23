@@ -312,6 +312,7 @@ int main(void)
             printf("\nATR: ");
             for(i = 0; i < g_u32SCInt; i++)
                 printf("%x ", ATR_Buf[i]);
+            printf("\n");
             break;
         }
 

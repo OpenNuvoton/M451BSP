@@ -22,7 +22,8 @@ void SC0_IRQHandler(void)
 {
     // Print SCUART received data to UART port
     // Data length here is short, so we're not care about UART FIFO over flow.
-    UART_WRITE(UART0, SCUART_READ(SC0));
+		while(!SCUART_GET_RX_EMPTY(SC0))
+			UART_WRITE(UART0, SCUART_READ(SC0));
 
     // RDA is the only interrupt enabled in this sample, this status bit
     // automatically cleared after Rx FIFO empty. So no need to clear interrupt
@@ -68,7 +69,7 @@ void SYS_Init(void)
     CLK_EnableModuleClock(SC0_MODULE);
 
     /* Select SC0 module clock source */
-    CLK_SetModuleClock(SC0_MODULE, CLK_CLKSEL3_SC0SEL_PLL, CLK_CLKDIV1_SC0(1));
+    CLK_SetModuleClock(SC0_MODULE, CLK_CLKSEL3_SC0SEL_HIRC, CLK_CLKDIV1_SC0(1));
 
     /*---------------------------------------------------------------------------------------------------------*/
     /* Init I/O Multi-function                                                                                 */
