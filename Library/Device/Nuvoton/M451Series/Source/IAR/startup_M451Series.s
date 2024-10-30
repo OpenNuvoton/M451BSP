@@ -302,7 +302,40 @@ CAN0_IRQHandler
 SC0_IRQHandler 
 TK_IRQHandler  
 Default_Handler
-        B   .    
+        B   .
+
+
+;void SH_ICE(void)
+    PUBLIC    SH_ICE
+SH_ICE
+    CMP   R2,#0
+    BEQ   SH_End
+    STR   R0,[R2]   ; Save the return value to *pn32Out_R0
+
+;void SH_End(void)
+    PUBLIC    SH_End
+SH_End
+    MOVS   R0,#1    ; Set return value to 1
+    BX     lr       ; Return
+
+
+;int32_t SH_DoCommand(int32_t n32In_R0, int32_t n32In_R1, int32_t *pn32Out_R0)
+    PUBLIC    SH_DoCommand
+SH_DoCommand
+    BKPT   0xAB             ; This instruction will cause ICE trap or system HardFault
+    B      SH_ICE
+SH_HardFault                ; Captured by HardFault
+    MOVS   R0,#0            ; Set return value to 0
+    BX     lr               ; Return
+
+
+    PUBLIC    __PC
+__PC
+    MOV     r0, lr
+    BLX     lr
+
+
+    END
 
     END        
 ;/*** (C) COPYRIGHT 2014 Nuvoton Technology Corp. ***/

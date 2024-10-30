@@ -19,6 +19,9 @@
 #define PLLCTL_SETTING  CLK_PLLCTL_72MHz_HIRC
 #define PLL_CLOCK       71884800
 
+void SH_Return(void);
+void SH_Return(void){}
+
 void ProcessHardFault(void)
 {
     while(1); /* Halt here if hard fault occurs. */

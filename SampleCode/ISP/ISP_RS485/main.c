@@ -22,6 +22,8 @@
 #define REVEIVE_MODE            (0)
 #define TRANSMIT_MODE           (1)
 
+void SH_Return(void);
+void SH_Return(void){}
 
 /*---------------------------------------------------------------------------------------------------------*/
 /* Global variables                                                                                        */

@@ -16,7 +16,8 @@
 #include "NuEdu-Basic01.h"
 #define PLL_CLOCK           72000000
 
-
+void SH_Return(void);
+void SH_Return(void){}
 void SendChar_ToUART(int ch);
 void ProcessHardFault(void)
 {
